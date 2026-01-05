@@ -192,4 +192,35 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       fileCount: Object.keys(files).length,
     }
   }
+
+  getSelectedElementIds(): string[] {
+    if (!this.api) {
+      return []
+    }
+    const appState = this.api.getAppState()
+    const selectedIds = appState.selectedElementIds || {}
+    return Object.keys(selectedIds).filter((id) => selectedIds[id])
+  }
+
+  setElementLink(elementId: string, link: string | null): void {
+    if (!this.api) {
+      return
+    }
+
+    const elements = this.getElements()
+    const updatedElements = elements.map((el) => {
+      if (el.id === elementId) {
+        return { ...el, link }
+      }
+      return el
+    })
+
+    this.api.updateScene({ elements: updatedElements })
+  }
+
+  getElementLink(elementId: string): string | null {
+    const elements = this.getElements()
+    const element = elements.find((el) => el.id === elementId)
+    return element?.link ?? null
+  }
 }

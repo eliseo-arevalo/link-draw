@@ -2,9 +2,17 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
+import {
+  createDrawingLink,
+  createElementLink,
+  isDrawingLink,
+  parseDrawingLink,
+} from "@/shared/lib/drawing-links"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { DrawingService } from "@/shared/services/DrawingService"
 import { useDrawingStore } from "@/shared/store/drawingStore"
+import { DrawingPickerModal } from "./components/DrawingPickerModal"
+import { LinkButton } from "./components/LinkButton"
 
 const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((mod) => ({ default: mod.Excalidraw }))
@@ -15,8 +23,12 @@ const drawingService = new DrawingService(repository, adapter)
 
 export function Canvas() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
-  const { activeDrawingId, setIsLoadingDrawing } = useDrawingStore()
+  const { activeDrawingId, setActiveDrawingId, setIsLoadingDrawing } = useDrawingStore()
   const [error, setError] = useState<string | null>(null)
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
+  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([])
+
+  const hasSelection = selectedElementIds.length > 0
 
   const { triggerSave } = useAutoSave(
     async () => {
@@ -30,6 +42,95 @@ export function Canvas() {
       onSaveError: (error) => console.error("Auto-save failed:", error),
     }
   )
+
+  const handleOpenLinkModal = useCallback(() => {
+    if (hasSelection) {
+      setIsLinkModalOpen(true)
+    }
+  }, [hasSelection])
+
+  const handleLinkSelect = useCallback(
+    (targetDrawingId: string, _targetTitle: string, targetElementId?: string) => {
+      const link = targetElementId
+        ? createElementLink(targetDrawingId, targetElementId)
+        : createDrawingLink(targetDrawingId)
+
+      for (const elementId of selectedElementIds) {
+        adapter.setElementLink(elementId, link)
+      }
+
+      setIsLinkModalOpen(false)
+      triggerSave()
+      console.log(
+        `[Canvas] Linked ${selectedElementIds.length} element(s) to ${targetElementId ? "element" : "drawing"} ${targetDrawingId}`
+      )
+    },
+    [selectedElementIds, triggerSave]
+  )
+
+  // Handle link clicks - navigate to target drawing
+  const handleLinkOpen = useCallback(
+    (
+      element: { link: string | null },
+      event: React.MouseEvent | React.KeyboardEvent
+    ) => {
+      const link = element.link
+      if (!link || !isDrawingLink(link)) {
+        // Let Excalidraw handle external links
+        return
+      }
+
+      // Prevent default browser navigation
+      event.preventDefault()
+
+      const parsed = parseDrawingLink(link)
+      if (!parsed) return
+
+      console.log("[Canvas] Navigating to drawing:", parsed.drawingId)
+      setActiveDrawingId(parsed.drawingId)
+
+      // If linking to a specific element, scroll to it after load
+      if (parsed.type === "element") {
+        setTimeout(() => {
+          adapter.scrollToElement(parsed.elementId)
+          adapter.highlightElement(parsed.elementId)
+        }, 500)
+      }
+    },
+    [setActiveDrawingId]
+  )
+
+  // Track selection changes
+  useEffect(() => {
+    if (!excalidrawAPI) return
+
+    const interval = setInterval(() => {
+      const ids = adapter.getSelectedElementIds()
+      setSelectedElementIds((prev) => {
+        if (prev.length !== ids.length || !prev.every((id, i) => id === ids[i])) {
+          return ids
+        }
+        return prev
+      })
+    }, 100)
+
+    return () => clearInterval(interval)
+  }, [excalidrawAPI])
+
+  // Keyboard shortcut: Ctrl+L to open link modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "l") {
+        e.preventDefault()
+        if (hasSelection && !isLinkModalOpen) {
+          setIsLinkModalOpen(true)
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [hasSelection, isLinkModalOpen])
 
   useEffect(() => {
     if (!excalidrawAPI) return
@@ -145,8 +246,19 @@ export function Canvas() {
               viewBackgroundColor: "#ffffff",
             },
           }}
+          onLinkOpen={handleLinkOpen}
+          renderTopRightUI={() => (
+            <LinkButton onClick={handleOpenLinkModal} disabled={!hasSelection} />
+          )}
         />
       </Suspense>
+
+      <DrawingPickerModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        onSelect={handleLinkSelect}
+        currentDrawingId={activeDrawingId}
+      />
     </div>
   )
 }

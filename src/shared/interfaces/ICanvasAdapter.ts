@@ -127,4 +127,24 @@ export interface ICanvasAdapter {
     linkCount: number
     fileCount: number
   }
+
+  /**
+   * Get currently selected element IDs
+   * @returns Array of selected element IDs
+   */
+  getSelectedElementIds(): string[]
+
+  /**
+   * Set a link on an element
+   * @param elementId - Element ID to set link on
+   * @param link - Link URL to set (or null to remove)
+   */
+  setElementLink(elementId: string, link: string | null): void
+
+  /**
+   * Get link from an element
+   * @param elementId - Element ID to get link from
+   * @returns Link URL or null
+   */
+  getElementLink(elementId: string): string | null
 }
