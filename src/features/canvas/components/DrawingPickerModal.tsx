@@ -9,6 +9,20 @@ const Z_INDEX = {
   MODAL_CONTENT: 301,
 }
 
+const loadDrawingElements = async (drawing: DrawingTreeNode) => {
+  const fullDrawing = await repository.loadDrawing(drawing.id)
+  if (!fullDrawing) return null
+
+  const linkableElements = (fullDrawing.content.elements || [])
+    .filter((el: { id: string; type: string; isDeleted?: boolean }) => !el.isDeleted)
+    .map((el: { id: string; type: string }) => ({
+      id: el.id,
+      type: el.type,
+    }))
+
+  return { drawing: fullDrawing, elements: linkableElements }
+}
+
 interface ElementInfo {
   id: string
   type: string
@@ -30,8 +44,6 @@ export function DrawingPickerModal({
   const [tree, setTree] = useState<DrawingTreeNode[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-
-  // Two-step selection state
   const [selectedDrawing, setSelectedDrawing] = useState<Drawing | null>(null)
   const [elements, setElements] = useState<ElementInfo[]>([])
   const [isLoadingElements, setIsLoadingElements] = useState(false)
@@ -71,17 +83,10 @@ export function DrawingPickerModal({
   const handleDrawingSelect = async (drawing: DrawingTreeNode) => {
     setIsLoadingElements(true)
     try {
-      const fullDrawing = await repository.loadDrawing(drawing.id)
-      if (fullDrawing) {
-        setSelectedDrawing(fullDrawing)
-        // Extract elements that can be linked to
-        const linkableElements = (fullDrawing.content.elements || [])
-          .filter((el: { id: string; type: string; isDeleted?: boolean }) => !el.isDeleted)
-          .map((el: { id: string; type: string }) => ({
-            id: el.id,
-            type: el.type,
-          }))
-        setElements(linkableElements)
+      const result = await loadDrawingElements(drawing)
+      if (result) {
+        setSelectedDrawing(result.drawing)
+        setElements(result.elements)
       }
     } catch (err) {
       console.error("Failed to load drawing elements:", err)
@@ -153,6 +158,8 @@ export function DrawingPickerModal({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       style={{
         position: "fixed",
         top: 0,
@@ -166,8 +173,10 @@ export function DrawingPickerModal({
         zIndex: Z_INDEX.MODAL_BACKDROP,
       }}
       onClick={onClose}
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <div
+        role="document"
         style={{
           backgroundColor: "var(--excalidraw-bg-primary, #fff)",
           border: "1px solid var(--excalidraw-border, #e5e5e5)",
@@ -182,6 +191,7 @@ export function DrawingPickerModal({
           zIndex: Z_INDEX.MODAL_CONTENT,
         }}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div style={{ marginBottom: "1rem" }}>
@@ -199,7 +209,7 @@ export function DrawingPickerModal({
                   alignItems: "center",
                   color: "var(--excalidraw-text-secondary, #666)",
                 }}
-                title="Back"
+                aria-label="Back to drawing list"
               >
                 <svg
                   width="20"
@@ -208,6 +218,7 @@ export function DrawingPickerModal({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden="true"
                 >
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
@@ -244,7 +255,6 @@ export function DrawingPickerModal({
             placeholder="Search drawings..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
             style={{
               width: "100%",
               padding: "0.75rem 1rem",
@@ -309,6 +319,7 @@ export function DrawingPickerModal({
                   fill="none"
                   stroke="var(--color-primary, #6965db)"
                   strokeWidth="1.5"
+                  aria-hidden="true"
                 >
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
@@ -440,6 +451,7 @@ export function DrawingPickerModal({
                     fill="none"
                     stroke="var(--excalidraw-text-secondary, #666)"
                     strokeWidth="1.5"
+                    aria-hidden="true"
                   >
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
@@ -464,6 +476,7 @@ export function DrawingPickerModal({
                     stroke="var(--excalidraw-text-secondary, #666)"
                     strokeWidth="2"
                     style={{ opacity: 0.5 }}
+                    aria-hidden="true"
                   >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>

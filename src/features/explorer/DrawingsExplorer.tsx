@@ -3,7 +3,6 @@ import { LocalStorageRepository } from "@/shared/repositories/localStorage/Local
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
-import { Z_INDEX } from "./constants"
 
 const repository = new LocalStorageRepository()
 
@@ -173,6 +172,216 @@ interface TreeNodeProps {
   onSelect: (id: string) => void
 }
 
+function TreeNodeMenu({
+  isOpen,
+  hasChildren,
+  onCreateChild,
+  onDelete,
+}: {
+  isOpen: boolean
+  hasChildren: boolean
+  onCreateChild: () => void
+  onDelete: () => void
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div
+      role="menu"
+      style={{
+        position: "absolute",
+        top: "100%",
+        right: 0,
+        marginTop: "0.25rem",
+        backgroundColor: "var(--excalidraw-bg-primary)",
+        border: "1px solid var(--excalidraw-border)",
+        borderRadius: "6px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        minWidth: "160px",
+        zIndex: 1000,
+        padding: "0.25rem",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={onCreateChild}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          padding: "0.5rem 0.75rem",
+          fontSize: "0.875rem",
+          border: "none",
+          background: "transparent",
+          cursor: "pointer",
+          color: "var(--excalidraw-text-primary)",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          borderRadius: "2px",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "transparent"
+        }}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Create Child
+      </button>
+
+      <div
+        style={{
+          height: "1px",
+          backgroundColor: "var(--excalidraw-border)",
+          margin: "0.25rem 0",
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={onDelete}
+        disabled={hasChildren}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          padding: "0.5rem 0.75rem",
+          fontSize: "0.875rem",
+          border: "none",
+          background: "transparent",
+          cursor: hasChildren ? "not-allowed" : "pointer",
+          color: hasChildren ? "var(--excalidraw-text-secondary)" : "#ef4444",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          borderRadius: "2px",
+          opacity: hasChildren ? 0.5 : 1,
+        }}
+        onMouseEnter={(e) => {
+          if (!hasChildren) {
+            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "transparent"
+        }}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+        Delete
+      </button>
+    </div>
+  )
+}
+
+function DeleteConfirmDialog({
+  isOpen,
+  onConfirm,
+  onCancel,
+}: {
+  isOpen: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  if (!isOpen) return null
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          backgroundColor: "var(--excalidraw-bg-primary)",
+          border: "1px solid var(--excalidraw-border)",
+          borderRadius: "8px",
+          padding: "1.5rem",
+          maxWidth: "400px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontWeight: 600 }}>
+          Delete Drawing?
+        </h3>
+        <p style={{ margin: "0 0 1rem 0", fontSize: "0.875rem", color: "#666" }}>
+          This action cannot be undone.
+        </p>
+        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: "0.5rem 1rem",
+              fontSize: "0.875rem",
+              border: "1px solid var(--excalidraw-border)",
+              borderRadius: "4px",
+              backgroundColor: "transparent",
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            style={{
+              padding: "0.5rem 1rem",
+              fontSize: "0.875rem",
+              border: "none",
+              borderRadius: "4px",
+              backgroundColor: "#ef4444",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -292,6 +501,8 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
   return (
     <div>
       <div
+        role="treeitem"
+        aria-expanded={hasChildren ? isExpanded : undefined}
         className="flex items-center gap-2 py-1.5 px-4 transition-colors group"
         style={{
           paddingLeft: `${level * 1.25 + 1}rem`,
@@ -360,8 +571,16 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
 
         {/* Icon and Title - Clickeable area */}
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => {
             if (!isEditing) {
+              onSelect(node.id)
+            }
+          }}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && !isEditing) {
+              e.preventDefault()
               onSelect(node.id)
             }
           }}
@@ -471,6 +690,7 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              aria-hidden="true"
             >
               <circle cx="12" cy="12" r="1" />
               <circle cx="12" cy="5" r="1" />
@@ -478,194 +698,20 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
             </svg>
           </button>
 
-          {/* Dropdown Menu */}
-          {isMenuOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                right: 0,
-                marginTop: "0.25rem",
-                backgroundColor: "var(--excalidraw-bg-primary)",
-                border: "1px solid var(--excalidraw-border)",
-                borderRadius: "4px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                zIndex: Z_INDEX.DROPDOWN_MENU,
-                minWidth: "160px",
-                padding: "0.25rem",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={handleCreateChild}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "0.5rem 0.75rem",
-                  fontSize: "0.875rem",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--excalidraw-text-primary)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  borderRadius: "2px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent"
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Create Child
-              </button>
-
-              <div
-                style={{
-                  height: "1px",
-                  backgroundColor: "var(--excalidraw-border)",
-                  margin: "0.25rem 0",
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={hasChildren}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "0.5rem 0.75rem",
-                  fontSize: "0.875rem",
-                  border: "none",
-                  background: "transparent",
-                  cursor: hasChildren ? "not-allowed" : "pointer",
-                  color: hasChildren ? "var(--excalidraw-text-secondary)" : "#ef4444",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  borderRadius: "2px",
-                  opacity: hasChildren ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!hasChildren) {
-                    e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)"
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent"
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-                Delete
-              </button>
-            </div>
-          )}
+          <TreeNodeMenu
+            isOpen={isMenuOpen}
+            hasChildren={!!hasChildren}
+            onCreateChild={handleCreateChild}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: Z_INDEX.MODAL_BACKDROP,
-          }}
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div
-            style={{
-              backgroundColor: "var(--excalidraw-bg-primary)",
-              border: "1px solid var(--excalidraw-border)",
-              borderRadius: "8px",
-              padding: "1.5rem",
-              maxWidth: "400px",
-              boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
-              zIndex: Z_INDEX.MODAL_CONTENT,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: "0 0 1rem 0", color: "var(--excalidraw-text-primary)" }}>
-              Delete Drawing?
-            </h3>
-            <p
-              style={{
-                margin: "0 0 1.5rem 0",
-                color: "var(--excalidraw-text-secondary)",
-                fontSize: "0.875rem",
-              }}
-            >
-              Are you sure you want to delete "{node.title}"? This action cannot be undone.
-            </p>
-            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                style={{
-                  padding: "0.5rem 1rem",
-                  border: "1px solid var(--excalidraw-border)",
-                  borderRadius: "4px",
-                  background: "transparent",
-                  color: "var(--excalidraw-text-primary)",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                style={{
-                  padding: "0.5rem 1rem",
-                  border: "none",
-                  borderRadius: "4px",
-                  background: "#ef4444",
-                  color: "white",
-                  cursor: "pointer",
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmDialog
+        isOpen={showDeleteConfirm}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
 
       {/* Children */}
       {hasChildren && isExpanded && (

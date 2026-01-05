@@ -14,6 +14,13 @@ import { useDrawingStore } from "@/shared/store/drawingStore"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { LinkButton } from "./components/LinkButton"
 
+// Type for Excalidraw's onLinkOpen callback
+// NonDeletedExcalidrawElement is not exported from main types, so we use the full signature
+type OnLinkOpenHandler = (
+  element: { link: string | null },
+  event: CustomEvent<{ nativeEvent: MouseEvent | React.PointerEvent<HTMLCanvasElement> }>
+) => void
+
 const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((mod) => ({ default: mod.Excalidraw }))
 )
@@ -69,18 +76,13 @@ export function Canvas() {
   )
 
   // Handle link clicks - navigate to target drawing
-  const handleLinkOpen = useCallback(
-    (
-      element: { link: string | null },
-      event: React.MouseEvent | React.KeyboardEvent
-    ) => {
+  const handleLinkOpen: OnLinkOpenHandler = useCallback(
+    (element, event) => {
       const link = element.link
       if (!link || !isDrawingLink(link)) {
-        // Let Excalidraw handle external links
         return
       }
 
-      // Prevent default browser navigation
       event.preventDefault()
 
       const parsed = parseDrawingLink(link)
@@ -89,7 +91,6 @@ export function Canvas() {
       console.log("[Canvas] Navigating to drawing:", parsed.drawingId)
       setActiveDrawingId(parsed.drawingId)
 
-      // If linking to a specific element, scroll to it after load
       if (parsed.type === "element") {
         setTimeout(() => {
           adapter.scrollToElement(parsed.elementId)
@@ -155,45 +156,45 @@ export function Canvas() {
   // Ref para trackear el drawing previo
   const previousDrawingIdRef = useRef<string | null>(null)
 
+  const savePreviousDrawing = useCallback(async (previousId: string) => {
+    console.log("[Canvas] Saving previous drawing before loading new one:", previousId)
+    try {
+      await drawingService.saveCurrentDrawing(previousId)
+      console.log("[Canvas] Previous drawing saved successfully")
+    } catch (err) {
+      console.error("[Canvas] Failed to save previous drawing:", err)
+    }
+  }, [])
+
+  const loadCurrentDrawing = useCallback(async (drawingId: string) => {
+    console.log("[Canvas] Loading drawing:", drawingId)
+    setIsLoadingDrawing(true)
+    setError(null)
+    try {
+      await drawingService.loadDrawing(drawingId)
+      console.log("[Canvas] Drawing loaded successfully:", drawingId)
+      previousDrawingIdRef.current = drawingId
+      setError(null)
+    } catch (err) {
+      setError("Failed to load drawing")
+      console.error("[Canvas] Failed to load drawing:", drawingId, err)
+    } finally {
+      setIsLoadingDrawing(false)
+    }
+  }, [setIsLoadingDrawing])
+
   useEffect(() => {
     if (!activeDrawingId || !excalidrawAPI) return
 
     let cancelled = false
 
     const loadDrawing = async () => {
-      // Guardar el drawing anterior antes de cargar el nuevo
       if (previousDrawingIdRef.current && previousDrawingIdRef.current !== activeDrawingId) {
-        console.log(
-          "[Canvas] Saving previous drawing before loading new one:",
-          previousDrawingIdRef.current
-        )
-        try {
-          await drawingService.saveCurrentDrawing(previousDrawingIdRef.current)
-          console.log("[Canvas] Previous drawing saved successfully")
-        } catch (err) {
-          console.error("[Canvas] Failed to save previous drawing:", err)
-        }
+        await savePreviousDrawing(previousDrawingIdRef.current)
       }
 
-      console.log("[Canvas] Loading drawing:", activeDrawingId)
-      setIsLoadingDrawing(true)
-      setError(null)
-      try {
-        await drawingService.loadDrawing(activeDrawingId)
-        if (!cancelled) {
-          console.log("[Canvas] Drawing loaded successfully:", activeDrawingId)
-          previousDrawingIdRef.current = activeDrawingId
-          setError(null)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError("Failed to load drawing")
-          console.error("[Canvas] Failed to load drawing:", activeDrawingId, err)
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingDrawing(false)
-        }
+      if (!cancelled) {
+        await loadCurrentDrawing(activeDrawingId)
       }
     }
 
@@ -203,7 +204,7 @@ export function Canvas() {
       console.log("[Canvas] Cleanup for:", activeDrawingId)
       cancelled = true
     }
-  }, [activeDrawingId, excalidrawAPI, setIsLoadingDrawing])
+  }, [activeDrawingId, excalidrawAPI, savePreviousDrawing, loadCurrentDrawing])
 
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative", overflow: "hidden" }}>
