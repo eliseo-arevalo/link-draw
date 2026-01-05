@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
@@ -13,14 +14,23 @@ const repository = new LocalStorageRepository()
 const adapter = new ExcalidrawAdapter()
 const drawingService = new DrawingService(repository, adapter)
 
-export function DrawingsExplorer() {
+interface DrawingsExplorerProps {
+  isCollapsed: boolean
+  onToggleSidebar: () => void
+  onToggleGraph: () => void
+  isGraphView: boolean
+}
+
+export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, isGraphView }: DrawingsExplorerProps) {
   const { tree, setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   
   const dragAndDrop = useDragAndDrop()
 
@@ -137,6 +147,64 @@ export function DrawingsExplorer() {
     }
   }, [setTree])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showMenu])
+
+  if (isCollapsed) {
+    return (
+      <div
+        className="h-full flex flex-col items-center"
+        style={{
+          width: "48px",
+          minWidth: "48px",
+          backgroundColor: "var(--excalidraw-bg-primary)",
+          borderRight: "1px solid rgba(0, 0, 0, 0.08)",
+          padding: "0.5rem 0",
+        }}
+      >
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="excalidraw-button"
+          style={{
+            padding: "0.5rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          title="Show sidebar (Cmd+B)"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <line x1="9" y1="3" x2="9" y2="21" />
+          </svg>
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       className="h-full flex flex-col"
@@ -162,38 +230,9 @@ export function DrawingsExplorer() {
           }}
         >
           <h2 className="text-sm font-semibold" style={{ color: "var(--excalidraw-text-primary)" }}>
-            EXPLORADOR
+            EXPLORER
           </h2>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={toggleSearch}
-              className="excalidraw-button"
-              style={{
-                padding: "0.375rem",
-                minWidth: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-              title="Buscar (Cmd+K)"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-label="Search icon"
-              >
-                <title>Buscar</title>
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </button>
             <button
               type="button"
               onClick={handleCreateDrawing}
@@ -206,7 +245,7 @@ export function DrawingsExplorer() {
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              title="Nuevo dibujo (Cmd+N)"
+              title="New drawing (Cmd+N)"
             >
               <svg
                 width="16"
@@ -217,13 +256,155 @@ export function DrawingsExplorer() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                aria-label="Plus icon"
               >
-                <title>Nuevo dibujo</title>
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
             </button>
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="excalidraw-button"
+              style={{
+                padding: "0.375rem",
+                minWidth: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Hide sidebar (Cmd+B)"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
+            </button>
+            <div style={{ position: "relative", zIndex: 10001 }} ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setShowMenu(!showMenu)}
+                className="excalidraw-button"
+                style={{
+                  padding: "0.375rem",
+                  minWidth: "1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title="More options"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="1" />
+                  <circle cx="12" cy="5" r="1" />
+                  <circle cx="12" cy="19" r="1" />
+                </svg>
+              </button>
+              {showMenu && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: "0.25rem",
+                    backgroundColor: "#ffffff",
+                    border: "1px solid rgba(0, 0, 0, 0.1)",
+                    borderRadius: "4px",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    minWidth: "160px",
+                    zIndex: 10000,
+                    padding: "0.25rem",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleSearch()
+                      setShowMenu(false)
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.875rem",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      color: "var(--excalidraw-text-primary)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      borderRadius: "2px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent"
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    Search (Cmd+K)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onToggleGraph()
+                      setShowMenu(false)
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.875rem",
+                      border: "none",
+                      background: isGraphView ? "var(--excalidraw-bg-secondary)" : "transparent",
+                      cursor: "pointer",
+                      color: "var(--excalidraw-text-primary)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      borderRadius: "2px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isGraphView) {
+                        e.currentTarget.style.backgroundColor = "transparent"
+                      }
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                      <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                    Graph view (Cmd+G)
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -233,7 +414,7 @@ export function DrawingsExplorer() {
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Buscar dibujos..."
+              placeholder="Search drawings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-3 py-1.5 text-sm rounded border"
@@ -272,7 +453,7 @@ export function DrawingsExplorer() {
         {filteredTree.length === 0 ? (
           <div className="px-4 py-8 text-center">
             <p className="text-sm" style={{ color: "var(--excalidraw-text-secondary)" }}>
-              {searchQuery ? "No se encontraron dibujos" : "No hay dibujos aún"}
+              {searchQuery ? "No drawings found" : "No drawings yet"}
             </p>
           </div>
         ) : (
@@ -333,12 +514,12 @@ function TreeNodeMenu({
         top: "100%",
         right: 0,
         marginTop: "0.25rem",
-        backgroundColor: "var(--excalidraw-bg-primary)",
-        border: "1px solid var(--excalidraw-border)",
+        backgroundColor: "#ffffff",
+        border: "1px solid rgba(0, 0, 0, 0.1)",
         borderRadius: "6px",
-        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
         minWidth: "160px",
-        zIndex: 1000,
+        zIndex: 10000,
         padding: "0.25rem",
       }}
       onClick={(e) => e.stopPropagation()}
@@ -451,7 +632,7 @@ function DeleteConfirmDialog({
 }) {
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -465,18 +646,18 @@ function DeleteConfirmDialog({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
+        zIndex: 999999,
       }}
       onClick={onCancel}
     >
       <div
         style={{
-          backgroundColor: "var(--excalidraw-bg-primary)",
-          border: "1px solid var(--excalidraw-border)",
+          backgroundColor: "#ffffff",
+          border: "1px solid rgba(0, 0, 0, 0.1)",
           borderRadius: "8px",
           padding: "1.5rem",
           maxWidth: "400px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -518,7 +699,8 @@ function DeleteConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
@@ -652,7 +834,7 @@ function TreeNode({
   }, [isMenuOpen])
 
   return (
-    <div>
+    <div style={{ position: "relative", zIndex: 1 }}>
       <div
         role="treeitem"
         aria-expanded={hasChildren ? isExpanded : undefined}
@@ -828,7 +1010,7 @@ function TreeNode({
         {/* Menu Button */}
         <div
           className="opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ position: "relative" }}
+          style={{ position: "relative", zIndex: 10001 }}
           ref={menuRef}
         >
           <button
