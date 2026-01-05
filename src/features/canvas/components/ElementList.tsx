@@ -1,6 +1,8 @@
 interface ElementInfo {
   id: string
   type: string
+  text?: string
+  name?: string
 }
 
 interface ElementListProps {
@@ -20,6 +22,22 @@ const getElementIcon = (type: string) => {
     frame: "frame",
   }
   return icons[type] || type.slice(0, 4)
+}
+
+const getElementLabel = (element: ElementInfo) => {
+  // Si es texto, mostrar el contenido (truncado)
+  if (element.type === "text" && element.text) {
+    const truncated = element.text.length > 30 ? `${element.text.slice(0, 30)}...` : element.text
+    return truncated
+  }
+
+  // Si es frame, mostrar el nombre
+  if (element.type === "frame" && element.name) {
+    return element.name
+  }
+
+  // Por defecto, mostrar tipo + ID corto
+  return `${element.type} (${element.id.slice(0, 8)})`
 }
 
 export function ElementList({ elements, onSelectElement, onSelectWholeDrawing }: ElementListProps) {
@@ -69,11 +87,11 @@ export function ElementList({ elements, onSelectElement, onSelectWholeDrawing }:
               onClick={() => onSelectElement(element.id)}
               className="flex items-center gap-3 p-2 rounded hover:bg-gray-100 transition-colors text-left w-full"
             >
-              <span className="text-xs font-mono px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 uppercase">
+              <span className="text-xs font-mono px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 uppercase flex-shrink-0">
                 {getElementIcon(element.type)}
               </span>
-              <span className="flex-1 text-xs font-mono text-gray-900">
-                {element.id.slice(0, 12)}...
+              <span className="flex-1 text-sm text-gray-900 truncate">
+                {getElementLabel(element)}
               </span>
             </button>
           ))}

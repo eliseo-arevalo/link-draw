@@ -2,6 +2,7 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
+import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { DrawingService } from "@/shared/services/DrawingService"
@@ -37,7 +38,7 @@ export function Canvas() {
   const saveAllRef = useRef(saveAllCachedDrawings)
   saveAllRef.current = saveAllCachedDrawings
 
-  const { triggerSave } = useAutoSave(
+  const { triggerSave, forceSave } = useAutoSave(
     async () => {
       if (!activeDrawingId) return
       // Guardar cache primero
@@ -55,6 +56,22 @@ export function Canvas() {
 
   const triggerSaveRef = useRef(triggerSave)
   triggerSaveRef.current = triggerSave
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "s",
+      meta: true,
+      handler: () => forceSave(),
+      description: "Save drawing",
+    },
+    {
+      key: "l",
+      meta: true,
+      handler: () => hasSelection && setIsLinkModalOpen(true),
+      description: "Add link to selection",
+    },
+  ])
 
   const handleOpenLinkModal = useCallback(() => {
     if (hasSelection) setIsLinkModalOpen(true)

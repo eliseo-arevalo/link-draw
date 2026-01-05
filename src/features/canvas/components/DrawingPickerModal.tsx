@@ -19,9 +19,11 @@ const loadDrawingElements = async (drawing: DrawingTreeNode) => {
 
   const linkableElements = (fullDrawing.content.elements || [])
     .filter((el: { id: string; type: string; isDeleted?: boolean }) => !el.isDeleted)
-    .map((el: { id: string; type: string }) => ({
+    .map((el: { id: string; type: string; text?: string; name?: string }) => ({
       id: el.id,
       type: el.type,
+      text: el.text,
+      name: el.name,
     }))
 
   return { drawing: fullDrawing, elements: linkableElements }
@@ -30,6 +32,8 @@ const loadDrawingElements = async (drawing: DrawingTreeNode) => {
 interface ElementInfo {
   id: string
   type: string
+  text?: string
+  name?: string
 }
 
 interface DrawingPickerModalProps {

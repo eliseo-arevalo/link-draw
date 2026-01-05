@@ -3,14 +3,19 @@ import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest"
 import type { ExcalidrawContent } from "@/shared/types/drawing"
 import { ExcalidrawAdapter } from "./ExcalidrawAdapter"
 
+interface MockElement {
+  id: string
+  link?: string
+}
+
 // Mock drawing-links library
 vi.mock("@/shared/lib/drawing-links", () => ({
-  findDrawingLinks: (elements: any[]) => {
+  findDrawingLinks: (elements: MockElement[]) => {
     return elements
-      .filter((el) => el.link && el.link.startsWith("drawing://"))
+      .filter((el) => el.link?.startsWith("drawing://"))
       .map((el) => ({
         elementId: el.id,
-        drawingId: el.link.replace("drawing://", ""),
+        drawingId: el.link?.replace("drawing://", "") || "",
         targetType: "drawing",
         link: el.link,
       }))
@@ -29,7 +34,7 @@ describe("ExcalidrawAdapter", () => {
       getAppState: vi.fn().mockReturnValue({}),
       getFiles: vi.fn().mockReturnValue({}),
       addFiles: vi.fn(),
-    } as any
+    } as unknown as Mocked<ExcalidrawImperativeAPI>
   })
 
   describe("setAPI / getAPI", () => {
@@ -89,26 +94,26 @@ describe("ExcalidrawAdapter", () => {
     })
 
     it("getElements should delegate to API", () => {
-      const mockElements = [{ id: "1" }] as any
-      mockApi.getSceneElements.mockReturnValue(mockElements)
+      const mockElements = [{ id: "1" }]
+      mockApi.getSceneElements.mockReturnValue(mockElements as never)
       expect(adapter.getElements()).toBe(mockElements)
     })
 
     it("setElements should delegate to API", () => {
-      const mockElements = [{ id: "1" }] as any
-      adapter.setElements(mockElements)
+      const mockElements = [{ id: "1" }]
+      adapter.setElements(mockElements as never)
       expect(mockApi.updateScene).toHaveBeenCalledWith({ elements: mockElements })
     })
 
     it("getAppState should delegate to API", () => {
-      const mockState = { zoom: 1 } as any
-      mockApi.getAppState.mockReturnValue(mockState)
+      const mockState = { zoom: 1 }
+      mockApi.getAppState.mockReturnValue(mockState as never)
       expect(adapter.getAppState()).toBe(mockState)
     })
 
     it("setAppState should delegate to API", () => {
-      const mockState = { zoom: 2 } as any
-      adapter.setAppState(mockState)
+      const mockState = { zoom: 2 }
+      adapter.setAppState(mockState as never)
       expect(mockApi.updateScene).toHaveBeenCalledWith({ appState: mockState })
     })
 
@@ -117,9 +122,9 @@ describe("ExcalidrawAdapter", () => {
       const state = { zoom: 1 }
       const files = { f1: {} }
 
-      mockApi.getSceneElements.mockReturnValue(els as any)
-      mockApi.getAppState.mockReturnValue(state as any)
-      mockApi.getFiles.mockReturnValue(files as any)
+      mockApi.getSceneElements.mockReturnValue(els as never)
+      mockApi.getAppState.mockReturnValue(state as never)
+      mockApi.getFiles.mockReturnValue(files as never)
 
       const content = adapter.getContent()
       expect(content).toEqual({ elements: els, appState: state, files })
@@ -127,9 +132,9 @@ describe("ExcalidrawAdapter", () => {
 
     it("setContent should update scene and add files", () => {
       const content: ExcalidrawContent = {
-        elements: [{ id: "1" } as any],
-        appState: { zoom: 1 } as any,
-        files: { f1: { id: "f1" } as any },
+        elements: [{ id: "1" }] as never,
+        appState: { zoom: 1 } as never,
+        files: { f1: { id: "f1" } } as never,
       }
 
       adapter.setContent(content)
@@ -145,8 +150,8 @@ describe("ExcalidrawAdapter", () => {
       const elements = [
         { id: "1", link: "drawing://d1" },
         { id: "2", link: "http://google.com" },
-      ] as any
-      mockApi.getSceneElements.mockReturnValue(elements)
+      ]
+      mockApi.getSceneElements.mockReturnValue(elements as never)
 
       const links = adapter.extractDrawingLinks()
 
@@ -160,7 +165,7 @@ describe("ExcalidrawAdapter", () => {
 
     it("markAsSaved and hasUnsavedChanges should track state", () => {
       mockApi.getSceneElements.mockReturnValue([])
-      mockApi.getAppState.mockReturnValue({} as any)
+      mockApi.getAppState.mockReturnValue({} as never)
       mockApi.getFiles.mockReturnValue({})
 
       // Initial state
@@ -168,7 +173,7 @@ describe("ExcalidrawAdapter", () => {
       expect(adapter.hasUnsavedChanges()).toBe(false)
 
       // Change content
-      mockApi.getSceneElements.mockReturnValue([{ id: "new" }] as any)
+      mockApi.getSceneElements.mockReturnValue([{ id: "new" }] as never)
       expect(adapter.hasUnsavedChanges()).toBe(true)
 
       // Save again
@@ -185,10 +190,10 @@ describe("ExcalidrawAdapter", () => {
     })
 
     it("scrollToElement should center on element", () => {
-      mockApi.getSceneElements.mockReturnValue([{ id: "1", x: 100, y: 100 }] as any)
+      mockApi.getSceneElements.mockReturnValue([{ id: "1", x: 100, y: 100 }] as never)
       // Mock window dimensions
-      ;(window as any).innerWidth = 1000
-      ;(window as any).innerHeight = 800
+      Object.defineProperty(window, "innerWidth", { value: 1000, writable: true })
+      Object.defineProperty(window, "innerHeight", { value: 800, writable: true })
 
       adapter.scrollToElement("1")
 
@@ -213,8 +218,8 @@ describe("ExcalidrawAdapter", () => {
       const els = [{ id: "1", link: "drawing://d1" }, { id: "2" }]
       const files = { f1: {} }
 
-      mockApi.getSceneElements.mockReturnValue(els as any)
-      mockApi.getFiles.mockReturnValue(files as any)
+      mockApi.getSceneElements.mockReturnValue(els as never)
+      mockApi.getFiles.mockReturnValue(files as never)
 
       const stats = adapter.getStats()
 

@@ -25,11 +25,11 @@ describe("LinkService", () => {
       listDrawings: vi.fn(),
       getDrawingsTree: vi.fn(),
       exists: vi.fn(),
-    } as any
+    } as unknown as Mocked<IGraphRepository>
 
     mockCanvas = {
       extractDrawingLinks: vi.fn(),
-    } as any
+    } as unknown as Mocked<ICanvasAdapter>
 
     service = new LinkService(mockRepository, mockCanvas)
   })
@@ -134,7 +134,7 @@ describe("LinkService", () => {
             { id: "2", link: "excaligraph://drawing/d3" },
           ],
         },
-      } as any
+      } as never
 
       mockRepository.loadDrawing.mockResolvedValue(drawingWithLinks)
       mockRepository.exists.mockImplementation(async (id) => id === "d2") // d3 is missing
@@ -152,7 +152,7 @@ describe("LinkService", () => {
         ...mockDrawing1,
         id: "d2",
         content: { elements: [{ id: "e1", link: "excaligraph://drawing/d1" }] },
-      } as any
+      } as never
       const d3 = { ...mockDrawing1, id: "d3" }
 
       mockRepository.listDrawings.mockResolvedValue([d1, d2, d3])
@@ -177,7 +177,7 @@ describe("LinkService", () => {
         ...mockDrawing1,
         id: "d2",
         content: { elements: [{ id: "e1", link: "excaligraph://drawing/d1" }] },
-      } as any
+      } as never
 
       mockRepository.listDrawings.mockResolvedValue([d2])
 
@@ -193,7 +193,7 @@ describe("LinkService", () => {
         ...mockDrawing1,
         id: "d2",
         content: { elements: [{ id: "e1", link: "excaligraph://drawing/d3" }] },
-      } as any
+      } as never
 
       mockRepository.listDrawings.mockResolvedValue([d2])
 

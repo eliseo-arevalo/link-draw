@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
+import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
@@ -12,30 +13,9 @@ export function DrawingsExplorer() {
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    const loadTree = async () => {
-      try {
-        const drawings = await repository.getDrawingsTree()
-        if (!cancelled) {
-          setTree(drawings)
-          setError(null)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError("Failed to load drawings")
-          console.error("Failed to load tree:", err)
-        }
-      }
-    }
-    loadTree()
-
-    return () => {
-      cancelled = true
-    }
-  }, [setTree])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [showSearch, setShowSearch] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleCreateDrawing = async () => {
     setIsCreating(true)
@@ -66,6 +46,78 @@ export function DrawingsExplorer() {
     setActiveDrawingId(id)
   }
 
+  const toggleSearch = () => {
+    setShowSearch(!showSearch)
+    if (!showSearch) {
+      setTimeout(() => searchInputRef.current?.focus(), 0)
+    } else {
+      setSearchQuery("")
+    }
+  }
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "n",
+      meta: true,
+      handler: handleCreateDrawing,
+      description: "Create new drawing",
+    },
+    {
+      key: "k",
+      meta: true,
+      handler: toggleSearch,
+      description: "Toggle search",
+    },
+  ])
+
+  // Filter tree based on search query
+  const filterTree = (nodes: DrawingTreeNode[], query: string): DrawingTreeNode[] => {
+    if (!query.trim()) return nodes
+
+    const lowerQuery = query.toLowerCase()
+
+    return nodes.reduce<DrawingTreeNode[]>((acc, node) => {
+      const matchesTitle = node.title.toLowerCase().includes(lowerQuery)
+      const filteredChildren = node.children ? filterTree(node.children, query) : []
+
+      if (matchesTitle || filteredChildren.length > 0) {
+        acc.push({
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children,
+        })
+      }
+
+      return acc
+    }, [])
+  }
+
+  const filteredTree = filterTree(tree, searchQuery)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTree = async () => {
+      try {
+        const drawings = await repository.getDrawingsTree()
+        if (!cancelled) {
+          setTree(drawings)
+          setError(null)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError("Failed to load drawings")
+          console.error("Failed to load tree:", err)
+        }
+      }
+    }
+    loadTree()
+
+    return () => {
+      cancelled = true
+    }
+  }, [setTree])
+
   return (
     <div
       className="h-full flex flex-col"
@@ -73,51 +125,107 @@ export function DrawingsExplorer() {
         width: `${SIDEBAR_WIDTH}px`,
         minWidth: `${SIDEBAR_WIDTH}px`,
         backgroundColor: "var(--excalidraw-bg-primary)",
-        borderRight: "1px solid var(--excalidraw-border)",
+        borderRight: "1px solid rgba(0, 0, 0, 0.08)",
       }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between border-b"
+        className="border-b"
         style={{
           borderColor: "var(--excalidraw-border)",
-          minHeight: "3rem",
-          padding: "0 1rem",
         }}
       >
-        <h2 className="text-sm font-semibold" style={{ color: "var(--excalidraw-text-primary)" }}>
-          EXPLORADOR
-        </h2>
-        <button
-          type="button"
-          onClick={handleCreateDrawing}
-          disabled={isCreating}
-          className="excalidraw-button"
+        <div
+          className="flex items-center justify-between"
           style={{
-            padding: "0.375rem",
-            minWidth: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            minHeight: "3rem",
+            padding: "0 1rem",
           }}
-          title="Nuevo dibujo"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-label="Plus icon"
-          >
-            <title>Nuevo dibujo</title>
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
+          <h2 className="text-sm font-semibold" style={{ color: "var(--excalidraw-text-primary)" }}>
+            EXPLORADOR
+          </h2>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={toggleSearch}
+              className="excalidraw-button"
+              style={{
+                padding: "0.375rem",
+                minWidth: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Buscar (Cmd+K)"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-label="Search icon"
+              >
+                <title>Buscar</title>
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateDrawing}
+              disabled={isCreating}
+              className="excalidraw-button"
+              style={{
+                padding: "0.375rem",
+                minWidth: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Nuevo dibujo (Cmd+N)"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-label="Plus icon"
+              >
+                <title>Nuevo dibujo</title>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Search Input - Conditional */}
+        {showSearch && (
+          <div style={{ padding: "0.5rem 1rem" }}>
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Buscar dibujos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm rounded border"
+              style={{
+                backgroundColor: "var(--excalidraw-bg-secondary)",
+                borderColor: "var(--excalidraw-border)",
+                color: "var(--excalidraw-text-primary)",
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Error Message */}
@@ -142,15 +250,15 @@ export function DrawingsExplorer() {
           scrollbarColor: "var(--excalidraw-border) transparent",
         }}
       >
-        {tree.length === 0 ? (
+        {filteredTree.length === 0 ? (
           <div className="px-4 py-8 text-center">
             <p className="text-sm" style={{ color: "var(--excalidraw-text-secondary)" }}>
-              No hay dibujos aún
+              {searchQuery ? "No se encontraron dibujos" : "No hay dibujos aún"}
             </p>
           </div>
         ) : (
           <div className="py-2">
-            {tree.map((node) => (
+            {filteredTree.map((node) => (
               <TreeNode
                 key={node.id}
                 node={node}

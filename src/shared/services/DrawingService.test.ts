@@ -32,7 +32,7 @@ describe("DrawingService", () => {
       deleteDrawing: vi.fn(),
       setDrawingParent: vi.fn(),
       togglePublic: vi.fn(),
-    } as any
+    } as unknown as Mocked<IGraphRepository>
 
     mockCanvas = {
       getContent: vi.fn(),
@@ -40,7 +40,7 @@ describe("DrawingService", () => {
       markAsSaved: vi.fn(),
       hasUnsavedChanges: vi.fn(),
       getStats: vi.fn(),
-    } as any
+    } as unknown as Mocked<ICanvasAdapter>
 
     service = new DrawingService(mockRepository, mockCanvas)
   })
@@ -99,7 +99,7 @@ describe("DrawingService", () => {
   describe("updateContent", () => {
     it("should save canvas content", async () => {
       const mockContent = { elements: [{ id: "1" }] }
-      mockCanvas.getContent.mockReturnValue(mockContent as any)
+      mockCanvas.getContent.mockReturnValue(mockContent as never)
 
       await service.updateContent("id-1")
 
@@ -111,7 +111,7 @@ describe("DrawingService", () => {
   describe("saveCurrentDrawing", () => {
     it("should save content and mark canvas as saved", async () => {
       const mockContent = { elements: [] }
-      mockCanvas.getContent.mockReturnValue(mockContent as any)
+      mockCanvas.getContent.mockReturnValue(mockContent as never)
 
       await service.saveCurrentDrawing("id-1")
 
@@ -122,7 +122,7 @@ describe("DrawingService", () => {
 
     it("should update title if provided", async () => {
       const mockContent = { elements: [] }
-      mockCanvas.getContent.mockReturnValue(mockContent as any)
+      mockCanvas.getContent.mockReturnValue(mockContent as never)
 
       await service.saveCurrentDrawing("id-1", "New Title")
 

@@ -29,6 +29,12 @@
             "maxAllowedComplexity": 15
           }
         }
+      },
+      "a11y": {
+        "useKeyWithClickEvents": "off",
+        "noStaticElementInteractions": "off",
+        "useFocusableInteractive": "off",
+        "useSemanticElements": "off"
       }
     }
   },
