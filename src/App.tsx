@@ -1,4 +1,4 @@
-import './App.css';
+import "./App.css"
 
 function App() {
   return (
@@ -8,7 +8,7 @@ function App() {
         <p>Multi-canvas management for Excalidraw</p>
       </main>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

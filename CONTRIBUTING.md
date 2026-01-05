@@ -72,11 +72,13 @@ npm run dev
 
 ### Code Style
 
-- Use ESLint and Prettier (configured in the project)
+- Use **Biome** for linting and formatting (replaces ESLint + Prettier)
+- **No semicolons** - Configured with `semicolons: "asNeeded"`
 - Follow TypeScript/React best practices
 - Write clean and self-documenting code
 - Add comments for complex logic
 - Use meaningful variable and function names
+- **`any` forbidden** - Use explicit types always
 
 ### Project-Specific Guidelines
 
@@ -110,6 +112,15 @@ test: add tests for relationship manager
 chore: update dependencies
 ```
 
+### Code Quality
+
+Run Biome checks before committing:
+
+```bash
+pnpm check:fix  # Fix linting and formatting
+pnpm check      # Check without fixing
+```
+
 ### Tests
 
 - Write tests for new features
@@ -117,8 +128,8 @@ chore: update dependencies
 - Maintain code coverage above 80%
 
 ```bash
-npm run test
-npm run test:coverage
+pnpm test
+pnpm test:coverage
 ```
 
 ## Pull Request Process
@@ -224,19 +235,19 @@ npm run dev:debug
 ### Testing Locally
 ```bash
 # Run all tests
-npm run test
+pnpm test
 
 # Run tests in watch mode
-npm run test:watch
+pnpm test:watch
 
 # Run tests with coverage
-npm run test:coverage
+pnpm test:coverage
 
 # Type checking
-npm run type-check
+pnpm tsc --noEmit
 
-# Linting
-npm run lint
+# Linting and formatting
+pnpm check:fix
 ```
 
 ## First-Time Contributors
