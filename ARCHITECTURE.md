@@ -1,450 +1,443 @@
-# Excaligraph - Arquitectura Core (Sprint 1 & 2)
+# Excaligraph - Architecture
 
-## 🏗️ Arquitectura General
+## Overview
 
-```mermaid
-graph TB
-    subgraph "UI Layer (Sprint 3)"
-        UI[React Components]
-    end
-    
-    subgraph "Service Layer"
-        DS[DrawingService]
-        LS[LinkService]
-    end
-    
-    subgraph "State Management"
-        DrawStore[DrawingStore]
-        TreeStore[TreeStore]
-        TempStore[TempStore]
-    end
-    
-    subgraph "Adapters"
-        ExcAdapter[ExcalidrawAdapter]
-    end
-    
-    subgraph "Repository"
-        LSRepo[LocalStorageRepository]
-    end
-    
-    subgraph "External"
-        Excalidraw[Excalidraw Library]
-        LocalStorage[Browser LocalStorage]
-    end
-    
-    UI --> DS
-    UI --> LS
-    UI --> DrawStore
-    UI --> TreeStore
-    UI --> TempStore
-    
-    DS --> LSRepo
-    DS --> ExcAdapter
-    
-    LS --> LSRepo
-    LS --> ExcAdapter
-    
-    ExcAdapter --> Excalidraw
-    LSRepo --> LocalStorage
-    
-    style DS fill:#a8e6cf
-    style LS fill:#a8e6cf
-    style ExcAdapter fill:#ffd3b6
-    style LSRepo fill:#ffd3b6
+Excaligraph extends Excalidraw with multi-canvas management and element relationships. The architecture follows clean architecture principles with clear separation of concerns and dependency inversion at key extension points.
+
+## Design Principles
+
+1. **Feature-based organization**: Code organized by functionality, not file type
+2. **Interfaces at extension points**: Only abstract where we plan to extend (persistence, canvas engine)
+3. **Inward dependencies**: Features depend on shared code, never the reverse
+4. **No over-engineering**: Simple code first, abstract only when needed
+
+## Architecture Layers
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    UI Layer (Features)                   │
+│              Canvas │ Explorer │ Components              │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+┌──────────────────────────┼──────────────────────────────┐
+│                   Service Layer                          │
+│         DrawingService │ LinkService                     │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+┌──────────────────────────┼──────────────────────────────┐
+│                  Interface Layer                         │
+│        IGraphRepository │ ICanvasAdapter                 │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+┌──────────────────────────┴──────────────────────────────┐
+│              Implementation Layer                        │
+│    LocalStorageRepository │ ExcalidrawAdapter           │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
+## Project Structure
 
-## 📦 Capas de la Arquitectura
-
-### **1. Repository Layer** (Persistencia)
 ```
-src/shared/repositories/
-└── localStorage/
-    ├── LocalStorageRepository.ts    # Implementa IGraphRepository
-    └── helpers/
-        ├── tree-builder.ts          # Construye árbol de drawings
-        └── circular-validator.ts    # Valida referencias circulares
-```
-
-**Responsabilidad**: Abstraer el acceso a datos
-- CRUD de drawings
-- Construcción de árbol jerárquico
-- Validación de integridad
-
----
-
-### **2. Adapter Layer** (Integración Externa)
-```
-src/shared/adapters/
-└── excalidraw/
-    └── ExcalidrawAdapter.ts         # Implementa ICanvasAdapter
-```
-
-**Responsabilidad**: Adaptar Excalidraw a nuestra interfaz
-- Gestión de elementos del canvas
-- Extracción de links
-- Detección de cambios
-- Callbacks de eventos
-
----
-
-### **3. Service Layer** (Lógica de Negocio)
-```
-src/shared/services/
-├── DrawingService.ts                # Orquesta CRUD y canvas
-├── LinkService.ts                   # Gestiona links y ciclos
-└── link/
-    └── graph-algorithms.ts          # Algoritmos de grafos (DFS)
-```
-
-**Responsabilidad**: Coordinar operaciones complejas
-- Orquestar Repository + Adapter
-- Validar reglas de negocio
-- Detectar referencias circulares
-
----
-
-### **4. State Management** (Estado Global)
-```
-src/shared/store/
-├── drawingStore.ts                  # Títulos, navegación, focus
-├── treeStore.ts                     # Operaciones de árbol
-├── tempStore.ts                     # Drawings temporales
-└── graphStore.ts                    # Barrel export
+src/
+├── features/              # Feature modules (UI)
+│   ├── canvas/           # Canvas and drawing management
+│   │   ├── components/   # DrawingPickerModal, LinkButton, etc.
+│   │   ├── hooks/        # useCanvasLoader, useElementSelection, etc.
+│   │   └── Canvas.tsx    # Main canvas component
+│   └── explorer/         # Tree-based drawing explorer
+│       ├── components/   # TreeNode, DeleteConfirmDialog, etc.
+│       ├── hooks/        # useTreeActions
+│       └── DrawingsExplorer.tsx
+│
+├── shared/               # Shared utilities
+│   ├── adapters/        # External library adapters
+│   │   └── excalidraw/
+│   │       └── ExcalidrawAdapter.ts
+│   ├── constants/       # Shared constants (layout, etc.)
+│   ├── hooks/           # Reusable hooks (useAutoSave)
+│   ├── interfaces/      # Core interfaces
+│   │   ├── ICanvasAdapter.ts
+│   │   └── IGraphRepository.ts
+│   ├── lib/             # Utility functions
+│   │   ├── drawing-links.ts
+│   │   ├── tree-utils.ts
+│   │   └── utils.ts
+│   ├── repositories/    # Data persistence
+│   │   └── localStorage/
+│   │       └── LocalStorageRepository.ts
+│   ├── services/        # Business logic
+│   │   ├── DrawingService.ts
+│   │   ├── LinkService.ts
+│   │   └── link/
+│   │       └── graph-algorithms.ts
+│   ├── store/           # Global state (Zustand)
+│   │   ├── drawingStore.ts
+│   │   └── treeStore.ts
+│   └── types/           # TypeScript types
+│       └── drawing.ts
+│
+└── App.tsx              # Root component
 ```
 
-**Responsabilidad**: Estado reactivo de la UI
-- Optimistic UI updates
-- Gestión de temporales
-- Navegación activa
+## Core Interfaces
 
----
+### IGraphRepository (Persistence)
 
-## 🔄 Flujos Principales
+Abstracts data access to allow switching storage backends without changing business logic.
 
-### **Flujo 1: Crear Drawing**
-
-```mermaid
-sequenceDiagram
-    participant UI
-    participant DS as DrawingService
-    participant Repo as LocalStorageRepository
-    participant Store as TreeStore
-    
-    UI->>DS: createDrawing(input)
-    DS->>Repo: createDrawing(title, parentId)
-    Repo->>Repo: generateId()
-    Repo->>Repo: validate parent exists
-    Repo-->>DS: drawingId
-    DS->>Repo: saveDrawing(id, content)
-    Repo->>Repo: saveAll(drawings)
-    Repo-->>DS: void
-    DS-->>UI: drawingId
-    UI->>Store: addDrawingToTree(id, title, parentId)
-    Store->>Store: update tree state
-```
-
-**Pasos**:
-1. UI llama a `DrawingService.createDrawing()`
-2. Service crea el drawing en el repository
-3. Service guarda el contenido
-4. UI actualiza el store para optimistic UI
-
----
-
-### **Flujo 2: Cargar Drawing en Canvas**
-
-```mermaid
-sequenceDiagram
-    participant UI
-    participant DS as DrawingService
-    participant Repo as LocalStorageRepository
-    participant Adapter as ExcalidrawAdapter
-    participant Excalidraw
-    
-    UI->>DS: loadDrawing(id)
-    DS->>Repo: loadDrawing(id)
-    Repo->>Repo: getAll()
-    Repo-->>DS: drawing
-    DS->>Adapter: setContent(drawing.content)
-    Adapter->>Excalidraw: updateScene({elements, appState})
-    Adapter->>Adapter: markAsSaved()
-    DS-->>UI: drawing
-```
-
-**Pasos**:
-1. UI solicita cargar un drawing
-2. Service lo obtiene del repository
-3. Service lo carga en el adapter
-4. Adapter actualiza Excalidraw
-5. Marca como guardado (sin cambios)
-
----
-
-### **Flujo 3: Auto-Save**
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Excalidraw
-    participant Adapter as ExcalidrawAdapter
-    participant Hook as useAutoSave
-    participant DS as DrawingService
-    participant Repo as LocalStorageRepository
-    
-    User->>Excalidraw: dibuja/edita
-    Excalidraw->>Adapter: onChange(elements, appState)
-    Adapter->>Adapter: notifyChange()
-    Adapter->>Hook: callback()
-    Hook->>Hook: debounce (2s)
-    Hook->>DS: saveCurrentDrawing(id)
-    DS->>Adapter: getContent()
-    Adapter-->>DS: {elements, appState, files}
-    DS->>Repo: saveDrawing(id, content)
-    Repo->>Repo: updateDrawing()
-    Repo->>Repo: saveAll()
-    DS->>Adapter: markAsSaved()
-```
-
-**Pasos**:
-1. Usuario edita en Excalidraw
-2. Excalidraw dispara onChange
-3. Adapter notifica a los callbacks
-4. Hook de auto-save espera 2s (debounce)
-5. Service guarda el contenido
-6. Marca como guardado
-
----
-
-### **Flujo 4: Detección de Referencias Circulares**
-
-```mermaid
-sequenceDiagram
-    participant UI
-    participant LS as LinkService
-    participant Repo as LocalStorageRepository
-    participant Utils as tree-utils
-    
-    UI->>LS: wouldCreateCircularReference(drawingId, newParentId)
-    
-    alt newParentId is null
-        LS-->>UI: {hasCircularReference: false}
-    else drawingId === newParentId
-        LS-->>UI: {hasCircularReference: true, message: "Cannot be own parent"}
-    else check tree
-        LS->>Repo: getDrawingsTree()
-        Repo-->>LS: tree[]
-        LS->>LS: isDescendantOf(tree, newParent, drawing)
-        LS->>Utils: findInTree(tree, ancestor)
-        Utils-->>LS: ancestorNode
-        LS->>Utils: nodeExists(children, descendant)
-        Utils-->>LS: boolean
-        
-        alt is descendant
-            LS->>Utils: getPathToNode(tree, newParentId)
-            Utils-->>LS: path[]
-            LS-->>UI: {hasCircularReference: true, path, message}
-        else not descendant
-            LS-->>UI: {hasCircularReference: false}
-        end
-    end
-```
-
-**Algoritmo**:
-1. Valida casos triviales (null, self-reference)
-2. Obtiene el árbol de drawings
-3. Busca si el nuevo padre es descendiente del drawing
-4. Si es descendiente → circular reference
-5. Retorna resultado con path si hay ciclo
-
----
-
-### **Flujo 5: Extraer Links de Drawing**
-
-```mermaid
-sequenceDiagram
-    participant UI
-    participant LS as LinkService
-    participant Repo as LocalStorageRepository
-    participant Adapter as ExcalidrawAdapter
-    participant DrawingLinks as drawing-links.ts
-    
-    UI->>LS: getDrawingLinks(drawingId)
-    LS->>Repo: loadDrawing(drawingId)
-    Repo-->>LS: drawing
-    LS->>LS: extractLinksFromContent(content)
-    LS->>Adapter: getContent() [save original]
-    LS->>Adapter: setContent(drawing.content)
-    LS->>Adapter: extractDrawingLinks()
-    Adapter->>DrawingLinks: findDrawingLinks(elements)
-    
-    loop for each element
-        DrawingLinks->>DrawingLinks: isDrawingLink(element.link)
-        DrawingLinks->>DrawingLinks: parseDrawingLink(link)
-        DrawingLinks->>DrawingLinks: create DrawingLinkInfo
-    end
-    
-    DrawingLinks-->>Adapter: DrawingLinkInfo[]
-    Adapter-->>LS: DrawingLink[]
-    LS->>Adapter: setContent(originalContent) [restore]
-    LS-->>UI: DrawingLink[]
-```
-
-**Pasos**:
-1. Service carga el drawing
-2. Guarda contenido actual del canvas
-3. Carga contenido del drawing temporalmente
-4. Extrae links usando utilidades
-5. Restaura contenido original
-6. Retorna links encontrados
-
----
-
-## 🗂️ Estructura de Datos
-
-### **Drawing**
 ```typescript
-interface Drawing {
-  id: string                    // UUID
-  title: string                 // "Mi Diagrama"
-  content: ExcalidrawContent    // {elements, appState, files}
-  parent_id: string | null      // Jerarquía
-  is_public: boolean
-  created_at: string            // ISO timestamp
-  updated_at: string            // ISO timestamp
+interface IGraphRepository {
+  // CRUD operations
+  createDrawing(title: string, parentId: string | null): Promise<string>;
+  loadDrawing(id: string): Promise<Drawing | null>;
+  saveDrawing(id: string, input: DrawingInput): Promise<void>;
+  deleteDrawing(id: string): Promise<void>;
+  
+  // Tree operations
+  getDrawingsTree(): Promise<DrawingTreeNode[]>;
+  setDrawingParent(id: string, newParentId: string | null): Promise<void>;
+  
+  // Metadata
+  updateDrawingTitle(id: string, title: string): Promise<void>;
+  getDrawingSummaries(): Promise<DrawingSummary[]>;
 }
 ```
 
-### **DrawingTreeNode**
+**Current Implementation:**
+- `LocalStorageRepository` - Browser localStorage (v0.1.0)
+
+**Future Implementations:**
+- `APIRepository` - Backend sync with authentication
+- `IndexedDBRepository` - Better performance for large projects
+
+### ICanvasAdapter (Canvas Engine)
+
+Decouples from Excalidraw to enable testing and potential future canvas engine changes.
+
 ```typescript
-interface DrawingTreeNode extends Drawing {
-  children?: DrawingTreeNode[]  // Árbol recursivo
+interface ICanvasAdapter {
+  // API management
+  setAPI(api: ExcalidrawImperativeAPI): void;
+  getAPI(): ExcalidrawImperativeAPI | null;
+  
+  // Content management
+  getContent(): ExcalidrawContent;
+  setContent(content: ExcalidrawContent): void;
+  
+  // Event handling
+  onChange(callback: (content: ExcalidrawContent) => void): () => void;
+  onSave(callback: () => void): () => void;
+  
+  // Navigation
+  scrollToElement(elementId: string): void;
+  highlightElement(elementId: string): void;
+  
+  // Link extraction
+  extractDrawingLinks(): DrawingLink[];
+  
+  // State tracking
+  hasUnsavedChanges(): boolean;
+  markAsSaved(): void;
 }
 ```
 
-### **DrawingLink**
+**Current Implementation:**
+- `ExcalidrawAdapter` - Wraps Excalidraw API
+
+## Key Features
+
+### 1. Drawing Links
+
+Links use a custom URI scheme: `drawing://[id][#element:id|#frame:id]`
+
 ```typescript
-interface DrawingLink {
-  elementId: string             // ID del elemento con el link
-  targetDrawingId: string       // ID del drawing destino
-  targetType: "drawing" | "element" | "frame"
+// Link to entire drawing
+"drawing://abc123"
+
+// Link to specific element
+"drawing://abc123#element:xyz"
+
+// Link to specific frame
+"drawing://abc123#frame:xyz"
+```
+
+**Implementation:**
+- Links stored as Excalidraw element properties
+- Parsed on-demand using `parseDrawingLink()`
+- Validated using `isDrawingLink()`
+
+### 2. Auto-save Strategy
+
+```typescript
+// 500ms debounced saves
+const { triggerSave } = useAutoSave(saveFunction, { delay: 500 });
+
+// Content caching during navigation
+const contentCacheRef = useRef<Map<string, ExcalidrawContent>>(new Map());
+
+// Stable function references with useRef
+const saveAllRef = useRef(saveAllCachedDrawings);
+saveAllRef.current = saveAllCachedDrawings;
+```
+
+**Flow:**
+1. User edits → Excalidraw fires `onChange`
+2. Adapter calls `notifyChange()`
+3. Hook debounces for 500ms
+4. Service saves content + cached drawings
+5. Adapter marks as saved
+
+### 3. Navigation Flow
+
+```typescript
+// 1. User clicks link
+onLinkOpen={(element, event) => handleLinkOpen(element, event)}
+
+// 2. Parse link
+const parsed = parseDrawingLink(link);
+
+// 3. Cache current content
+contentCacheRef.current.set(currentDrawingId, adapter.getContent());
+
+// 4. Load new drawing
+await drawingService.loadDrawing(parsed.drawingId);
+
+// 5. Scroll to element (if specified)
+if (parsed.elementId) {
+  adapter.scrollToElement(parsed.elementId);
+  adapter.highlightElement(parsed.elementId);
 }
 ```
 
----
+### 4. Circular Reference Detection
 
-## 🔗 Formato de Links
-
-```
-drawing://[drawingId]                    → Link a drawing completo
-drawing://[drawingId]#element:[elementId] → Link a elemento específico
-drawing://[drawingId]#frame:[frameId]     → Link a frame específico
+**Tree Hierarchy:**
+```typescript
+// Prevents: A → B → C → A
+wouldCreateCircularReference(drawingId, newParentId)
 ```
 
-**Ejemplo**:
+**Link Graph:**
+```typescript
+// Prevents: Drawing A links to B, B links to C, C links to A
+wouldCreateCircularLinkReference(sourceId, targetId)
 ```
-drawing://abc123
-drawing://abc123#element:xyz789
-drawing://abc123#frame:frame-001
+
+**Algorithm:** Depth-First Search (DFS) with visited tracking
+
+## Data Flow Examples
+
+### Creating a Drawing
+
+```
+User Action
+    ↓
+DrawingsExplorer.handleCreateDrawing()
+    ↓
+repository.createDrawing(title, parentId)
+    ↓
+repository.saveDrawing(id, content)
+    ↓
+treeStore.setTree(updatedTree)
+    ↓
+drawingStore.setActiveDrawingId(id)
+    ↓
+UI Updates
 ```
 
----
+### Loading a Drawing
 
-## 🎯 Patrones de Diseño Utilizados
+```
+User Clicks Drawing
+    ↓
+drawingStore.setActiveDrawingId(id)
+    ↓
+useCanvasLoader detects change
+    ↓
+Cache current content
+    ↓
+drawingService.loadDrawing(id)
+    ↓
+adapter.setContent(drawing.content)
+    ↓
+Excalidraw renders
+```
 
-### **1. Repository Pattern**
-- `IGraphRepository` abstrae persistencia
-- Permite cambiar de localStorage a Firebase sin cambiar servicios
+### Auto-saving
 
-### **2. Adapter Pattern**
-- `ExcalidrawAdapter` adapta API de Excalidraw
-- Permite cambiar de librería de canvas sin cambiar servicios
+```
+User Edits
+    ↓
+Excalidraw.onChange()
+    ↓
+adapter.notifyChange()
+    ↓
+useAutoSave.triggerSave()
+    ↓
+[500ms debounce]
+    ↓
+saveAllCachedDrawings()
+    ↓
+drawingService.saveCurrentDrawing()
+    ↓
+repository.saveDrawing()
+    ↓
+adapter.markAsSaved()
+```
 
-### **3. Service Layer Pattern**
-- `DrawingService` y `LinkService` encapsulan lógica de negocio
-- Orquestan Repository + Adapter
+## State Management
 
-### **4. Dependency Injection**
-- Servicios reciben dependencias en constructor
-- Facilita testing y flexibilidad
+### drawingStore (Zustand)
 
-### **5. Observer Pattern**
-- `ExcalidrawAdapter` usa callbacks (onChange, onSave)
-- Hooks de React se suscriben a cambios
+```typescript
+{
+  activeDrawingId: string | null,
+  isLoadingDrawing: boolean,
+  setActiveDrawingId: (id: string | null) => void,
+  setIsLoadingDrawing: (loading: boolean) => void
+}
+```
 
----
+### treeStore (Zustand)
 
-## 📊 Complejidad de Operaciones
+```typescript
+{
+  tree: DrawingTreeNode[],
+  setTree: (tree: DrawingTreeNode[]) => void
+}
+```
 
-| Operación | Complejidad | Notas |
-|-----------|-------------|-------|
-| `createDrawing` | O(n) | Validar parent existe |
-| `loadDrawing` | O(n) | Buscar en array |
-| `getDrawingsTree` | O(n) | Construir árbol con Map |
-| `setDrawingParent` | O(d) | d = profundidad del árbol |
-| `getDrawingSummaries` | O(n) | Con Set para hasChildren |
-| `wouldCreateCircularReference` | O(d) | Caminar hacia arriba |
-| `detectCycle` (links) | O(V + E) | DFS en grafo |
-| `getBacklinks` | O(n) | Iterar todos los drawings |
+**Why Zustand?**
+- Minimal boilerplate
+- No providers needed
+- Easy to test
+- TypeScript-first
 
-**Optimizaciones aplicadas**:
-- ✅ Uso de `Map` para lookups O(1)
-- ✅ Uso de `Set` para checks O(1)
-- ✅ Evitar iteraciones anidadas
-- ✅ Extracción de links sin I/O repetido
+## Testing Strategy
 
----
+### Unit Tests (111 tests, ~88% coverage)
 
-## 🚀 Preparado para Sprint 3
+**Services:**
+- DrawingService: CRUD operations, validation
+- LinkService: Circular reference detection, backlinks
+- graph-algorithms: DFS cycle detection
 
-**Lo que tenemos**:
-- ✅ Persistencia funcionando (LocalStorage)
-- ✅ Adaptador de Excalidraw
-- ✅ Servicios con lógica de negocio
-- ✅ State management con Zustand
-- ✅ Detección de ciclos
-- ✅ Auto-save hooks
+**Adapters:**
+- ExcalidrawAdapter: Content management, event handling, navigation
 
-**Lo que falta (Sprint 3)**:
-- ⏳ Componentes de UI
-- ⏳ Integración de servicios con UI
-- ⏳ Navegación entre drawings
-- ⏳ Visualización del árbol
-- ⏳ Canvas con Excalidraw
+**Utilities:**
+- tree-utils: Tree traversal, path finding
+- drawing-links: Link parsing, validation
+- utils: General utilities
 
----
+**Hooks:**
+- useAutoSave: Debouncing, lifecycle callbacks, error handling
 
-## 📝 Notas de Implementación
+### Test Structure
 
-### **Decisiones Clave**
+```typescript
+describe('DrawingService', () => {
+  let service: DrawingService;
+  let mockRepository: Mocked<IGraphRepository>;
+  let mockCanvas: Mocked<ICanvasAdapter>;
 
-1. **LocalStorage como primera implementación**
-   - Rápido para desarrollo
-   - Fácil de debuggear
-   - Preparado para migrar a Supabase
+  beforeEach(() => {
+    mockRepository = { /* mocked methods */ };
+    mockCanvas = { /* mocked methods */ };
+    service = new DrawingService(mockRepository, mockCanvas);
+  });
 
-2. **Links almacenados en contenido**
-   - No hay tabla separada de links
-   - Se extraen on-demand del contenido
-   - Simplifica la implementación inicial
+  it('should create a drawing', async () => {
+    // Test implementation
+  });
+});
+```
 
-3. **Stores divididos por dominio**
-   - `drawingStore`: UI state (títulos, navegación)
-   - `treeStore`: Operaciones de árbol
-   - `tempStore`: Drawings temporales
-   - Cada uno < 200 líneas
+## Performance Considerations
 
-4. **Mutación de canvas encapsulada**
-   - `extractLinksFromContent()` es privado
-   - Guarda/restaura estado del canvas
-   - Evita efectos secundarios visibles
+### Complexity Analysis
 
-5. **Validación en múltiples capas**
-   - Repository: Valida integridad de datos
-   - Service: Valida reglas de negocio
-   - UI: Validación de formularios (Sprint 3)
+| Operation | Complexity | Notes |
+|-----------|------------|-------|
+| Create drawing | O(n) | Validate parent exists |
+| Load drawing | O(n) | Search in array |
+| Build tree | O(n) | Single pass with Map |
+| Detect cycle (tree) | O(d) | d = tree depth |
+| Detect cycle (links) | O(V + E) | DFS on graph |
+| Get backlinks | O(n × m) | n drawings, m elements each |
 
----
+### Optimizations
 
-**Arquitectura sólida y lista para construir la UI** 🎯
+- ✅ Map for O(1) lookups
+- ✅ Set for O(1) membership checks
+- ✅ Debounced saves (500ms)
+- ✅ Content caching during navigation
+- ✅ Stable function references with useRef
+
+## Extension Points
+
+### Adding a New Storage Backend
+
+```typescript
+class SupabaseRepository implements IGraphRepository {
+  constructor(private client: SupabaseClient) {}
+
+  async createDrawing(title: string, parentId: string | null): Promise<string> {
+    const { data, error } = await this.client
+      .from('drawings')
+      .insert({ title, parent_id: parentId })
+      .select('id')
+      .single();
+    
+    if (error) throw error;
+    return data.id;
+  }
+
+  // ... implement other methods
+}
+```
+
+### Adding a New Canvas Engine
+
+```typescript
+class TldrawAdapter implements ICanvasAdapter {
+  private editor: Editor | null = null;
+
+  setAPI(editor: Editor): void {
+    this.editor = editor;
+  }
+
+  getContent(): ExcalidrawContent {
+    // Convert Tldraw shapes to our format
+  }
+
+  // ... implement other methods
+}
+```
+
+## Future Enhancements
+
+### v0.2.0
+- Undo/Redo across drawings
+- Search/filter in explorer
+- Drag & drop for reorganization
+- Export/Import project
+
+### v0.3.0
+- Real-time collaboration
+- Cloud sync with authentication
+- Version history
+- Comments and annotations
+
+### v1.0.0
+- Plugin system
+- Custom themes
+- Advanced link types (bidirectional, typed)
+- Performance optimizations for large projects
+
+## References
+
+- [Excalidraw Documentation](https://docs.excalidraw.com/)
+- [Zustand Documentation](https://docs.pmnd.rs/zustand)
+- [Vitest Documentation](https://vitest.dev/)
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
