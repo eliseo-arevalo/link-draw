@@ -1,12 +1,13 @@
-import "./App.css"
+import { Canvas } from "./features/canvas/Canvas"
+import { Sidebar } from "./features/sidebar/Sidebar"
 
 function App() {
   return (
-    <div className="app">
-      <main className="app-main">
-        <h1>Excaligraph</h1>
-        <p>Multi-canvas management for Excalidraw</p>
-      </main>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      <Sidebar />
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        <Canvas />
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 export interface UseAutoSaveOptions {
   delay?: number
@@ -12,17 +12,18 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
   const { delay = 2000, enabled = true, onSaveStart, onSaveSuccess, onSaveError } = options
 
   const timeoutRef = useRef<number | null>(null)
-  const isSavingRef = useRef(false)
+  const retryTimeoutRef = useRef<number | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const pendingSaveRef = useRef(false)
 
   const performSave = useCallback(async () => {
-    if (isSavingRef.current) {
+    if (isSaving) {
       pendingSaveRef.current = true
       return
     }
 
     try {
-      isSavingRef.current = true
+      setIsSaving(true)
       pendingSaveRef.current = false
 
       onSaveStart?.()
@@ -31,15 +32,15 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
 
       if (pendingSaveRef.current) {
         pendingSaveRef.current = false
-        setTimeout(() => performSave(), delay)
+        retryTimeoutRef.current = setTimeout(() => performSave(), delay)
       }
     } catch (error) {
       onSaveError?.(error as Error)
       console.error("Auto-save failed:", error)
     } finally {
-      isSavingRef.current = false
+      setIsSaving(false)
     }
-  }, [onSave, onSaveStart, onSaveSuccess, onSaveError, delay])
+  }, [onSave, onSaveStart, onSaveSuccess, onSaveError, delay, isSaving])
 
   const triggerSave = useCallback(() => {
     if (!enabled) return
@@ -74,6 +75,9 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+      }
     }
   }, [])
 
@@ -81,7 +85,7 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
     triggerSave,
     forceSave,
     cancelSave,
-    isSaving: isSavingRef.current,
+    isSaving,
   }
 }
 

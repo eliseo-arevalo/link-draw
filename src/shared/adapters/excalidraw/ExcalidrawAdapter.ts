@@ -70,10 +70,16 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       return
     }
 
+    // Don't pass appState to avoid Excalidraw bugs
+    // Let Excalidraw use its own defaults
     this.api.updateScene({
-      elements: content.elements,
-      appState: content.appState as unknown as ExcalidrawAppState,
+      elements: content.elements || [],
     })
+
+    // Add files if they exist
+    if (content.files && Object.keys(content.files).length > 0) {
+      this.api.addFiles(Object.values(content.files))
+    }
   }
 
   extractDrawingLinks(): DrawingLink[] {

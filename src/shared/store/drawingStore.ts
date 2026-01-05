@@ -1,7 +1,7 @@
 import { create } from "zustand"
 
 interface DrawingStore {
-  titles: Map<string, string>
+  titles: Record<string, string>
   updateTitle: (drawingId: string, title: string) => void
   getTitle: (drawingId: string) => string | undefined
 
@@ -15,14 +15,12 @@ interface DrawingStore {
 }
 
 export const useDrawingStore = create<DrawingStore>((set, get) => ({
-  titles: new Map(),
+  titles: {},
   updateTitle: (drawingId, title) =>
-    set((state) => {
-      const newTitles = new Map(state.titles)
-      newTitles.set(drawingId, title)
-      return { titles: newTitles }
-    }),
-  getTitle: (drawingId) => get().titles.get(drawingId),
+    set((state) => ({
+      titles: { ...state.titles, [drawingId]: title },
+    })),
+  getTitle: (drawingId) => get().titles[drawingId],
 
   activeDrawingId: null,
   setActiveDrawingId: (drawingId) => set({ activeDrawingId: drawingId }),
