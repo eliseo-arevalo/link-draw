@@ -1,4 +1,4 @@
-import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
+import type { BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import type {
   DrawingLink,
   ExcalidrawAppState,
@@ -49,7 +49,7 @@ export interface ICanvasAdapter {
    * Get binary files (images, etc.)
    * @returns Binary files object
    */
-  getFiles(): Record<string, any>
+  getFiles(): BinaryFiles
 
   /**
    * Get complete canvas content

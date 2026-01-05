@@ -92,16 +92,8 @@ export function parseDrawingLink(link: string): LinkTarget | null {
   }
 }
 
-/**
- * @deprecated Use parseDrawingLink instead
- */
-export const parseLink = parseDrawingLink
-
-/**
- * Extracts the drawing ID from a drawing link
- */
 export function extractDrawingIdFromLink(link: string): string | null {
-  const parsed = parseLink(link)
+  const parsed = parseDrawingLink(link)
   return parsed?.drawingId ?? null
 }
 

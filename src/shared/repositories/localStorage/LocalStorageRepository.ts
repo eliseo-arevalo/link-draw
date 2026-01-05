@@ -1,20 +1,8 @@
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import type { Drawing, DrawingInput, DrawingSummary, DrawingTreeNode } from "@/shared/types/drawing"
+import { validateNoCircularReference } from "./helpers/circular-validator"
+import { buildTree } from "./helpers/tree-builder"
 
-/**
- * LocalStorage implementation of IGraphRepository
- *
- * Stores drawings in browser localStorage.
- * Suitable for:
- * - Development
- * - Single-user applications
- * - Offline-first applications
- *
- * Limitations:
- * - ~5-10MB storage limit
- * - No synchronization across devices
- * - Data lost if localStorage is cleared
- */
 export class LocalStorageRepository implements IGraphRepository {
   private readonly STORAGE_KEY = "excaligraph:drawings"
   private readonly VERSION_KEY = "excaligraph:version"
@@ -24,25 +12,17 @@ export class LocalStorageRepository implements IGraphRepository {
     this.initializeStorage()
   }
 
-  /**
-   * Initialize storage with version check
-   */
   private initializeStorage(): void {
     const version = localStorage.getItem(this.VERSION_KEY)
 
     if (!version) {
-      // First time initialization
       localStorage.setItem(this.VERSION_KEY, this.CURRENT_VERSION)
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify([]))
     } else if (version !== this.CURRENT_VERSION) {
-      // Handle version migration if needed
       console.warn(`Storage version mismatch. Current: ${this.CURRENT_VERSION}, Found: ${version}`)
     }
   }
 
-  /**
-   * Get all drawings from storage
-   */
   private getAll(): Drawing[] {
     try {
       const data = localStorage.getItem(this.STORAGE_KEY)
@@ -54,9 +34,6 @@ export class LocalStorageRepository implements IGraphRepository {
     }
   }
 
-  /**
-   * Save all drawings to storage
-   */
   private saveAll(drawings: Drawing[]): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(drawings))
@@ -66,16 +43,10 @@ export class LocalStorageRepository implements IGraphRepository {
     }
   }
 
-  /**
-   * Generate a unique ID
-   */
   private generateId(): string {
     return crypto.randomUUID()
   }
 
-  /**
-   * Generic helper to update a drawing
-   */
   private updateDrawing(id: string, updater: (drawing: Drawing) => void): void {
     const drawings = this.getAll()
     const drawing = drawings.find((d) => d.id === id)
@@ -177,39 +148,11 @@ export class LocalStorageRepository implements IGraphRepository {
 
   async getDrawingsTree(): Promise<DrawingTreeNode[]> {
     const drawings = this.getAll()
-
-    // Build tree structure
-    const drawingMap = new Map<string, DrawingTreeNode>()
-    const rootNodes: DrawingTreeNode[] = []
-
-    // First pass: create all nodes
-    for (const drawing of drawings) {
-      drawingMap.set(drawing.id, { ...drawing, children: [] })
-    }
-
-    // Second pass: build tree
-    for (const drawing of drawings) {
-      const node = drawingMap.get(drawing.id)
-      if (!node) continue
-
-      const parent = drawing.parent_id ? drawingMap.get(drawing.parent_id) : null
-
-      if (parent) {
-        // Add to parent's children
-        parent.children ??= []
-        parent.children.push(node)
-      } else {
-        // No parent or parent not found - treat as root
-        rootNodes.push(node)
-      }
-    }
-
-    return rootNodes
+    return buildTree(drawings)
   }
 
   async setDrawingParent(id: string, parentId: string | null): Promise<void> {
     const drawings = this.getAll()
-
     const drawingMap = new Map(drawings.map((d) => [d.id, d]))
 
     const drawing = drawingMap.get(id)
@@ -217,35 +160,8 @@ export class LocalStorageRepository implements IGraphRepository {
       throw new Error(`Drawing ${id} not found`)
     }
 
-    // Prevent self-reference
-    if (id === parentId) {
-      throw new Error("A drawing cannot be its own parent")
-    }
+    validateNoCircularReference(id, parentId, drawingMap)
 
-    // Check for circular reference - O(d) with O(1) lookups
-    if (parentId) {
-      const parentExists = drawingMap.has(parentId)
-      if (!parentExists) {
-        throw new Error(`Parent drawing ${parentId} not found`)
-      }
-
-      // Walk up the parent chain to detect cycles
-      let currentParentId: string | null = parentId
-      const visited = new Set<string>([id])
-
-      while (currentParentId) {
-        if (visited.has(currentParentId)) {
-          throw new Error("This would create a circular reference")
-        }
-        visited.add(currentParentId)
-
-        const parent = drawingMap.get(currentParentId) // O(1) instead of O(n)
-        if (!parent) break
-        currentParentId = parent.parent_id
-      }
-    }
-
-    // Update parent
     drawing.parent_id = parentId
     drawing.updated_at = new Date().toISOString()
     this.saveAll(drawings)

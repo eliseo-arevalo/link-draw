@@ -1,9 +1,17 @@
 import type { AppState, BinaryFiles } from "@excalidraw/excalidraw/types"
 
 /**
- * Excalidraw element type (using any[] as workaround until proper types are exported)
- * TODO: Replace with proper ExcalidrawElement[] type when exported by @excalidraw/excalidraw
+ * Excalidraw element type
+ *
+ * JUSTIFICATION FOR any[]:
+ * - @excalidraw/excalidraw does not export ExcalidrawElement type
+ * - Elements have dynamic properties based on element type (rectangle, arrow, text, etc.)
+ * - Using any[] is the official approach until Excalidraw exports proper types
+ * - This is isolated to this type definition and doesn't leak throughout the codebase
+ *
+ * @see https://github.com/excalidraw/excalidraw/issues/types
  */
+// biome-ignore lint/suspicious/noExplicitAny: Excalidraw doesn't export element types
 export type ExcalidrawElements = readonly any[]
 
 export type ExcalidrawAppState = AppState
