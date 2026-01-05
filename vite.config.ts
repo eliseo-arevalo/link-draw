@@ -15,5 +15,16 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     exclude: [...configDefaults.exclude],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      exclude: [
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        '**/*.config.ts',
+        '**/node_modules/**',
+        '**/dist/**',
+      ],
+    },
   },
 })
