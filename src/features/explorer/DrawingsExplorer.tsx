@@ -7,6 +7,8 @@ import { DrawingService } from "@/shared/services/DrawingService"
 import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
+import { useThemeStore } from "@/shared/store/themeStore"
+import { getThemeColors } from "@/shared/styles/theme"
 import { useDragAndDrop } from "./hooks/useDragAndDrop"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 
@@ -24,6 +26,8 @@ interface DrawingsExplorerProps {
 export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, isGraphView }: DrawingsExplorerProps) {
   const { tree, setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -170,8 +174,8 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
         style={{
           width: "48px",
           minWidth: "48px",
-          backgroundColor: "var(--excalidraw-bg-primary)",
-          borderRight: "1px solid rgba(0, 0, 0, 0.08)",
+          backgroundColor: colors.background,
+          borderRight: `1px solid ${colors.border}`,
           padding: "0.5rem 0",
         }}
       >
@@ -184,6 +188,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+                color: colors.text,
           }}
           title="Show sidebar (Cmd+B)"
         >
@@ -211,8 +216,8 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
       style={{
         width: `${SIDEBAR_WIDTH}px`,
         minWidth: `${SIDEBAR_WIDTH}px`,
-        backgroundColor: "var(--excalidraw-bg-primary)",
-        borderRight: "1px solid rgba(0, 0, 0, 0.08)",
+        backgroundColor: colors.background,
+        borderRight: `1px solid ${colors.border}`,
       }}
     >
       {/* Header */}
@@ -229,10 +234,45 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
             padding: "0 1rem",
           }}
         >
-          <h2 className="text-sm font-semibold" style={{ color: "var(--excalidraw-text-primary)" }}>
+          <h2 className="text-sm font-semibold" style={{ color: colors.text }}>
             EXPLORER
           </h2>
           <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                const { theme, setTheme } = useThemeStore.getState()
+                setTheme(theme === "light" ? "dark" : "light")
+              }}
+              className="excalidraw-button"
+              style={{
+                padding: "0.375rem",
+                minWidth: "1.5rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: colors.text,
+              }}
+              title="Toggle theme"
+            >
+              {theme === "light" ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              )}
+            </button>
             <button
               type="button"
               onClick={handleCreateDrawing}
@@ -244,6 +284,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                color: colors.text,
               }}
               title="New drawing (Cmd+N)"
             >
@@ -271,6 +312,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                color: colors.text,
               }}
               title="Hide sidebar (Cmd+B)"
             >
@@ -299,6 +341,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                color: colors.text,
                 }}
                 title="More options"
               >
@@ -324,10 +367,10 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                     top: "100%",
                     right: 0,
                     marginTop: "0.25rem",
-                    backgroundColor: "#ffffff",
-                    border: "1px solid rgba(0, 0, 0, 0.1)",
+                    backgroundColor: colors.background,
+                    border: `1px solid ${colors.border}`,
                     borderRadius: "4px",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    boxShadow: colors.shadowIsland,
                     minWidth: "160px",
                     zIndex: 10000,
                     padding: "0.25rem",
@@ -347,14 +390,14 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                       border: "none",
                       background: "transparent",
                       cursor: "pointer",
-                      color: "var(--excalidraw-text-primary)",
+                      color: colors.text,
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
                       borderRadius: "2px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent"
@@ -378,16 +421,16 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                       padding: "0.5rem 0.75rem",
                       fontSize: "0.875rem",
                       border: "none",
-                      background: isGraphView ? "var(--excalidraw-bg-secondary)" : "transparent",
+                      background: isGraphView ? colors.backgroundSecondary : "transparent",
                       cursor: "pointer",
-                      color: "var(--excalidraw-text-primary)",
+                      color: colors.text,
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
                       borderRadius: "2px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
                     }}
                     onMouseLeave={(e) => {
                       if (!isGraphView) {
@@ -419,9 +462,9 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-3 py-1.5 text-sm rounded border"
               style={{
-                backgroundColor: "var(--excalidraw-bg-secondary)",
-                borderColor: "var(--excalidraw-border)",
-                color: "var(--excalidraw-text-primary)",
+                backgroundColor: colors.backgroundSecondary,
+                borderColor: colors.border,
+                color: colors.text,
               }}
             />
           </div>
@@ -452,7 +495,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
       >
         {filteredTree.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <p className="text-sm" style={{ color: "var(--excalidraw-text-secondary)" }}>
+            <p className="text-sm" style={{ color: colors.textSecondary }}>
               {searchQuery ? "No drawings found" : "No drawings yet"}
             </p>
           </div>
@@ -504,6 +547,9 @@ function TreeNodeMenu({
   onCreateChild: () => void
   onDelete: () => void
 }) {
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
+  
   if (!isOpen) return null
 
   return (
@@ -514,10 +560,10 @@ function TreeNodeMenu({
         top: "100%",
         right: 0,
         marginTop: "0.25rem",
-        backgroundColor: "#ffffff",
-        border: "1px solid rgba(0, 0, 0, 0.1)",
+        backgroundColor: colors.background,
+        border: `1px solid ${colors.border}`,
         borderRadius: "6px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+        boxShadow: colors.shadowIsland,
         minWidth: "160px",
         zIndex: 10000,
         padding: "0.25rem",
@@ -535,14 +581,14 @@ function TreeNodeMenu({
           border: "none",
           background: "transparent",
           cursor: "pointer",
-          color: "var(--excalidraw-text-primary)",
+          color: colors.text,
           display: "flex",
           alignItems: "center",
           gap: "0.5rem",
           borderRadius: "2px",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+          e.currentTarget.style.backgroundColor = colors.backgroundSecondary
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = "transparent"
@@ -630,6 +676,9 @@ function DeleteConfirmDialog({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
+  
   if (!isOpen) return null
 
   return createPortal(
@@ -646,25 +695,26 @@ function DeleteConfirmDialog({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+                color: colors.text,
         zIndex: 999999,
       }}
       onClick={onCancel}
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
-          border: "1px solid rgba(0, 0, 0, 0.1)",
+          backgroundColor: colors.background,
+          border: `1px solid ${colors.border}`,
           borderRadius: "8px",
           padding: "1.5rem",
           maxWidth: "400px",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+          boxShadow: colors.shadowIsland,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontWeight: 600 }}>
+        <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontWeight: 600, color: colors.text }}>
           Delete Drawing?
         </h3>
-        <p style={{ margin: "0 0 1rem 0", fontSize: "0.875rem", color: "#666" }}>
+        <p style={{ margin: "0 0 1rem 0", fontSize: "0.875rem", color: colors.textSecondary }}>
           This action cannot be undone.
         </p>
         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
@@ -729,6 +779,8 @@ function TreeNode({
   const isDragOver = dragOverId === node.id
   const { setTree } = useTreeStore()
   const { setActiveDrawingId } = useDrawingStore()
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -868,7 +920,7 @@ function TreeNode({
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
-            e.currentTarget.style.backgroundColor = "var(--excalidraw-bg-secondary)"
+            e.currentTarget.style.backgroundColor = colors.backgroundSecondary
           }
         }}
         onMouseLeave={(e) => {
@@ -892,6 +944,7 @@ function TreeNode({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+                color: colors.text,
               cursor: "pointer",
               border: "none",
               background: "transparent",
@@ -948,9 +1001,7 @@ function TreeNode({
           {/* Icon */}
           <div
             style={{
-              color: isActive
-                ? "var(--excalidraw-button-primary)"
-                : "var(--excalidraw-text-secondary)",
+              color: isActive ? "#6366f1" : colors.textSecondary,
               display: "flex",
               alignItems: "center",
               flexShrink: 0,
@@ -985,9 +1036,9 @@ function TreeNode({
               onClick={(e) => e.stopPropagation()}
               className="text-sm flex-1"
               style={{
-                color: "var(--excalidraw-text-primary)",
-                backgroundColor: "var(--excalidraw-bg-primary)",
-                border: "1px solid var(--excalidraw-button-primary)",
+                color: colors.text,
+                backgroundColor: colors.background,
+                border: "1px solid #6366f1",
                 borderRadius: "2px",
                 padding: "2px 4px",
                 outline: "none",
@@ -998,7 +1049,7 @@ function TreeNode({
             <span
               className="text-sm truncate flex-1"
               style={{
-                color: "var(--excalidraw-text-primary)",
+                color: colors.text,
                 fontWeight: isActive ? 500 : 400,
               }}
             >
@@ -1026,10 +1077,10 @@ function TreeNode({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              color: colors.text,
               border: "none",
               background: "transparent",
               cursor: "pointer",
-              color: "var(--excalidraw-text-secondary)",
             }}
             title="More options"
           >

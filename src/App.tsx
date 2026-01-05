@@ -4,10 +4,12 @@ import { DrawingsExplorer } from "./features/explorer/DrawingsExplorer"
 import { GraphView } from "./features/graph/GraphView"
 import { useViewStore } from "./shared/store/viewStore"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
+import { useThemeDetector } from "./shared/hooks/useThemeDetector"
 
 function App() {
   const { viewMode, toggleView } = useViewStore()
   const [showSidebar, setShowSidebar] = useState(true)
+  useThemeDetector() // Detectar cambios de theme
 
   useKeyboardShortcuts([
     {

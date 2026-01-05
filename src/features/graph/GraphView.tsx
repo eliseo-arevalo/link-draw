@@ -3,6 +3,8 @@ import cytoscape, { type Core, type ElementDefinition } from "cytoscape"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useViewStore } from "@/shared/store/viewStore"
+import { useThemeStore } from "@/shared/store/themeStore"
+import { getThemeColors } from "@/shared/styles/theme"
 import type { Drawing } from "@/shared/types/drawing"
 
 const repository = new LocalStorageRepository()
@@ -25,6 +27,8 @@ export function GraphView() {
   const cyRef = useRef<Core | null>(null)
   const { setActiveDrawingId } = useDrawingStore()
   const { setViewMode } = useViewStore()
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
   const [filters, setFilters] = useState<GraphFilters>({
     showHierarchy: true,
     showLinks: true,
@@ -129,15 +133,15 @@ export function GraphView() {
   }, [filters, setActiveDrawingId, setViewMode])
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: "#f8fafc" }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: colors.backgroundSecondary }}>
       <div
         className="p-3 border-b flex items-center gap-4"
         style={{
-          backgroundColor: "white",
-          borderColor: "rgba(0, 0, 0, 0.08)",
+          backgroundColor: colors.background,
+          borderColor: colors.border,
         }}
       >
-        <span className="text-sm font-semibold" style={{ color: "#1e293b" }}>
+        <span className="text-sm font-semibold" style={{ color: colors.text }}>
           Filters:
         </span>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -147,7 +151,7 @@ export function GraphView() {
             onChange={(e) => setFilters({ ...filters, showHierarchy: e.target.checked })}
             className="cursor-pointer"
           />
-          <span style={{ color: "#475569" }}>Hierarchy</span>
+          <span style={{ color: colors.textSecondary }}>Hierarchy</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -156,7 +160,7 @@ export function GraphView() {
             onChange={(e) => setFilters({ ...filters, showLinks: e.target.checked })}
             className="cursor-pointer"
           />
-          <span style={{ color: "#475569" }}>Links</span>
+          <span style={{ color: colors.textSecondary }}>Links</span>
         </label>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
@@ -165,10 +169,10 @@ export function GraphView() {
             onChange={(e) => setFilters({ ...filters, showOrphans: e.target.checked })}
             className="cursor-pointer"
           />
-          <span style={{ color: "#475569" }}>Orphans</span>
+          <span style={{ color: colors.textSecondary }}>Orphans</span>
         </label>
         <div style={{ flex: 1 }} />
-        <div className="flex items-center gap-2 text-xs" style={{ color: "#64748b" }}>
+        <div className="flex items-center gap-2 text-xs" style={{ color: colors.textSecondary }}>
           <span>Nodes: {stats.nodes}</span>
           <span>•</span>
           <span>Edges: {stats.edges}</span>
@@ -200,8 +204,8 @@ export function GraphView() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "white",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              backgroundColor: colors.background,
+              boxShadow: colors.shadowIsland,
             }}
             title="Zoom in"
           >
@@ -220,8 +224,8 @@ export function GraphView() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "white",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              backgroundColor: colors.background,
+              boxShadow: colors.shadowIsland,
             }}
             title="Zoom out"
           >
@@ -239,8 +243,8 @@ export function GraphView() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "white",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              backgroundColor: colors.background,
+              boxShadow: colors.shadowIsland,
             }}
             title="Fit to screen"
           >
@@ -271,7 +275,10 @@ function buildGraphElements(
       if (!childrenMap.has(drawing.parent_id)) {
         childrenMap.set(drawing.parent_id, new Set())
       }
-      childrenMap.get(drawing.parent_id)!.add(drawing.id)
+      const children = childrenMap.get(drawing.parent_id)
+      if (children) {
+        children.add(drawing.id)
+      }
     }
     const links = extractLinks(drawing)
     if (links.length > 0) {
@@ -294,10 +301,8 @@ function buildGraphElements(
 
   // Add nodes
   let orphanCount = 0
-  let totalOrphans = 0
   for (const drawing of drawings) {
     const isOrphan = !drawing.parent_id
-    if (isOrphan) totalOrphans++
     if (!filters.showOrphans && isOrphan) continue
 
     if (isOrphan) orphanCount++

@@ -7,6 +7,7 @@ import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { DrawingService } from "@/shared/services/DrawingService"
 import { useDrawingStore } from "@/shared/store/drawingStore"
+import { useThemeStore } from "@/shared/store/themeStore"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { LinkButton } from "./components/LinkButton"
 import { useCanvasLoader } from "./hooks/useCanvasLoader"
@@ -24,6 +25,7 @@ const drawingService = new DrawingService(repository, adapter)
 export function Canvas() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
   const { activeDrawingId } = useDrawingStore()
+  const { theme } = useThemeStore()
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
 
   const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
@@ -142,6 +144,7 @@ export function Canvas() {
               viewBackgroundColor: "#ffffff",
             },
           }}
+          theme={theme}
           onChange={() => adapter.notifyChange()}
           onLinkOpen={handleLinkOpen}
           renderTopRightUI={() => (
