@@ -80,6 +80,10 @@ export class DrawingService {
     await this.repository.setDrawingParent(drawingId, parentId)
   }
 
+  async moveDrawing(drawingId: string, parentId: string | null): Promise<void> {
+    await this.setParent(drawingId, parentId)
+  }
+
   async togglePublic(id: string, isPublic: boolean): Promise<void> {
     await this.repository.togglePublic(id, isPublic)
   }

@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from "react"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
+import { DrawingService } from "@/shared/services/DrawingService"
+import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
+import { useDragAndDrop } from "./hooks/useDragAndDrop"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 
 const repository = new LocalStorageRepository()
+const adapter = new ExcalidrawAdapter()
+const drawingService = new DrawingService(repository, adapter)
 
 export function DrawingsExplorer() {
   const { tree, setTree } = useTreeStore()
@@ -16,6 +21,8 @@ export function DrawingsExplorer() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  
+  const dragAndDrop = useDragAndDrop()
 
   const handleCreateDrawing = async () => {
     setIsCreating(true)
@@ -44,6 +51,18 @@ export function DrawingsExplorer() {
   const handleSelectDrawing = (id: string) => {
     console.log("[Sidebar] Selecting drawing:", id)
     setActiveDrawingId(id)
+  }
+
+  const handleDrop = async (draggedId: string, targetId: string | null) => {
+    try {
+      await drawingService.moveDrawing(draggedId, targetId)
+      const updatedTree = await repository.getDrawingsTree()
+      setTree(updatedTree)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to move drawing")
+    } finally {
+      dragAndDrop.handleDragEnd()
+    }
   }
 
   const toggleSearch = () => {
@@ -265,6 +284,12 @@ export function DrawingsExplorer() {
                 level={0}
                 activeId={activeDrawingId}
                 onSelect={handleSelectDrawing}
+                onDragStart={dragAndDrop.handleDragStart}
+                onDragOver={dragAndDrop.handleDragOver}
+                onDrop={handleDrop}
+                onDragEnd={dragAndDrop.handleDragEnd}
+                draggedId={dragAndDrop.draggedId}
+                dragOverId={dragAndDrop.dragOverId}
               />
             ))}
           </div>
@@ -279,6 +304,12 @@ interface TreeNodeProps {
   level: number
   activeId: string | null
   onSelect: (id: string) => void
+  onDragStart: (e: React.DragEvent, id: string) => void
+  onDragOver: (e: React.DragEvent, id: string) => void
+  onDrop: (draggedId: string, targetId: string | null) => void
+  onDragEnd: () => void
+  draggedId: string | null
+  dragOverId: string | null
 }
 
 function TreeNodeMenu({
@@ -491,7 +522,18 @@ function DeleteConfirmDialog({
   )
 }
 
-function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
+function TreeNode({ 
+  node, 
+  level, 
+  activeId, 
+  onSelect,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  draggedId,
+  dragOverId,
+}: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(node.title)
@@ -501,6 +543,8 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const hasChildren = node.children && node.children.length > 0
   const isActive = activeId === node.id
+  const isDragging = draggedId === node.id
+  const isDragOver = dragOverId === node.id
   const { setTree } = useTreeStore()
   const { setActiveDrawingId } = useDrawingStore()
 
@@ -612,16 +656,33 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
       <div
         role="treeitem"
         aria-expanded={hasChildren ? isExpanded : undefined}
+        draggable={!isEditing}
+        onDragStart={(e) => onDragStart(e, node.id)}
+        onDragOver={(e) => onDragOver(e, node.id)}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (draggedId && draggedId !== node.id) {
+            onDrop(draggedId, node.id)
+          }
+        }}
+        onDragEnd={onDragEnd}
         className="flex items-center gap-2 py-1.5 px-4 transition-colors group"
         style={{
           paddingLeft: `${level * 1.25 + 1}rem`,
-          backgroundColor: isActive ? "var(--excalidraw-bg-secondary)" : "transparent",
+          backgroundColor: isDragOver 
+            ? "rgba(99, 102, 241, 0.1)" 
+            : isActive 
+            ? "var(--excalidraw-bg-secondary)" 
+            : "transparent",
           borderLeft: isActive
             ? "2px solid var(--excalidraw-button-primary)"
             : "2px solid transparent",
           borderTop: "none",
           borderRight: "none",
           borderBottom: "none",
+          opacity: isDragging ? 0.5 : 1,
+          cursor: isDragging ? "grabbing" : "pointer",
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
@@ -832,6 +893,12 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
               level={level + 1}
               activeId={activeId}
               onSelect={onSelect}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              onDragEnd={onDragEnd}
+              draggedId={draggedId}
+              dragOverId={dragOverId}
             />
           ))}
         </div>
