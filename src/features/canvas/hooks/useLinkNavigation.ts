@@ -1,7 +1,7 @@
 import { useCallback } from "react"
-import { useDrawingStore } from "@/shared/store/drawingStore"
-import { isDrawingLink, parseDrawingLink } from "@/shared/lib/drawing-links"
 import type { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
+import { isDrawingLink, parseDrawingLink } from "@/shared/lib/drawing-links"
+import { useDrawingStore } from "@/shared/store/drawingStore"
 
 type OnLinkOpenHandler = (
   element: { link: string | null },

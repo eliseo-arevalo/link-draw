@@ -27,8 +27,13 @@ export function Canvas() {
 
   const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
   const { handleLinkOpen } = useLinkNavigation(adapter)
-  const { saveAllCachedDrawings } = useCanvasLoader(drawingService, repository, excalidrawAPI, adapter)
-  
+  const { saveAllCachedDrawings } = useCanvasLoader(
+    drawingService,
+    repository,
+    excalidrawAPI,
+    adapter
+  )
+
   const saveAllRef = useRef(saveAllCachedDrawings)
   saveAllRef.current = saveAllCachedDrawings
 

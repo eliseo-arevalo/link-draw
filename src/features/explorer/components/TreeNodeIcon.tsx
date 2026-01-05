@@ -29,7 +29,7 @@ export function TreeNodeIcon({ isExpanded, hasChildren, onToggle }: TreeNodeIcon
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
-        className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : 'rotate-0'}`}
+        className={`text-gray-500 transition-transform ${isExpanded ? "rotate-90" : "rotate-0"}`}
       >
         <polyline points="9 18 15 12 9 6" />
       </svg>

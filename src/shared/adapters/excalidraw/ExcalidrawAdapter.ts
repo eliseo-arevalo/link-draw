@@ -1,7 +1,7 @@
 import type { BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
+import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type { ICanvasAdapter } from "@/shared/interfaces/ICanvasAdapter"
 import { type DrawingLinkInfo, findDrawingLinks } from "@/shared/lib/drawing-links"
-import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type {
   DrawingLink,
   ExcalidrawAppState,

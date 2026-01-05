@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react"
+import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
-import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 
 const repository = new LocalStorageRepository()

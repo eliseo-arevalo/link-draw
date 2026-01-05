@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import type { Drawing, DrawingTreeNode } from "@/shared/types/drawing"
 import { DrawingList } from "./DrawingList"
 import { ElementList } from "./ElementList"
-import { SearchInput } from "./SearchInput"
 import { ModalHeader } from "./ModalHeader"
+import { SearchInput } from "./SearchInput"
 
 const repository = new LocalStorageRepository()
 
@@ -77,11 +77,14 @@ export function DrawingPickerModal({
     }
   }, [selectedDrawing, onSelect])
 
-  const handleSelectElement = useCallback((elementId: string) => {
-    if (selectedDrawing) {
-      onSelect(selectedDrawing.id, selectedDrawing.title, elementId)
-    }
-  }, [selectedDrawing, onSelect])
+  const handleSelectElement = useCallback(
+    (elementId: string) => {
+      if (selectedDrawing) {
+        onSelect(selectedDrawing.id, selectedDrawing.title, elementId)
+      }
+    },
+    [selectedDrawing, onSelect]
+  )
 
   useEffect(() => {
     if (!isOpen) return
@@ -171,9 +174,7 @@ export function DrawingPickerModal({
 
         <div className="flex-1 overflow-y-auto mb-4 min-h-[200px]">
           {isLoading || isLoadingElements ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Loading...
-            </div>
+            <div className="flex items-center justify-center h-full text-gray-500">Loading...</div>
           ) : selectedDrawing ? (
             <ElementList
               elements={elements}

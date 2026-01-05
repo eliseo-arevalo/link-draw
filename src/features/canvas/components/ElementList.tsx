@@ -57,11 +57,11 @@ export function ElementList({ elements, onSelectElement, onSelectWholeDrawing }:
             <span className="text-xs text-gray-500 font-medium">OR LINK TO SPECIFIC ELEMENT</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
-          
+
           <div className="text-xs text-gray-500 mb-2 px-1">
-            {elements.length} element{elements.length !== 1 ? 's' : ''} available
+            {elements.length} element{elements.length !== 1 ? "s" : ""} available
           </div>
-          
+
           {elements.map((element) => (
             <button
               key={element.id}

@@ -1,252 +1,254 @@
-import { describe, it, expect, vi, beforeEach, type Mocked } from 'vitest';
-import { ExcalidrawAdapter } from './ExcalidrawAdapter';
-import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
-import { type ExcalidrawContent, type ExcalidrawElements } from "@/shared/types/drawing";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest"
+import type { ExcalidrawContent } from "@/shared/types/drawing"
+import { ExcalidrawAdapter } from "./ExcalidrawAdapter"
 
 // Mock drawing-links library
 vi.mock("@/shared/lib/drawing-links", () => ({
   findDrawingLinks: (elements: any[]) => {
     return elements
-      .filter(el => el.link && el.link.startsWith('drawing://'))
-      .map(el => ({
+      .filter((el) => el.link && el.link.startsWith("drawing://"))
+      .map((el) => ({
         elementId: el.id,
-        drawingId: el.link.replace('drawing://', ''),
-        targetType: 'drawing',
-        link: el.link
-      }));
-  }
-}));
+        drawingId: el.link.replace("drawing://", ""),
+        targetType: "drawing",
+        link: el.link,
+      }))
+  },
+}))
 
-describe('ExcalidrawAdapter', () => {
-  let adapter: ExcalidrawAdapter;
-  let mockApi: Mocked<ExcalidrawImperativeAPI>;
+describe("ExcalidrawAdapter", () => {
+  let adapter: ExcalidrawAdapter
+  let mockApi: Mocked<ExcalidrawImperativeAPI>
 
   beforeEach(() => {
-    adapter = new ExcalidrawAdapter();
+    adapter = new ExcalidrawAdapter()
     mockApi = {
       getSceneElements: vi.fn().mockReturnValue([]),
       updateScene: vi.fn(),
       getAppState: vi.fn().mockReturnValue({}),
       getFiles: vi.fn().mockReturnValue({}),
       addFiles: vi.fn(),
-    } as any;
-  });
+    } as any
+  })
 
-  describe('setAPI / getAPI', () => {
-    it('should store and retrieve the API', () => {
-      expect(adapter.getAPI()).toBeNull();
-      adapter.setAPI(mockApi);
-      expect(adapter.getAPI()).toBe(mockApi);
-    });
-  });
+  describe("setAPI / getAPI", () => {
+    it("should store and retrieve the API", () => {
+      expect(adapter.getAPI()).toBeNull()
+      adapter.setAPI(mockApi)
+      expect(adapter.getAPI()).toBe(mockApi)
+    })
+  })
 
-  describe('Operations without API', () => {
+  describe("Operations without API", () => {
     // Should not throw, should return defaults or do nothing
-    it('getElements should return empty array', () => {
-      expect(adapter.getElements()).toEqual([]);
-    });
+    it("getElements should return empty array", () => {
+      expect(adapter.getElements()).toEqual([])
+    })
 
-    it('setElements should not throw', () => {
-      expect(() => adapter.setElements([])).not.toThrow();
-    });
+    it("setElements should not throw", () => {
+      expect(() => adapter.setElements([])).not.toThrow()
+    })
 
-    it('getAppState should return empty object', () => {
-      expect(adapter.getAppState()).toEqual({});
-    });
+    it("getAppState should return empty object", () => {
+      expect(adapter.getAppState()).toEqual({})
+    })
 
-    it('setAppState should not throw', () => {
-        expect(() => adapter.setAppState({})).not.toThrow();
-    });
+    it("setAppState should not throw", () => {
+      expect(() => adapter.setAppState({})).not.toThrow()
+    })
 
-    it('getFiles should return empty object', () => {
-        expect(adapter.getFiles()).toEqual({});
-    });
+    it("getFiles should return empty object", () => {
+      expect(adapter.getFiles()).toEqual({})
+    })
 
-    it('setContent should not throw', () => {
-        expect(() => adapter.setContent({ elements: [], appState: {}, files: {} })).not.toThrow();
-    });
+    it("setContent should not throw", () => {
+      expect(() => adapter.setContent({ elements: [], appState: {}, files: {} })).not.toThrow()
+    })
 
-    it('clear should not throw', () => {
-        expect(() => adapter.clear()).not.toThrow();
-    });
+    it("clear should not throw", () => {
+      expect(() => adapter.clear()).not.toThrow()
+    })
 
-    it('scrollToElement should not throw', () => {
-        expect(() => adapter.scrollToElement('1')).not.toThrow();
-    });
+    it("scrollToElement should not throw", () => {
+      expect(() => adapter.scrollToElement("1")).not.toThrow()
+    })
 
-    it('highlightElement should not throw', () => {
-        expect(() => adapter.highlightElement('1')).not.toThrow();
-    });
+    it("highlightElement should not throw", () => {
+      expect(() => adapter.highlightElement("1")).not.toThrow()
+    })
 
-    it('exportAsImage should throw', async () => {
-        await expect(adapter.exportAsImage('png')).rejects.toThrow('Excalidraw API not initialized');
-    });
-  });
+    it("exportAsImage should throw", async () => {
+      await expect(adapter.exportAsImage("png")).rejects.toThrow("Excalidraw API not initialized")
+    })
+  })
 
-  describe('Operations with API', () => {
+  describe("Operations with API", () => {
     beforeEach(() => {
-      adapter.setAPI(mockApi);
-    });
+      adapter.setAPI(mockApi)
+    })
 
-    it('getElements should delegate to API', () => {
-      const mockElements = [{ id: '1' }] as any;
-      mockApi.getSceneElements.mockReturnValue(mockElements);
-      expect(adapter.getElements()).toBe(mockElements);
-    });
+    it("getElements should delegate to API", () => {
+      const mockElements = [{ id: "1" }] as any
+      mockApi.getSceneElements.mockReturnValue(mockElements)
+      expect(adapter.getElements()).toBe(mockElements)
+    })
 
-    it('setElements should delegate to API', () => {
-      const mockElements = [{ id: '1' }] as any;
-      adapter.setElements(mockElements);
-      expect(mockApi.updateScene).toHaveBeenCalledWith({ elements: mockElements });
-    });
+    it("setElements should delegate to API", () => {
+      const mockElements = [{ id: "1" }] as any
+      adapter.setElements(mockElements)
+      expect(mockApi.updateScene).toHaveBeenCalledWith({ elements: mockElements })
+    })
 
-    it('getAppState should delegate to API', () => {
-        const mockState = { zoom: 1 } as any;
-        mockApi.getAppState.mockReturnValue(mockState);
-        expect(adapter.getAppState()).toBe(mockState);
-    });
+    it("getAppState should delegate to API", () => {
+      const mockState = { zoom: 1 } as any
+      mockApi.getAppState.mockReturnValue(mockState)
+      expect(adapter.getAppState()).toBe(mockState)
+    })
 
-    it('setAppState should delegate to API', () => {
-        const mockState = { zoom: 2 } as any;
-        adapter.setAppState(mockState);
-        expect(mockApi.updateScene).toHaveBeenCalledWith({ appState: mockState });
-    });
+    it("setAppState should delegate to API", () => {
+      const mockState = { zoom: 2 } as any
+      adapter.setAppState(mockState)
+      expect(mockApi.updateScene).toHaveBeenCalledWith({ appState: mockState })
+    })
 
-    it('getContent should aggregate data', () => {
-        const els = [{id: '1'}];
-        const state = { zoom: 1 };
-        const files = { 'f1': {} };
+    it("getContent should aggregate data", () => {
+      const els = [{ id: "1" }]
+      const state = { zoom: 1 }
+      const files = { f1: {} }
 
-        mockApi.getSceneElements.mockReturnValue(els as any);
-        mockApi.getAppState.mockReturnValue(state as any);
-        mockApi.getFiles.mockReturnValue(files as any);
+      mockApi.getSceneElements.mockReturnValue(els as any)
+      mockApi.getAppState.mockReturnValue(state as any)
+      mockApi.getFiles.mockReturnValue(files as any)
 
-        const content = adapter.getContent();
-        expect(content).toEqual({ elements: els, appState: state, files });
-    });
+      const content = adapter.getContent()
+      expect(content).toEqual({ elements: els, appState: state, files })
+    })
 
-    it('setContent should update scene and add files', () => {
-        const content: ExcalidrawContent = {
-            elements: [{ id: '1' } as any],
-            appState: { zoom: 1 } as any,
-            files: { 'f1': { id: 'f1' } as any }
-        };
+    it("setContent should update scene and add files", () => {
+      const content: ExcalidrawContent = {
+        elements: [{ id: "1" } as any],
+        appState: { zoom: 1 } as any,
+        files: { f1: { id: "f1" } as any },
+      }
 
-        adapter.setContent(content);
+      adapter.setContent(content)
 
-        // It should update elements
-        expect(mockApi.updateScene).toHaveBeenCalledWith({ elements: content.elements });
-        // It should add files
-        expect(mockApi.addFiles).toHaveBeenCalledWith([{ id: 'f1' }]);
-        // Note: Implementation says it doesn't pass appState to avoid bugs
-    });
+      // It should update elements
+      expect(mockApi.updateScene).toHaveBeenCalledWith({ elements: content.elements })
+      // It should add files
+      expect(mockApi.addFiles).toHaveBeenCalledWith([{ id: "f1" }])
+      // Note: Implementation says it doesn't pass appState to avoid bugs
+    })
 
-    it('extractDrawingLinks should return links', () => {
-        const elements = [
-            { id: '1', link: 'drawing://d1' },
-            { id: '2', link: 'http://google.com' }
-        ] as any;
-        mockApi.getSceneElements.mockReturnValue(elements);
+    it("extractDrawingLinks should return links", () => {
+      const elements = [
+        { id: "1", link: "drawing://d1" },
+        { id: "2", link: "http://google.com" },
+      ] as any
+      mockApi.getSceneElements.mockReturnValue(elements)
 
-        const links = adapter.extractDrawingLinks();
+      const links = adapter.extractDrawingLinks()
 
-        expect(links).toHaveLength(1);
-        expect(links[0]).toEqual({
-            elementId: '1',
-            targetDrawingId: 'd1',
-            targetType: 'drawing'
-        });
-    });
+      expect(links).toHaveLength(1)
+      expect(links[0]).toEqual({
+        elementId: "1",
+        targetDrawingId: "d1",
+        targetType: "drawing",
+      })
+    })
 
-    it('markAsSaved and hasUnsavedChanges should track state', () => {
-        mockApi.getSceneElements.mockReturnValue([]);
-        mockApi.getAppState.mockReturnValue({});
-        mockApi.getFiles.mockReturnValue({});
+    it("markAsSaved and hasUnsavedChanges should track state", () => {
+      mockApi.getSceneElements.mockReturnValue([])
+      mockApi.getAppState.mockReturnValue({} as any)
+      mockApi.getFiles.mockReturnValue({})
 
-        // Initial state
-        adapter.markAsSaved();
-        expect(adapter.hasUnsavedChanges()).toBe(false);
+      // Initial state
+      adapter.markAsSaved()
+      expect(adapter.hasUnsavedChanges()).toBe(false)
 
-        // Change content
-        mockApi.getSceneElements.mockReturnValue([{id: 'new'}] as any);
-        expect(adapter.hasUnsavedChanges()).toBe(true);
+      // Change content
+      mockApi.getSceneElements.mockReturnValue([{ id: "new" }] as any)
+      expect(adapter.hasUnsavedChanges()).toBe(true)
 
-        // Save again
-        adapter.markAsSaved();
-        expect(adapter.hasUnsavedChanges()).toBe(false);
-    });
+      // Save again
+      adapter.markAsSaved()
+      expect(adapter.hasUnsavedChanges()).toBe(false)
+    })
 
-    it('clear should reset scene', () => {
-        adapter.clear();
-        expect(mockApi.updateScene).toHaveBeenCalledWith({
-            elements: [],
-            appState: { viewBackgroundColor: "#ffffff" }
-        });
-    });
+    it("clear should reset scene", () => {
+      adapter.clear()
+      expect(mockApi.updateScene).toHaveBeenCalledWith({
+        elements: [],
+        appState: { viewBackgroundColor: "#ffffff" },
+      })
+    })
 
-    it('scrollToElement should center on element', () => {
-        mockApi.getSceneElements.mockReturnValue([{ id: '1', x: 100, y: 100 }] as any);
-        // Mock window dimensions
-        global.innerWidth = 1000;
-        global.innerHeight = 800;
+    it("scrollToElement should center on element", () => {
+      mockApi.getSceneElements.mockReturnValue([{ id: "1", x: 100, y: 100 }] as any)
+      // Mock window dimensions
+      ;(window as any).innerWidth = 1000
+      ;(window as any).innerHeight = 800
 
-        adapter.scrollToElement('1');
+      adapter.scrollToElement("1")
 
-        expect(mockApi.updateScene).toHaveBeenCalledWith(expect.objectContaining({
-            appState: expect.objectContaining({
-                scrollX: expect.any(Number),
-                scrollY: expect.any(Number)
-            })
-        }));
-    });
+      expect(mockApi.updateScene).toHaveBeenCalledWith(
+        expect.objectContaining({
+          appState: expect.objectContaining({
+            scrollX: expect.any(Number),
+            scrollY: expect.any(Number),
+          }),
+        })
+      )
+    })
 
-    it('highlightElement should select element', () => {
-        adapter.highlightElement('1');
-        expect(mockApi.updateScene).toHaveBeenCalledWith({
-            appState: { selectedElementIds: { '1': true } }
-        });
-    });
+    it("highlightElement should select element", () => {
+      adapter.highlightElement("1")
+      expect(mockApi.updateScene).toHaveBeenCalledWith({
+        appState: { selectedElementIds: { "1": true } },
+      })
+    })
 
-    it('getStats should return counts', () => {
-        const els = [{ id: '1', link: 'drawing://d1' }, { id: '2' }];
-        const files = { 'f1': {} };
+    it("getStats should return counts", () => {
+      const els = [{ id: "1", link: "drawing://d1" }, { id: "2" }]
+      const files = { f1: {} }
 
-        mockApi.getSceneElements.mockReturnValue(els as any);
-        mockApi.getFiles.mockReturnValue(files as any);
+      mockApi.getSceneElements.mockReturnValue(els as any)
+      mockApi.getFiles.mockReturnValue(files as any)
 
-        const stats = adapter.getStats();
+      const stats = adapter.getStats()
 
-        expect(stats).toEqual({
-            elementCount: 2,
-            linkCount: 1,
-            fileCount: 1
-        });
-    });
-  });
+      expect(stats).toEqual({
+        elementCount: 2,
+        linkCount: 1,
+        fileCount: 1,
+      })
+    })
+  })
 
-  describe('Observers', () => {
-      it('should notify change listeners', () => {
-          const spy = vi.fn();
-          const unsubscribe = adapter.onChange(spy);
+  describe("Observers", () => {
+    it("should notify change listeners", () => {
+      const spy = vi.fn()
+      const unsubscribe = adapter.onChange(spy)
 
-          adapter.notifyChange();
-          expect(spy).toHaveBeenCalled();
+      adapter.notifyChange()
+      expect(spy).toHaveBeenCalled()
 
-          unsubscribe();
-          adapter.notifyChange();
-          expect(spy).toHaveBeenCalledTimes(1);
-      });
+      unsubscribe()
+      adapter.notifyChange()
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
 
-      it('should notify save listeners', () => {
-        const spy = vi.fn();
-        const unsubscribe = adapter.onSave(spy);
+    it("should notify save listeners", () => {
+      const spy = vi.fn()
+      const unsubscribe = adapter.onSave(spy)
 
-        adapter.notifySave();
-        expect(spy).toHaveBeenCalled();
+      adapter.notifySave()
+      expect(spy).toHaveBeenCalled()
 
-        unsubscribe();
-        adapter.notifySave();
-        expect(spy).toHaveBeenCalledTimes(1);
-    });
-  });
-});
+      unsubscribe()
+      adapter.notifySave()
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+  })
+})
