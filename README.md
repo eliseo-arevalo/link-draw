@@ -28,9 +28,23 @@ pnpm build
 
 # Run linter
 pnpm lint
+
+# Run tests
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
 ```
 
-## Architecture
+## Tech Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19 | UI framework |
+| TypeScript | 5.9 | Type safety |
+| Vite | 7 | Build tool |
+| Vitest | 4 | Testing framework |
+| Excalidraw | latest | Canvas engine |
 
 ### Design Principles
 
@@ -138,17 +152,9 @@ const repository = new APIRepository('https://api.example.com');
 
 No changes needed in features or business logic.
 
-## Tech Stack
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19 | UI framework |
-| TypeScript | 5.9 | Type safety |
-| Vite | 7 | Build tool |
-| Excalidraw | latest | Canvas engine |
-
 ## Documentation
 
+- [Architecture Details](./ARCHITECTURE.md) - System design and patterns
 - [Product Requirements (PRD)](./PRD.md) - Full specification and architecture details
 - [Contributing Guide](./CONTRIBUTING.md) - How to contribute
 - [Code of Conduct](./CODE_OF_CONDUCT.md) - Community guidelines
