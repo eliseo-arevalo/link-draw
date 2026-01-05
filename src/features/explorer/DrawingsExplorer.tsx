@@ -3,10 +3,11 @@ import { LocalStorageRepository } from "@/shared/repositories/localStorage/Local
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
+import { Z_INDEX } from "./constants"
 
 const repository = new LocalStorageRepository()
 
-export function Sidebar() {
+export function DrawingsExplorer() {
   const { tree, setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const [isCreating, setIsCreating] = useState(false)
@@ -489,7 +490,7 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
                 border: "1px solid var(--excalidraw-border)",
                 borderRadius: "4px",
                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                zIndex: 1000,
+                zIndex: Z_INDEX.DROPDOWN_MENU,
                 minWidth: "160px",
                 padding: "0.25rem",
               }}
@@ -604,7 +605,7 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 2000,
+            zIndex: Z_INDEX.MODAL_BACKDROP,
           }}
           onClick={() => setShowDeleteConfirm(false)}
         >
@@ -616,6 +617,7 @@ function TreeNode({ node, level, activeId, onSelect }: TreeNodeProps) {
               padding: "1.5rem",
               maxWidth: "400px",
               boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+              zIndex: Z_INDEX.MODAL_CONTENT,
             }}
             onClick={(e) => e.stopPropagation()}
           >

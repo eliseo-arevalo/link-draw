@@ -1,10 +1,10 @@
 import { Canvas } from "./features/canvas/Canvas"
-import { Sidebar } from "./features/sidebar/Sidebar"
+import { DrawingsExplorer } from "./features/explorer/DrawingsExplorer"
 
 function App() {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <Sidebar />
+      <DrawingsExplorer />
       <div style={{ flex: 1, overflow: "hidden" }}>
         <Canvas />
       </div>

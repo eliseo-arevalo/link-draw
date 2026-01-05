@@ -36,11 +36,24 @@ export class LinkService {
   }
 
   private extractLinksFromContent(content: ExcalidrawContent): DrawingLink[] {
-    const tempCanvas = this.canvas
-    const originalContent = tempCanvas.getContent()
-    tempCanvas.setContent(content)
-    const links = tempCanvas.extractDrawingLinks()
-    tempCanvas.setContent(originalContent)
+    // Extract links directly from content without mutating canvas state
+    // Use the same logic as ExcalidrawAdapter.extractDrawingLinks but stateless
+    const elements = content.elements || []
+    const links: DrawingLink[] = []
+
+    for (const element of elements) {
+      if (element.link) {
+        const match = element.link.match(/^excaligraph:\/\/drawing\/([a-f0-9-]+)$/i)
+        if (match) {
+          links.push({
+            elementId: element.id,
+            targetDrawingId: match[1],
+            targetType: "drawing",
+          })
+        }
+      }
+    }
+
     return links
   }
 

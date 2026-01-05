@@ -14,15 +14,17 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
   const timeoutRef = useRef<number | null>(null)
   const retryTimeoutRef = useRef<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const isSavingRef = useRef(false)
   const pendingSaveRef = useRef(false)
 
   const performSave = useCallback(async () => {
-    if (isSaving) {
+    if (isSavingRef.current) {
       pendingSaveRef.current = true
       return
     }
 
     try {
+      isSavingRef.current = true
       setIsSaving(true)
       pendingSaveRef.current = false
 
@@ -38,9 +40,10 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
       onSaveError?.(error as Error)
       console.error("Auto-save failed:", error)
     } finally {
+      isSavingRef.current = false
       setIsSaving(false)
     }
-  }, [onSave, onSaveStart, onSaveSuccess, onSaveError, delay, isSaving])
+  }, [onSave, onSaveStart, onSaveSuccess, onSaveError, delay])
 
   const triggerSave = useCallback(() => {
     if (!enabled) return
