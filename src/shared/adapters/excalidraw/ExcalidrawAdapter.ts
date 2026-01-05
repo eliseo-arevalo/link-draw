@@ -1,6 +1,7 @@
 import type { BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import type { ICanvasAdapter } from "@/shared/interfaces/ICanvasAdapter"
 import { type DrawingLinkInfo, findDrawingLinks } from "@/shared/lib/drawing-links"
+import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type {
   DrawingLink,
   ExcalidrawAppState,
@@ -150,10 +151,22 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       return
     }
 
+    // Calcular el centro del elemento
+    const elementCenterX = element.x + (element.width || 0) / 2
+    const elementCenterY = element.y + (element.height || 0) / 2
+
+    // Obtener el zoom actual
+    const appState = this.getAppState()
+    const zoom = appState.zoom?.value || 1
+
+    // Calcular ancho del canvas (restando el sidebar)
+    const canvasWidth = window.innerWidth - SIDEBAR_WIDTH
+
+    // Calcular scroll para centrar el elemento en el área visible del canvas
     this.api.updateScene({
       appState: {
-        scrollX: -element.x + window.innerWidth / 2,
-        scrollY: -element.y + window.innerHeight / 2,
+        scrollX: canvasWidth / 2 - elementCenterX * zoom,
+        scrollY: window.innerHeight / 2 - elementCenterY * zoom,
       },
     })
   }

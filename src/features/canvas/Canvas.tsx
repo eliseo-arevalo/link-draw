@@ -2,58 +2,57 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
-import {
-  createDrawingLink,
-  createElementLink,
-  isDrawingLink,
-  parseDrawingLink,
-} from "@/shared/lib/drawing-links"
+import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { DrawingService } from "@/shared/services/DrawingService"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { LinkButton } from "./components/LinkButton"
-
-// Type for Excalidraw's onLinkOpen callback
-// NonDeletedExcalidrawElement is not exported from main types, so we use the full signature
-type OnLinkOpenHandler = (
-  element: { link: string | null },
-  event: CustomEvent<{ nativeEvent: MouseEvent | React.PointerEvent<HTMLCanvasElement> }>
-) => void
+import { useCanvasLoader } from "./hooks/useCanvasLoader"
+import { useElementSelection } from "./hooks/useElementSelection"
+import { useLinkNavigation } from "./hooks/useLinkNavigation"
 
 const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((mod) => ({ default: mod.Excalidraw }))
 )
+
 const repository = new LocalStorageRepository()
 const adapter = new ExcalidrawAdapter()
 const drawingService = new DrawingService(repository, adapter)
 
 export function Canvas() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
-  const { activeDrawingId, setActiveDrawingId, setIsLoadingDrawing } = useDrawingStore()
-  const [error, setError] = useState<string | null>(null)
+  const { activeDrawingId } = useDrawingStore()
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
-  const [selectedElementIds, setSelectedElementIds] = useState<string[]>([])
 
-  const hasSelection = selectedElementIds.length > 0
+  const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
+  const { handleLinkOpen } = useLinkNavigation(adapter)
+  const { saveAllCachedDrawings } = useCanvasLoader(drawingService, repository, excalidrawAPI, adapter)
+  
+  const saveAllRef = useRef(saveAllCachedDrawings)
+  saveAllRef.current = saveAllCachedDrawings
 
   const { triggerSave } = useAutoSave(
     async () => {
       if (!activeDrawingId) return
+      // Guardar cache primero
+      await saveAllRef.current()
+      // Luego guardar el actual
       await drawingService.saveCurrentDrawing(activeDrawingId)
     },
     {
-      delay: 2000,
+      delay: 500,
       enabled: !!activeDrawingId,
       onSaveSuccess: () => console.log("Auto-saved"),
       onSaveError: (error) => console.error("Auto-save failed:", error),
     }
   )
 
+  const triggerSaveRef = useRef(triggerSave)
+  triggerSaveRef.current = triggerSave
+
   const handleOpenLinkModal = useCallback(() => {
-    if (hasSelection) {
-      setIsLinkModalOpen(true)
-    }
+    if (hasSelection) setIsLinkModalOpen(true)
   }, [hasSelection])
 
   const handleLinkSelect = useCallback(
@@ -67,71 +66,11 @@ export function Canvas() {
       }
 
       setIsLinkModalOpen(false)
-      triggerSave()
-      console.log(
-        `[Canvas] Linked ${selectedElementIds.length} element(s) to ${targetElementId ? "element" : "drawing"} ${targetDrawingId}`
-      )
+      triggerSaveRef.current()
+      console.log(`[Canvas] Linked ${selectedElementIds.length} element(s)`)
     },
-    [selectedElementIds, triggerSave]
+    [selectedElementIds]
   )
-
-  // Handle link clicks - navigate to target drawing
-  const handleLinkOpen: OnLinkOpenHandler = useCallback(
-    (element, event) => {
-      const link = element.link
-      if (!link || !isDrawingLink(link)) {
-        return
-      }
-
-      event.preventDefault()
-
-      const parsed = parseDrawingLink(link)
-      if (!parsed) return
-
-      console.log("[Canvas] Navigating to drawing:", parsed.drawingId)
-      setActiveDrawingId(parsed.drawingId)
-
-      if (parsed.type === "element") {
-        setTimeout(() => {
-          adapter.scrollToElement(parsed.elementId)
-          adapter.highlightElement(parsed.elementId)
-        }, 500)
-      }
-    },
-    [setActiveDrawingId]
-  )
-
-  // Track selection changes
-  useEffect(() => {
-    if (!excalidrawAPI) return
-
-    const interval = setInterval(() => {
-      const ids = adapter.getSelectedElementIds()
-      setSelectedElementIds((prev) => {
-        if (prev.length !== ids.length || !prev.every((id, i) => id === ids[i])) {
-          return ids
-        }
-        return prev
-      })
-    }, 100)
-
-    return () => clearInterval(interval)
-  }, [excalidrawAPI])
-
-  // Keyboard shortcut: Ctrl+L to open link modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "l") {
-        e.preventDefault()
-        if (hasSelection && !isLinkModalOpen) {
-          setIsLinkModalOpen(true)
-        }
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [hasSelection, isLinkModalOpen])
 
   useEffect(() => {
     if (!excalidrawAPI) return
@@ -139,104 +78,38 @@ export function Canvas() {
     console.log("[Canvas] Initializing Excalidraw adapter")
     adapter.setAPI(excalidrawAPI)
 
-    // Use a ref to always get the latest activeDrawingId
     const handleChange = () => {
-      console.log("[Canvas] Content changed, triggering save for:", activeDrawingId)
-      triggerSave()
+      console.log("[Canvas] Content changed")
+      triggerSaveRef.current()
     }
 
     const unsubscribe = adapter.onChange(handleChange)
-
     return () => {
       console.log("[Canvas] Cleaning up onChange subscription")
       unsubscribe()
     }
-  }, [excalidrawAPI, activeDrawingId, triggerSave])
-
-  // Ref para trackear el drawing previo
-  const previousDrawingIdRef = useRef<string | null>(null)
-
-  const savePreviousDrawing = useCallback(async (previousId: string) => {
-    console.log("[Canvas] Saving previous drawing before loading new one:", previousId)
-    try {
-      await drawingService.saveCurrentDrawing(previousId)
-      console.log("[Canvas] Previous drawing saved successfully")
-    } catch (err) {
-      console.error("[Canvas] Failed to save previous drawing:", err)
-    }
-  }, [])
-
-  const loadCurrentDrawing = useCallback(async (drawingId: string) => {
-    console.log("[Canvas] Loading drawing:", drawingId)
-    setIsLoadingDrawing(true)
-    setError(null)
-    try {
-      await drawingService.loadDrawing(drawingId)
-      console.log("[Canvas] Drawing loaded successfully:", drawingId)
-      previousDrawingIdRef.current = drawingId
-      setError(null)
-    } catch (err) {
-      setError("Failed to load drawing")
-      console.error("[Canvas] Failed to load drawing:", drawingId, err)
-    } finally {
-      setIsLoadingDrawing(false)
-    }
-  }, [setIsLoadingDrawing])
+  }, [excalidrawAPI])
 
   useEffect(() => {
-    if (!activeDrawingId || !excalidrawAPI) return
+    if (!hasSelection || isLinkModalOpen) return
 
-    let cancelled = false
-
-    const loadDrawing = async () => {
-      if (previousDrawingIdRef.current && previousDrawingIdRef.current !== activeDrawingId) {
-        await savePreviousDrawing(previousDrawingIdRef.current)
-      }
-
-      if (!cancelled) {
-        await loadCurrentDrawing(activeDrawingId)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "l") {
+        e.preventDefault()
+        setIsLinkModalOpen(true)
       }
     }
 
-    loadDrawing()
-
-    return () => {
-      console.log("[Canvas] Cleanup for:", activeDrawingId)
-      cancelled = true
-    }
-  }, [activeDrawingId, excalidrawAPI, savePreviousDrawing, loadCurrentDrawing])
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [hasSelection, isLinkModalOpen])
 
   return (
-    <div style={{ width: "100%", height: "100vh", position: "relative", overflow: "hidden" }}>
-      {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: "1rem",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-            backgroundColor: "rgba(239, 68, 68, 0.95)",
-            color: "white",
-            padding: "0.75rem 1.5rem",
-            borderRadius: "0.5rem",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "0.875rem" }}>{error}</p>
-        </div>
-      )}
+    <div className="w-full h-screen relative overflow-hidden">
       <Suspense
         fallback={
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-            }}
-          >
-            <div style={{ fontSize: "1.125rem" }}>Loading editor...</div>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-lg">Loading editor...</div>
           </div>
         }
       >
@@ -247,6 +120,7 @@ export function Canvas() {
               viewBackgroundColor: "#ffffff",
             },
           }}
+          onChange={() => adapter.notifyChange()}
           onLinkOpen={handleLinkOpen}
           renderTopRightUI={() => (
             <LinkButton onClick={handleOpenLinkModal} disabled={!hasSelection} />

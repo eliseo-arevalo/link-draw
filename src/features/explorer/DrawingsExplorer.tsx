@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
+import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 
 const repository = new LocalStorageRepository()
@@ -69,8 +70,8 @@ export function DrawingsExplorer() {
     <div
       className="h-full flex flex-col"
       style={{
-        width: "280px",
-        minWidth: "280px",
+        width: `${SIDEBAR_WIDTH}px`,
+        minWidth: `${SIDEBAR_WIDTH}px`,
         backgroundColor: "var(--excalidraw-bg-primary)",
         borderRight: "1px solid var(--excalidraw-border)",
       }}

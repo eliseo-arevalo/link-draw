@@ -4,38 +4,21 @@ interface LinkButtonProps {
 }
 
 export function LinkButton({ onClick, disabled }: LinkButtonProps) {
+  const title = disabled ? "Select an element to add a link" : "Link to drawing (Ctrl+L)"
+  
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      title={disabled ? "Select an element to add a link" : "Link to drawing (Ctrl+L)"}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "0.375rem",
-        padding: "0.5rem 0.75rem",
-        backgroundColor: disabled ? "var(--color-gray-200)" : "var(--color-primary)",
-        color: disabled ? "var(--color-gray-500)" : "white",
-        border: "none",
-        borderRadius: "0.5rem",
-        cursor: disabled ? "not-allowed" : "pointer",
-        fontSize: "0.875rem",
-        fontWeight: 500,
-        opacity: disabled ? 0.6 : 1,
-        transition: "all 0.15s ease",
-      }}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.opacity = "0.9"
+      title={title}
+      className={`
+        flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all
+        ${disabled 
+          ? 'bg-gray-200 text-gray-500 cursor-not-allowed opacity-60' 
+          : 'bg-blue-500 text-white hover:opacity-90 cursor-pointer'
         }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.opacity = "1"
-        }
-      }}
+      `}
     >
       <svg
         width="16"
