@@ -9,6 +9,73 @@ import { getThemeColors } from "@/shared/styles/theme"
 import type { GraphFilters, GraphStats } from "@/shared/types/graph"
 import { buildGraphElements } from "./lib/graph-builder"
 
+type LayoutType = "cose" | "breadthfirst" | "circle" | "grid" | "concentric"
+
+const LAYOUTS = {
+  cose: {
+    name: "Force-Directed",
+    description: "Physics-based layout",
+    config: {
+      name: "cose" as const,
+      idealEdgeLength: 150,
+      nodeOverlap: 20,
+      refresh: 20,
+      fit: true,
+      padding: 50,
+      randomize: false,
+      componentSpacing: 100,
+      nodeRepulsion: 400000,
+      edgeElasticity: 100,
+      nestingFactor: 5,
+      gravity: 80,
+      numIter: 1000,
+      initialTemp: 200,
+      coolingFactor: 0.95,
+      minTemp: 1.0,
+    },
+  },
+  breadthfirst: {
+    name: "Hierarchical",
+    description: "Top-down tree layout",
+    config: {
+      name: "breadthfirst" as const,
+      directed: true,
+      padding: 50,
+      spacingFactor: 1.5,
+      animate: false,
+    },
+  },
+  circle: {
+    name: "Circular",
+    description: "Nodes in a circle",
+    config: {
+      name: "circle" as const,
+      padding: 50,
+      animate: false,
+    },
+  },
+  grid: {
+    name: "Grid",
+    description: "Organized grid",
+    config: {
+      name: "grid" as const,
+      padding: 50,
+      animate: false,
+    },
+  },
+  concentric: {
+    name: "Concentric",
+    description: "Rings by depth",
+    config: {
+      name: "concentric" as const,
+      padding: 50,
+      animate: false,
+      concentric: (node: { data: (key: string) => number }) => node.data("depth") || 0,
+      levelWidth: () => 2,
+    },
+  },
+}
+
 export function Graph() {
   const { repository } = useServices()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -17,6 +84,8 @@ export function Graph() {
   const { setViewMode } = useViewStore()
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
+  const [layout, setLayout] = useState<LayoutType>("cose")
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [filters, setFilters] = useState<GraphFilters>({
     showHierarchy: true,
     showLinks: true,
@@ -33,10 +102,21 @@ export function Graph() {
     if (!containerRef.current) return
 
     const loadGraph = async () => {
+      // Trigger update when refreshTrigger changes
+      console.log("[Graph] Loading graph, trigger:", refreshTrigger)
       const drawings = await repository.listDrawings()
       const { elements, stats: graphStats } = buildGraphElements(drawings, filters)
       setStats(graphStats)
 
+      // If graph exists, just update elements and layout
+      if (cyRef.current) {
+        cyRef.current.elements().remove()
+        cyRef.current.add(elements)
+        cyRef.current.layout(LAYOUTS[layout].config).run()
+        return
+      }
+
+      // Create new graph only if it doesn't exist
       cyRef.current = cytoscape({
         container: containerRef.current,
         elements,
@@ -86,24 +166,7 @@ export function Graph() {
             },
           },
         ],
-        layout: {
-          name: "cose",
-          idealEdgeLength: 150,
-          nodeOverlap: 20,
-          refresh: 20,
-          fit: true,
-          padding: 50,
-          randomize: false,
-          componentSpacing: 100,
-          nodeRepulsion: 400000,
-          edgeElasticity: 100,
-          nestingFactor: 5,
-          gravity: 80,
-          numIter: 1000,
-          initialTemp: 200,
-          coolingFactor: 0.95,
-          minTemp: 1.0,
-        },
+        layout: LAYOUTS[layout].config,
       })
 
       cyRef.current.on("tap", "node", (evt) => {
@@ -116,9 +179,28 @@ export function Graph() {
     loadGraph()
 
     return () => {
-      cyRef.current?.destroy()
+      if (cyRef.current) {
+        try {
+          cyRef.current.destroy()
+        } catch {
+          // Ignore cleanup errors
+        }
+        cyRef.current = null
+      }
     }
-  }, [filters, setActiveDrawingId, setViewMode, repository.listDrawings])
+  }, [filters, layout, refreshTrigger, setActiveDrawingId, setViewMode, repository.listDrawings])
+
+  const handleRefresh = () => {
+    setRefreshTrigger((prev) => prev + 1)
+  }
+
+  const handleLayoutChange = (newLayout: LayoutType) => {
+    setLayout(newLayout)
+    // Apply layout to existing graph if it exists
+    if (cyRef.current) {
+      cyRef.current.layout(LAYOUTS[newLayout].config).run()
+    }
+  }
 
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: colors.backgroundSecondary }}>
@@ -129,6 +211,53 @@ export function Graph() {
           borderColor: colors.border,
         }}
       >
+        {/* Layout Selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold" style={{ color: colors.text }}>
+            Layout:
+          </span>
+          <select
+            value={layout}
+            onChange={(e) => handleLayoutChange(e.target.value as LayoutType)}
+            className="text-sm px-2 py-1 rounded border cursor-pointer"
+            style={{
+              backgroundColor: colors.background,
+              color: colors.text,
+              borderColor: colors.border,
+            }}
+          >
+            {(Object.keys(LAYOUTS) as LayoutType[]).map((key) => (
+              <option key={key} value={key}>
+                {LAYOUTS[key].name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Refresh Button */}
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="excalidraw-button text-sm px-3 py-1"
+          style={{
+            backgroundColor: colors.background,
+            color: colors.text,
+            borderColor: colors.border,
+          }}
+          title="Refresh graph"
+        >
+          ↻ Refresh
+        </button>
+
+        <div
+          style={{
+            width: "1px",
+            height: "1.5rem",
+            backgroundColor: colors.border,
+          }}
+        />
+
+        {/* Filters */}
         <span className="text-sm font-semibold" style={{ color: colors.text }}>
           Filters:
         </span>
@@ -159,7 +288,10 @@ export function Graph() {
           />
           <span style={{ color: colors.textSecondary }}>Orphans</span>
         </label>
+
         <div style={{ flex: 1 }} />
+
+        {/* Stats */}
         <div className="flex items-center gap-2 text-xs" style={{ color: colors.textSecondary }}>
           <span>Nodes: {stats.nodes}</span>
           <span>•</span>
