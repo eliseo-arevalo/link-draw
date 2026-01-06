@@ -118,7 +118,7 @@ export function Graph() {
     return () => {
       cyRef.current?.destroy()
     }
-  }, [filters, setActiveDrawingId, setViewMode])
+  }, [filters, setActiveDrawingId, setViewMode, repository.listDrawings])
 
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: colors.backgroundSecondary }}>

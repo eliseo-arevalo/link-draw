@@ -2,9 +2,9 @@ import { Icon } from "@/shared/components/Icon"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
+import { useTreeNode } from "../hooks/useTreeNode"
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 import { TreeNodeMenu } from "./TreeNodeMenu"
-import { useTreeNode } from "../hooks/useTreeNode"
 
 interface TreeNodeProps {
   node: DrawingTreeNode
@@ -17,6 +17,36 @@ interface TreeNodeProps {
   onDragEnd: () => void
   draggedId: string | null
   dragOverId: string | null
+}
+
+const getNodeStyles = (
+  level: number,
+  isActive: boolean,
+  isDragging: boolean,
+  isDragOver: boolean
+) => ({
+  paddingLeft: `${level * 1.25 + 1}rem`,
+  backgroundColor: isDragOver
+    ? "rgba(99, 102, 241, 0.1)"
+    : isActive
+      ? "var(--excalidraw-bg-secondary)"
+      : "transparent",
+  borderLeft: isActive ? "2px solid var(--excalidraw-button-primary)" : "2px solid transparent",
+  opacity: isDragging ? 0.5 : 1,
+  cursor: isDragging ? "grabbing" : "pointer",
+})
+
+const handleNodeDrop = (
+  e: React.DragEvent,
+  nodeId: string,
+  draggedId: string | null,
+  onDrop: (draggedId: string, targetId: string | null) => void
+) => {
+  e.preventDefault()
+  e.stopPropagation()
+  if (draggedId && draggedId !== nodeId) {
+    onDrop(draggedId, nodeId)
+  }
 }
 
 export function TreeNode({
@@ -74,26 +104,10 @@ export function TreeNode({
         draggable={!isEditing}
         onDragStart={(e) => onDragStart(e, node.id)}
         onDragOver={(e) => onDragOver(e, node.id)}
-        onDrop={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          if (draggedId && draggedId !== node.id) {
-            onDrop(draggedId, node.id)
-          }
-        }}
+        onDrop={(e) => handleNodeDrop(e, node.id, draggedId, onDrop)}
         onDragEnd={onDragEnd}
         className="flex items-center gap-2 py-1.5 px-4 transition-colors group"
-        style={{
-          paddingLeft: `${level * 1.25 + 1}rem`,
-          backgroundColor: isDragOver
-            ? "rgba(99, 102, 241, 0.1)"
-            : isActive
-              ? "var(--excalidraw-bg-secondary)"
-              : "transparent",
-          borderLeft: isActive ? "2px solid var(--excalidraw-button-primary)" : "2px solid transparent",
-          opacity: isDragging ? 0.5 : 1,
-          cursor: isDragging ? "grabbing" : "pointer",
-        }}
+        style={getNodeStyles(level, isActive, isDragging, isDragOver)}
         onMouseEnter={(e) => {
           if (!isActive) e.currentTarget.style.backgroundColor = colors.backgroundSecondary
         }}
@@ -122,7 +136,11 @@ export function TreeNode({
             }}
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
-            <Icon name={isExpanded ? "chevronDown" : "chevronRight"} size={10} color={colors.textSecondary} />
+            <Icon
+              name={isExpanded ? "chevronDown" : "chevronRight"}
+              size={10}
+              color={colors.textSecondary}
+            />
           </button>
         ) : (
           <div style={{ width: "1rem" }} />
@@ -143,7 +161,13 @@ export function TreeNode({
             e.stopPropagation()
             setIsEditing(true)
           }}
-          style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1, cursor: "pointer" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            flex: 1,
+            cursor: "pointer",
+          }}
         >
           <Icon
             name={hasChildren ? "folderOpen" : "file"}
@@ -217,11 +241,11 @@ export function TreeNode({
         </div>
       </div>
 
-      <DeleteConfirmDialog 
-        isOpen={showDeleteConfirm} 
+      <DeleteConfirmDialog
+        isOpen={showDeleteConfirm}
         hasChildren={!!hasChildren}
-        onConfirm={confirmDelete} 
-        onCancel={() => setShowDeleteConfirm(false)} 
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
       />
 
       {/* Children */}

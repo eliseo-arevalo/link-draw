@@ -7,13 +7,13 @@ export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string 
   const { repository } = useServices()
   const { setTree } = useTreeStore()
   const { setActiveDrawingId } = useDrawingStore()
-  
+
   const [isExpanded, setIsExpanded] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(nodeTitle)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  
+
   const inputRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 

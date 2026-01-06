@@ -88,7 +88,7 @@ export function Canvas() {
       triggerSaveRef.current()
       console.log(`[Canvas] Linked ${selectedElementIds.length} element(s)`)
     },
-    [selectedElementIds]
+    [selectedElementIds, adapter.setElementLink]
   )
 
   useEffect(() => {
@@ -129,7 +129,15 @@ export function Canvas() {
       console.log("[Canvas] Cleaning up onChange subscription")
       unsubscribe()
     }
-  }, [excalidrawAPI, activeDrawingId, setActiveDrawingId])
+  }, [
+    excalidrawAPI,
+    activeDrawingId,
+    setActiveDrawingId,
+    adapter.getContent,
+    adapter.onChange,
+    adapter.setAPI,
+    drawingService.createDrawing,
+  ])
 
   useEffect(() => {
     if (!hasSelection || isLinkModalOpen) return

@@ -1,93 +1,90 @@
 import { useEffect } from "react"
 import { useThemeStore } from "@/shared/store/themeStore"
 
+type Theme = "light" | "dark"
+
+const checkDataTheme = (element: HTMLElement): Theme | null => {
+  const dataTheme = element.getAttribute("data-theme")
+  return dataTheme === "dark" ? "dark" : null
+}
+
+const checkDarkClass = (element: HTMLElement): boolean => {
+  return element.classList.contains("theme--dark") || element.classList.contains("dark")
+}
+
+const detectThemeFromElement = (element: HTMLElement): Theme | null => {
+  // Check data-theme attribute
+  const dataTheme = checkDataTheme(element)
+  if (dataTheme) return dataTheme
+
+  // Check dark classes
+  if (checkDarkClass(element)) return "dark"
+
+  return null
+}
+
+const detectCurrentTheme = (): Theme => {
+  const htmlElement = document.documentElement
+  const bodyElement = document.body
+
+  // Check html element
+  const htmlTheme = detectThemeFromElement(htmlElement)
+  if (htmlTheme) return htmlTheme
+
+  // Check body element
+  const bodyTheme = detectThemeFromElement(bodyElement)
+  if (bodyTheme) return bodyTheme
+
+  // Check Excalidraw container
+  const excalidrawContainer = document.querySelector<HTMLElement>(".excalidraw")
+  if (excalidrawContainer) {
+    const excalidrawTheme = detectThemeFromElement(excalidrawContainer)
+    if (excalidrawTheme) return excalidrawTheme
+  }
+
+  // Default to light
+  return "light"
+}
+
+const observeElement = (observer: MutationObserver, element: Element) => {
+  observer.observe(element, {
+    attributes: true,
+    attributeFilter: ["class", "data-theme"],
+  })
+}
+
 export function useThemeDetector() {
   const { setTheme } = useThemeStore()
 
   useEffect(() => {
     let isFirstDetection = true
 
-    // Detectar theme inicial de Excalidraw
-    const detectTheme = () => {
-      // En la primera detección, no hacer nada (usar el theme guardado)
+    const handleThemeChange = () => {
+      // Skip first detection to use saved theme
       if (isFirstDetection) {
         isFirstDetection = false
         return
       }
 
-      // Excalidraw puede usar diferentes métodos para el theme
-      const htmlElement = document.documentElement
-      const bodyElement = document.body
-
-      // Método 1: Atributo data-theme
-      const dataTheme =
-        htmlElement.getAttribute("data-theme") || bodyElement.getAttribute("data-theme")
-      if (dataTheme === "dark") {
-        setTheme("dark")
-        return
-      }
-
-      // Método 2: Clase theme--dark
-      if (
-        htmlElement.classList.contains("theme--dark") ||
-        bodyElement.classList.contains("theme--dark")
-      ) {
-        setTheme("dark")
-        return
-      }
-
-      // Método 3: Clase dark
-      if (htmlElement.classList.contains("dark") || bodyElement.classList.contains("dark")) {
-        setTheme("dark")
-        return
-      }
-
-      // Método 4: Buscar en el contenedor de Excalidraw
-      const excalidrawContainer = document.querySelector(".excalidraw")
-      if (excalidrawContainer) {
-        const isDark =
-          excalidrawContainer.classList.contains("theme--dark") ||
-          excalidrawContainer.classList.contains("dark") ||
-          excalidrawContainer.getAttribute("data-theme") === "dark"
-        if (isDark) {
-          setTheme("dark")
-          return
-        }
-      }
-
-      // Default: light
-      setTheme("light")
+      const theme = detectCurrentTheme()
+      setTheme(theme)
     }
 
-    // Detectar inmediatamente
-    detectTheme()
+    // Initial detection
+    handleThemeChange()
 
-    // Observar cambios en html y body
-    const observer = new MutationObserver(() => {
-      detectTheme()
-    })
+    // Setup mutation observer
+    const observer = new MutationObserver(handleThemeChange)
 
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    })
+    // Observe html and body
+    observeElement(observer, document.documentElement)
+    observeElement(observer, document.body)
 
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    })
-
-    // Observar el contenedor de Excalidraw si existe
+    // Observe Excalidraw container if exists
     const excalidrawContainer = document.querySelector(".excalidraw")
     if (excalidrawContainer) {
-      observer.observe(excalidrawContainer, {
-        attributes: true,
-        attributeFilter: ["class", "data-theme"],
-      })
+      observeElement(observer, excalidrawContainer)
     }
-
-    // NO usar polling - solo detectar cambios reales del usuario
-    // const interval = setInterval(detectTheme, 500)
 
     return () => {
       observer.disconnect()

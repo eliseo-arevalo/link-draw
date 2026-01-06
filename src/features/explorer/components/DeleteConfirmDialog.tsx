@@ -7,7 +7,12 @@ interface DeleteConfirmDialogProps {
   onCancel: () => void
 }
 
-export function DeleteConfirmDialog({ isOpen, hasChildren, onConfirm, onCancel }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({
+  isOpen,
+  hasChildren,
+  onConfirm,
+  onCancel,
+}: DeleteConfirmDialogProps) {
   if (!isOpen) return null
 
   return createPortal(

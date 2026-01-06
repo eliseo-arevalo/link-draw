@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import type { Drawing, DrawingTreeNode } from "@/shared/types/drawing"
 import { DrawingList } from "./DrawingList"
@@ -11,7 +12,7 @@ const Z_INDEX = {
   MODAL_CONTENT: 301,
 }
 
-const loadDrawingElements = async (drawing: DrawingTreeNode, repository: any) => {
+const loadDrawingElements = async (drawing: DrawingTreeNode, repository: IGraphRepository) => {
   const fullDrawing = await repository.loadDrawing(drawing.id)
   if (!fullDrawing) return null
 
@@ -67,7 +68,7 @@ export function DrawingPickerModal({
         .catch(console.error)
         .finally(() => setIsLoading(false))
     }
-  }, [isOpen])
+  }, [isOpen, repository.getDrawingsTree])
 
   const handleBack = useCallback(() => {
     setSelectedDrawing(null)

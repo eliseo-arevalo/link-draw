@@ -150,7 +150,7 @@ export function Explorer({
     return () => {
       cancelled = true
     }
-  }, [setTree])
+  }, [setTree, repository.getDrawingsTree])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -482,5 +482,3 @@ export function Explorer({
     </div>
   )
 }
-
-

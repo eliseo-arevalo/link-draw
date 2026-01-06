@@ -6,7 +6,10 @@ export interface GraphMaps {
   linkMap: Map<string, Set<string>>
 }
 
-export function buildGraphMaps(drawings: Drawing[], extractLinks: (drawing: Drawing) => string[]): GraphMaps {
+export function buildGraphMaps(
+  drawings: Drawing[],
+  extractLinks: (drawing: Drawing) => string[]
+): GraphMaps {
   const parentMap = new Map<string, string>()
   const childrenMap = new Map<string, Set<string>>()
   const linkMap = new Map<string, Set<string>>()
@@ -44,10 +47,7 @@ export function getNodeColor(
   return "#6366f1" // Default indigo
 }
 
-export function calculateMaxDepth(
-  nodeIds: Set<string>,
-  parentMap: Map<string, string>
-): number {
+export function calculateMaxDepth(nodeIds: Set<string>, parentMap: Map<string, string>): number {
   const getDepth = (id: string, visited = new Set<string>()): number => {
     if (visited.has(id)) return 0
     visited.add(id)
