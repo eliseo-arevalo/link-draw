@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { Icon } from "@/shared/components/Icon"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { useServices } from "@/shared/providers/ServiceProvider"
@@ -192,21 +193,7 @@ export function Explorer({
           }}
           title="Show sidebar (Cmd+B)"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            role="img"
-            aria-label="Show sidebar"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <line x1="9" y1="3" x2="9" y2="21" />
-          </svg>
+          <Icon name="sidebar" size={20} aria-label="Show sidebar" />
         </button>
       </div>
     )
@@ -258,39 +245,9 @@ export function Explorer({
               title="Toggle theme"
             >
               {theme === "light" ? (
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  role="img"
-                  aria-label="Toggle theme"
-                >
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
+                <Icon name="moon" aria-label="Toggle theme" />
               ) : (
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  role="img"
-                  aria-label="Toggle theme"
-                >
-                  <circle cx="12" cy="12" r="5" />
-                  <line x1="12" y1="1" x2="12" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="23" />
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                  <line x1="1" y1="12" x2="3" y2="12" />
-                  <line x1="21" y1="12" x2="23" y2="12" />
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
+                <Icon name="sun" aria-label="Toggle theme" />
               )}
             </button>
             <button
@@ -308,21 +265,7 @@ export function Explorer({
               }}
               title="New drawing (Cmd+N)"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                role="img"
-                aria-label="New drawing"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <Icon name="plus" aria-label="New drawing" />
             </button>
             <button
               type="button"
@@ -338,21 +281,7 @@ export function Explorer({
               }}
               title="Hide sidebar (Cmd+B)"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                role="img"
-                aria-label="Hide sidebar"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <line x1="9" y1="3" x2="9" y2="21" />
-              </svg>
+              <Icon name="sidebar" aria-label="Hide sidebar" />
             </button>
             <div style={{ position: "relative", zIndex: 10001 }} ref={menuRef}>
               <button
@@ -369,22 +298,7 @@ export function Explorer({
                 }}
                 title="More options"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  role="img"
-                  aria-label="More options"
-                >
-                  <circle cx="12" cy="12" r="1" />
-                  <circle cx="12" cy="5" r="1" />
-                  <circle cx="12" cy="19" r="1" />
-                </svg>
+                <Icon name="moreVertical" aria-label="More options" />
               </button>
               {showMenu && (
                 <div
@@ -429,19 +343,7 @@ export function Explorer({
                       e.currentTarget.style.backgroundColor = "transparent"
                     }}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      role="img"
-                      aria-label="Icon"
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <path d="m21 21-4.35-4.35" />
-                    </svg>
+                    <Icon name="search" size={14} aria-label="Search" />
                     Search (Cmd+K)
                   </button>
                   <button
@@ -642,20 +544,7 @@ function TreeNodeMenu({
           e.currentTarget.style.backgroundColor = "transparent"
         }}
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <Icon name="plus" size={14} aria-label="Add drawing" />
         Create Child
       </button>
 
@@ -706,8 +595,7 @@ function TreeNodeMenu({
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <Icon name="trash" size={14} aria-label="Delete" />
         </svg>
         Delete
       </button>
@@ -1019,7 +907,7 @@ function TreeNode({
               }}
               aria-hidden="true"
             >
-              <polyline points="9 18 15 12 9 6" />
+              <Icon name={isExpanded ? "chevronDown" : "chevronRight"} size={16} />
             </svg>
           </button>
         ) : (
@@ -1070,9 +958,7 @@ function TreeNode({
               strokeLinejoin="round"
               aria-hidden="true"
             >
-              <title>File icon</title>
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
+              <Icon name={hasChildren ? "folderOpen" : "file"} size={16} aria-label={hasChildren ? "Folder" : "File"} />
             </svg>
           </div>
 

@@ -1,5 +1,6 @@
 import cytoscape, { type Core } from "cytoscape"
 import { useEffect, useRef, useState } from "react"
+import { Icon } from "@/shared/components/Icon"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
@@ -196,19 +197,7 @@ export function Graph() {
             }}
             title="Zoom in"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              role="img"
-              aria-label="Zoom in"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <Icon name="plus" size={20} aria-label="Zoom in" />
           </button>
           <button
             type="button"
@@ -225,18 +214,7 @@ export function Graph() {
             }}
             title="Zoom out"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              role="img"
-              aria-label="Zoom out"
-            >
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <Icon name="minus" size={20} aria-label="Zoom out" />
           </button>
           <button
             type="button"
@@ -253,18 +231,7 @@ export function Graph() {
             }}
             title="Fit to screen"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              role="img"
-              aria-label="Fit to screen"
-            >
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-            </svg>
+            <Icon name="maximize" size={20} aria-label="Fit to screen" />
           </button>
         </div>
       </div>
