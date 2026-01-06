@@ -1,3 +1,5 @@
+import { Icon } from "@/shared/components/Icon"
+
 interface ModalHeaderProps {
   title: string
   subtitle: string
@@ -15,18 +17,7 @@ export function ModalHeader({ title, subtitle, onBack }: ModalHeaderProps) {
             className="p-1 hover:bg-gray-100 rounded transition-colors"
             aria-label="Back to drawing list"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-              className="text-gray-600"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <Icon name="arrowLeft" size={20} className="text-gray-600" aria-label="Back" />
           </button>
         )}
         <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
