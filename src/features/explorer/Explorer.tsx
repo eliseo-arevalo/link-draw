@@ -438,6 +438,20 @@ export function Explorer({
           scrollbarWidth: "thin",
           scrollbarColor: "var(--excalidraw-border) transparent",
         }}
+        onDragOver={(e) => {
+          if (dragAndDrop.draggedId) {
+            e.preventDefault()
+            e.stopPropagation()
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          if (dragAndDrop.draggedId) {
+            // Drop on root (no parent)
+            handleDrop(dragAndDrop.draggedId, null)
+          }
+        }}
       >
         {filteredTree.length === 0 ? (
           <div className="px-4 py-8 text-center">

@@ -3,7 +3,7 @@ import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
 
-export function useTreeNode(nodeId: string, nodeTitle: string, hasChildren: boolean, activeId: string | null) {
+export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string | null) {
   const { repository } = useServices()
   const { setTree } = useTreeStore()
   const { setActiveDrawingId } = useDrawingStore()
@@ -67,14 +67,12 @@ export function useTreeNode(nodeId: string, nodeTitle: string, hasChildren: bool
     }
   }
 
-  const handleDelete = async () => {
-    if (hasChildren) {
-      alert("Cannot delete a drawing with children")
-      setIsMenuOpen(false)
-      return
-    }
-    setShowDeleteConfirm(true)
+  const handleDelete = () => {
     setIsMenuOpen(false)
+    // Pequeño delay para que el menú se cierre antes de mostrar el modal
+    setTimeout(() => {
+      setShowDeleteConfirm(true)
+    }, 100)
   }
 
   const confirmDelete = async () => {

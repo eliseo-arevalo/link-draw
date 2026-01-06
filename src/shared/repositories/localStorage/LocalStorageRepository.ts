@@ -125,19 +125,25 @@ export class LocalStorageRepository implements IGraphRepository {
   async deleteDrawing(id: string): Promise<void> {
     const drawings = this.getAll()
 
-    // Check if drawing has children
-    const hasChildren = drawings.some((d) => d.parent_id === id)
-    if (hasChildren) {
-      throw new Error(
-        "Cannot delete drawing with children. Please delete or reassign children first."
-      )
-    }
-
-    const filtered = drawings.filter((d) => d.id !== id)
-
-    if (filtered.length === drawings.length) {
+    // Find drawing to delete
+    const drawingToDelete = drawings.find((d) => d.id === id)
+    if (!drawingToDelete) {
       throw new Error(`Drawing ${id} not found`)
     }
+
+    // Recursively collect all descendant IDs
+    const idsToDelete = new Set<string>([id])
+    const collectDescendants = (parentId: string) => {
+      const children = drawings.filter((d) => d.parent_id === parentId)
+      for (const child of children) {
+        idsToDelete.add(child.id)
+        collectDescendants(child.id)
+      }
+    }
+    collectDescendants(id)
+
+    // Filter out all drawings to delete
+    const filtered = drawings.filter((d) => !idsToDelete.has(d.id))
 
     this.saveAll(filtered)
   }

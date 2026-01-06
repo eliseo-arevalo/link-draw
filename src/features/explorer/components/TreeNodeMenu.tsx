@@ -2,12 +2,11 @@ import { Icon } from "@/shared/components/Icon"
 
 interface TreeNodeMenuProps {
   isOpen: boolean
-  hasChildren: boolean
   onCreateChild: () => void
   onDelete: () => void
 }
 
-export function TreeNodeMenu({ isOpen, hasChildren, onCreateChild, onDelete }: TreeNodeMenuProps) {
+export function TreeNodeMenu({ isOpen, onCreateChild, onDelete }: TreeNodeMenuProps) {
   if (!isOpen) return null
 
   return (
@@ -30,12 +29,7 @@ export function TreeNodeMenu({ isOpen, hasChildren, onCreateChild, onDelete }: T
       <button
         type="button"
         onClick={onDelete}
-        disabled={hasChildren}
-        className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 ${
-          hasChildren
-            ? "text-gray-400 cursor-not-allowed opacity-50"
-            : "text-red-500 hover:bg-red-50"
-        }`}
+        className="w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 text-red-500 hover:bg-red-50"
       >
         <Icon name="trash" size={14} aria-label="Delete" />
         Delete

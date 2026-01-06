@@ -55,7 +55,7 @@ export function TreeNode({
     handleCreateChild,
     handleDelete,
     confirmDelete,
-  } = useTreeNode(node.id, node.title, !!hasChildren, activeId)
+  } = useTreeNode(node.id, node.title, activeId)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -211,14 +211,18 @@ export function TreeNode({
 
           <TreeNodeMenu
             isOpen={isMenuOpen}
-            hasChildren={!!hasChildren}
             onCreateChild={handleCreateChild}
             onDelete={handleDelete}
           />
         </div>
       </div>
 
-      <DeleteConfirmDialog isOpen={showDeleteConfirm} onConfirm={confirmDelete} onCancel={() => setShowDeleteConfirm(false)} />
+      <DeleteConfirmDialog 
+        isOpen={showDeleteConfirm} 
+        hasChildren={!!hasChildren}
+        onConfirm={confirmDelete} 
+        onCancel={() => setShowDeleteConfirm(false)} 
+      />
 
       {/* Children */}
       {hasChildren && isExpanded && (
