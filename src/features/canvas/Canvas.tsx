@@ -24,7 +24,7 @@ const drawingService = new DrawingService(repository, adapter)
 
 export function Canvas() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
-  const { activeDrawingId } = useDrawingStore()
+  const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const { theme } = useThemeStore()
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
 
@@ -102,8 +102,30 @@ export function Canvas() {
     console.log("[Canvas] Initializing Excalidraw adapter")
     adapter.setAPI(excalidrawAPI)
 
-    const handleChange = () => {
+    const handleChange = async () => {
       console.log("[Canvas] Content changed")
+
+      // Auto-crear dibujo si no hay uno activo y hay contenido
+      if (!activeDrawingId) {
+        const content = adapter.getContent()
+        const hasContent = content.elements && content.elements.length > 0
+
+        if (hasContent) {
+          console.log("[Canvas] Auto-creating 'Untitled' drawing")
+          try {
+            const newId = await drawingService.createDrawing({
+              title: "Untitled",
+              parent_id: null,
+              content,
+            })
+            setActiveDrawingId(newId)
+            return // No trigger save, ya guardamos al crear
+          } catch (error) {
+            console.error("[Canvas] Failed to auto-create drawing:", error)
+          }
+        }
+      }
+
       triggerSaveRef.current()
     }
 
@@ -112,7 +134,7 @@ export function Canvas() {
       console.log("[Canvas] Cleaning up onChange subscription")
       unsubscribe()
     }
-  }, [excalidrawAPI])
+  }, [excalidrawAPI, activeDrawingId, setActiveDrawingId])
 
   useEffect(() => {
     if (!hasSelection || isLinkModalOpen) return

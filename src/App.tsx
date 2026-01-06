@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { Canvas } from "./features/canvas/Canvas"
-import { DrawingsExplorer } from "./features/explorer/DrawingsExplorer"
-import { GraphView } from "./features/graph/GraphView"
-import { useViewStore } from "./shared/store/viewStore"
+import { Explorer } from "./features/explorer/Explorer"
+import { Graph } from "./features/graph/Graph"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
 import { useThemeDetector } from "./shared/hooks/useThemeDetector"
+import { useViewStore } from "./shared/store/viewStore"
 
 function App() {
   const { viewMode, toggleView } = useViewStore()
@@ -28,14 +28,14 @@ function App() {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <DrawingsExplorer 
+      <Explorer
         isCollapsed={!showSidebar}
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
         onToggleGraph={toggleView}
         isGraphView={viewMode === "graph"}
       />
       <div style={{ flex: 1, overflow: "hidden" }}>
-        {viewMode === "canvas" ? <Canvas /> : <GraphView />}
+        {viewMode === "canvas" ? <Canvas /> : <Graph />}
       </div>
     </div>
   )

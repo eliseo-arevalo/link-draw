@@ -6,7 +6,7 @@ export function useThemeDetector() {
 
   useEffect(() => {
     let isFirstDetection = true
-    
+
     // Detectar theme inicial de Excalidraw
     const detectTheme = () => {
       // En la primera detección, no hacer nada (usar el theme guardado)
@@ -14,42 +14,47 @@ export function useThemeDetector() {
         isFirstDetection = false
         return
       }
-      
+
       // Excalidraw puede usar diferentes métodos para el theme
       const htmlElement = document.documentElement
       const bodyElement = document.body
-      
+
       // Método 1: Atributo data-theme
-      const dataTheme = htmlElement.getAttribute("data-theme") || bodyElement.getAttribute("data-theme")
+      const dataTheme =
+        htmlElement.getAttribute("data-theme") || bodyElement.getAttribute("data-theme")
       if (dataTheme === "dark") {
         setTheme("dark")
         return
       }
-      
+
       // Método 2: Clase theme--dark
-      if (htmlElement.classList.contains("theme--dark") || bodyElement.classList.contains("theme--dark")) {
+      if (
+        htmlElement.classList.contains("theme--dark") ||
+        bodyElement.classList.contains("theme--dark")
+      ) {
         setTheme("dark")
         return
       }
-      
+
       // Método 3: Clase dark
       if (htmlElement.classList.contains("dark") || bodyElement.classList.contains("dark")) {
         setTheme("dark")
         return
       }
-      
+
       // Método 4: Buscar en el contenedor de Excalidraw
       const excalidrawContainer = document.querySelector(".excalidraw")
       if (excalidrawContainer) {
-        const isDark = excalidrawContainer.classList.contains("theme--dark") || 
-                      excalidrawContainer.classList.contains("dark") ||
-                      excalidrawContainer.getAttribute("data-theme") === "dark"
+        const isDark =
+          excalidrawContainer.classList.contains("theme--dark") ||
+          excalidrawContainer.classList.contains("dark") ||
+          excalidrawContainer.getAttribute("data-theme") === "dark"
         if (isDark) {
           setTheme("dark")
           return
         }
       }
-      
+
       // Default: light
       setTheme("light")
     }

@@ -1,11 +1,11 @@
+import cytoscape, { type Core } from "cytoscape"
 import { useEffect, useRef, useState } from "react"
-import cytoscape, { type Core, type ElementDefinition } from "cytoscape"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { useDrawingStore } from "@/shared/store/drawingStore"
-import { useViewStore } from "@/shared/store/viewStore"
 import { useThemeStore } from "@/shared/store/themeStore"
+import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
-import type { Drawing } from "@/shared/types/drawing"
+import { buildGraphElements } from "./lib/graph-builder"
 
 const repository = new LocalStorageRepository()
 
@@ -22,7 +22,7 @@ interface GraphStats {
   maxDepth: number
 }
 
-export function GraphView() {
+export function Graph() {
   const containerRef = useRef<HTMLDivElement>(null)
   const cyRef = useRef<Core | null>(null)
   const { setActiveDrawingId } = useDrawingStore()
@@ -209,7 +209,16 @@ export function GraphView() {
             }}
             title="Zoom in"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              role="img"
+              aria-label="Zoom in"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
@@ -229,7 +238,16 @@ export function GraphView() {
             }}
             title="Zoom out"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              role="img"
+              aria-label="Zoom out"
+            >
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
@@ -248,7 +266,16 @@ export function GraphView() {
             }}
             title="Fit to screen"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              role="img"
+              aria-label="Fit to screen"
+            >
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
           </button>
@@ -256,137 +283,4 @@ export function GraphView() {
       </div>
     </div>
   )
-}
-
-function buildGraphElements(
-  drawings: Drawing[],
-  filters: GraphFilters
-): { elements: ElementDefinition[]; stats: GraphStats } {
-  const elements: ElementDefinition[] = []
-  const nodeIds = new Set<string>()
-  const parentMap = new Map<string, string>()
-  const childrenMap = new Map<string, Set<string>>()
-  const linkMap = new Map<string, Set<string>>()
-
-  // Build maps
-  for (const drawing of drawings) {
-    if (drawing.parent_id) {
-      parentMap.set(drawing.id, drawing.parent_id)
-      if (!childrenMap.has(drawing.parent_id)) {
-        childrenMap.set(drawing.parent_id, new Set())
-      }
-      const children = childrenMap.get(drawing.parent_id)
-      if (children) {
-        children.add(drawing.id)
-      }
-    }
-    const links = extractLinks(drawing)
-    if (links.length > 0) {
-      linkMap.set(drawing.id, new Set(links))
-    }
-  }
-
-  // Calculate node colors
-  const getNodeColor = (drawing: Drawing): string => {
-    const isRoot = !drawing.parent_id
-    const hasChildren = childrenMap.has(drawing.id)
-    const hasLinks = linkMap.has(drawing.id)
-
-    if (isRoot && hasChildren) return "#8b5cf6" // Purple - Root with children
-    if (hasLinks) return "#3b82f6" // Blue - Has links
-    if (hasChildren) return "#10b981" // Green - Has children
-    if (isRoot) return "#6b7280" // Gray - Orphan
-    return "#6366f1" // Default indigo
-  }
-
-  // Add nodes
-  let orphanCount = 0
-  for (const drawing of drawings) {
-    const isOrphan = !drawing.parent_id
-    if (!filters.showOrphans && isOrphan) continue
-
-    if (isOrphan) orphanCount++
-    elements.push({
-      data: {
-        id: drawing.id,
-        label: drawing.title,
-        color: getNodeColor(drawing),
-      },
-    })
-    nodeIds.add(drawing.id)
-  }
-
-  // Add hierarchy edges
-  let edgeCount = 0
-  if (filters.showHierarchy) {
-    for (const drawing of drawings) {
-      if (drawing.parent_id && nodeIds.has(drawing.parent_id) && nodeIds.has(drawing.id)) {
-        elements.push({
-          data: {
-            id: `h-${drawing.parent_id}-${drawing.id}`,
-            source: drawing.parent_id,
-            target: drawing.id,
-            type: "hierarchy",
-          },
-        })
-        edgeCount++
-      }
-    }
-  }
-
-  // Add link edges
-  if (filters.showLinks) {
-    for (const drawing of drawings) {
-      if (!nodeIds.has(drawing.id)) continue
-      const links = extractLinks(drawing)
-      for (const targetId of links) {
-        if (nodeIds.has(targetId)) {
-          elements.push({
-            data: {
-              id: `l-${drawing.id}-${targetId}`,
-              source: drawing.id,
-              target: targetId,
-              type: "link",
-            },
-          })
-          edgeCount++
-        }
-      }
-    }
-  }
-
-  // Calculate max depth
-  const getDepth = (id: string, visited = new Set<string>()): number => {
-    if (visited.has(id)) return 0
-    visited.add(id)
-    const parent = parentMap.get(id)
-    return parent && nodeIds.has(parent) ? 1 + getDepth(parent, visited) : 0
-  }
-
-  const maxDepth = nodeIds.size > 0 ? Math.max(0, ...Array.from(nodeIds).map((id) => getDepth(id))) : 0
-
-  const stats: GraphStats = {
-    nodes: nodeIds.size,
-    edges: edgeCount,
-    orphans: orphanCount,
-    maxDepth,
-  }
-
-  return { elements, stats }
-}
-
-function extractLinks(drawing: Drawing): string[] {
-  const links = new Set<string>()
-  const elements = drawing.content.elements || []
-
-  for (const element of elements) {
-    if (element.link?.startsWith("drawing://")) {
-      const match = element.link.match(/^drawing:\/\/([^#]+)/)
-      if (match) {
-        links.add(match[1])
-      }
-    }
-  }
-
-  return Array.from(links)
 }

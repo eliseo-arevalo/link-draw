@@ -16,8 +16,10 @@ function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): bool
 
   // On Mac, Cmd is meta, on Windows/Linux, Ctrl is ctrl
   const hasModifier = shortcut.ctrl || shortcut.meta
-  const modifierMatch = hasModifier ? (event.ctrlKey || event.metaKey) : (!event.ctrlKey && !event.metaKey)
-  
+  const modifierMatch = hasModifier
+    ? event.ctrlKey || event.metaKey
+    : !event.ctrlKey && !event.metaKey
+
   const shiftMatch = shortcut.shift ? event.shiftKey : !event.shiftKey
   const altMatch = shortcut.alt ? event.altKey : !event.altKey
 

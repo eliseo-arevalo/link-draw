@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { DrawingService } from "@/shared/services/DrawingService"
-import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useDrawingStore } from "@/shared/store/drawingStore"
-import { useTreeStore } from "@/shared/store/treeStore"
 import { useThemeStore } from "@/shared/store/themeStore"
+import { useTreeStore } from "@/shared/store/treeStore"
 import { getThemeColors } from "@/shared/styles/theme"
-import { useDragAndDrop } from "./hooks/useDragAndDrop"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
+import { useDragAndDrop } from "./hooks/useDragAndDrop"
 
 const repository = new LocalStorageRepository()
 const adapter = new ExcalidrawAdapter()
@@ -23,7 +23,12 @@ interface DrawingsExplorerProps {
   isGraphView: boolean
 }
 
-export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, isGraphView }: DrawingsExplorerProps) {
+export function Explorer({
+  isCollapsed,
+  onToggleSidebar,
+  onToggleGraph,
+  isGraphView,
+}: DrawingsExplorerProps) {
   const { tree, setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const { theme } = useThemeStore()
@@ -35,7 +40,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
   const [showMenu, setShowMenu] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  
+
   const dragAndDrop = useDragAndDrop()
 
   const handleCreateDrawing = async () => {
@@ -188,7 +193,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-                color: colors.text,
+            color: colors.text,
           }}
           title="Show sidebar (Cmd+B)"
         >
@@ -201,6 +206,8 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            role="img"
+            aria-label="Show sidebar"
           >
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
             <line x1="9" y1="3" x2="9" y2="21" />
@@ -256,11 +263,29 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
               title="Toggle theme"
             >
               {theme === "light" ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  role="img"
+                  aria-label="Toggle theme"
+                >
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  role="img"
+                  aria-label="Toggle theme"
+                >
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" />
                   <line x1="12" y1="21" x2="12" y2="23" />
@@ -297,6 +322,8 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                role="img"
+                aria-label="New drawing"
               >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -325,6 +352,8 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                role="img"
+                aria-label="Hide sidebar"
               >
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                 <line x1="9" y1="3" x2="9" y2="21" />
@@ -341,7 +370,7 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                color: colors.text,
+                  color: colors.text,
                 }}
                 title="More options"
               >
@@ -354,6 +383,8 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  role="img"
+                  aria-label="More options"
                 >
                   <circle cx="12" cy="12" r="1" />
                   <circle cx="12" cy="5" r="1" />
@@ -403,7 +434,16 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                       e.currentTarget.style.backgroundColor = "transparent"
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      role="img"
+                      aria-label="Icon"
+                    >
                       <circle cx="11" cy="11" r="8" />
                       <path d="m21 21-4.35-4.35" />
                     </svg>
@@ -438,7 +478,16 @@ export function DrawingsExplorer({ isCollapsed, onToggleSidebar, onToggleGraph, 
                       }
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      role="img"
+                      aria-label="Icon"
+                    >
                       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                       <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -549,7 +598,7 @@ function TreeNodeMenu({
 }) {
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
-  
+
   if (!isOpen) return null
 
   return (
@@ -678,7 +727,7 @@ function DeleteConfirmDialog({
 }) {
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
-  
+
   if (!isOpen) return null
 
   return createPortal(
@@ -695,7 +744,7 @@ function DeleteConfirmDialog({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-                color: colors.text,
+        color: colors.text,
         zIndex: 999999,
       }}
       onClick={onCancel}
@@ -711,7 +760,9 @@ function DeleteConfirmDialog({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontWeight: 600, color: colors.text }}>
+        <h3
+          style={{ margin: "0 0 0.5rem 0", fontSize: "1rem", fontWeight: 600, color: colors.text }}
+        >
           Delete Drawing?
         </h3>
         <p style={{ margin: "0 0 1rem 0", fontSize: "0.875rem", color: colors.textSecondary }}>
@@ -754,10 +805,10 @@ function DeleteConfirmDialog({
   )
 }
 
-function TreeNode({ 
-  node, 
-  level, 
-  activeId, 
+function TreeNode({
+  node,
+  level,
+  activeId,
   onSelect,
   onDragStart,
   onDragOver,
@@ -904,11 +955,11 @@ function TreeNode({
         className="flex items-center gap-2 py-1.5 px-4 transition-colors group"
         style={{
           paddingLeft: `${level * 1.25 + 1}rem`,
-          backgroundColor: isDragOver 
-            ? "rgba(99, 102, 241, 0.1)" 
-            : isActive 
-            ? "var(--excalidraw-bg-secondary)" 
-            : "transparent",
+          backgroundColor: isDragOver
+            ? "rgba(99, 102, 241, 0.1)"
+            : isActive
+              ? "var(--excalidraw-bg-secondary)"
+              : "transparent",
           borderLeft: isActive
             ? "2px solid var(--excalidraw-button-primary)"
             : "2px solid transparent",
@@ -944,7 +995,7 @@ function TreeNode({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-                color: colors.text,
+              color: colors.text,
               cursor: "pointer",
               border: "none",
               background: "transparent",
@@ -1093,6 +1144,8 @@ function TreeNode({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              role="img"
+              aria-label="More options"
               aria-hidden="true"
             >
               <circle cx="12" cy="12" r="1" />
