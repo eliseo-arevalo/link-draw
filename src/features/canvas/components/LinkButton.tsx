@@ -24,9 +24,6 @@ export function LinkButton({ onClick, disabled }: LinkButtonProps) {
       `}
     >
       <Icon name="link" aria-label="Link to drawing" />
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
       Link
     </button>
   )
