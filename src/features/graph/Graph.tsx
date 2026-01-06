@@ -1,28 +1,15 @@
 import cytoscape, { type Core } from "cytoscape"
 import { useEffect, useRef, useState } from "react"
-import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
+import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
+import type { GraphFilters, GraphStats } from "@/shared/types/graph"
 import { buildGraphElements } from "./lib/graph-builder"
 
-const repository = new LocalStorageRepository()
-
-interface GraphFilters {
-  showHierarchy: boolean
-  showLinks: boolean
-  showOrphans: boolean
-}
-
-interface GraphStats {
-  nodes: number
-  edges: number
-  orphans: number
-  maxDepth: number
-}
-
 export function Graph() {
+  const { repository } = useServices()
   const containerRef = useRef<HTMLDivElement>(null)
   const cyRef = useRef<Core | null>(null)
   const { setActiveDrawingId } = useDrawingStore()

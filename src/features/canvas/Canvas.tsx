@@ -1,11 +1,9 @@
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
-import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links"
-import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
-import { DrawingService } from "@/shared/services/DrawingService"
+import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
@@ -18,11 +16,8 @@ const Excalidraw = lazy(() =>
   import("@excalidraw/excalidraw").then((mod) => ({ default: mod.Excalidraw }))
 )
 
-const repository = new LocalStorageRepository()
-const adapter = new ExcalidrawAdapter()
-const drawingService = new DrawingService(repository, adapter)
-
 export function Canvas() {
+  const { adapter, drawingService, repository } = useServices()
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const { theme } = useThemeStore()

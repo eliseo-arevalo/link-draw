@@ -1,11 +1,10 @@
 import { useCallback, useState } from "react"
-import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
+import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
 
-const repository = new LocalStorageRepository()
-
 export function useTreeActions() {
+  const { repository } = useServices()
   const { setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -14,7 +13,7 @@ export function useTreeActions() {
   const refreshTree = useCallback(async () => {
     const updatedTree = await repository.getDrawingsTree()
     setTree(updatedTree)
-  }, [setTree])
+  }, [repository, setTree])
 
   const createDrawing = useCallback(
     async (parentId: string | null = null) => {
@@ -40,7 +39,7 @@ export function useTreeActions() {
         setIsLoading(false)
       }
     },
-    [refreshTree, setActiveDrawingId]
+    [repository, refreshTree, setActiveDrawingId]
   )
 
   const updateTitle = useCallback(
@@ -54,7 +53,7 @@ export function useTreeActions() {
         return false
       }
     },
-    [refreshTree]
+    [repository, refreshTree]
   )
 
   const deleteDrawing = useCallback(
@@ -71,7 +70,7 @@ export function useTreeActions() {
         return false
       }
     },
-    [refreshTree, activeDrawingId, setActiveDrawingId]
+    [repository, refreshTree, activeDrawingId, setActiveDrawingId]
   )
 
   const loadTree = useCallback(async () => {

@@ -1,20 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
-import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
-import { DrawingService } from "@/shared/services/DrawingService"
+import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { useTreeStore } from "@/shared/store/treeStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 import { useDragAndDrop } from "./hooks/useDragAndDrop"
-
-const repository = new LocalStorageRepository()
-const adapter = new ExcalidrawAdapter()
-const drawingService = new DrawingService(repository, adapter)
 
 interface DrawingsExplorerProps {
   isCollapsed: boolean
@@ -29,6 +23,7 @@ export function Explorer({
   onToggleGraph,
   isGraphView,
 }: DrawingsExplorerProps) {
+  const { drawingService, repository } = useServices()
   const { tree, setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const { theme } = useThemeStore()
@@ -563,6 +558,8 @@ export function Explorer({
                 onDragEnd={dragAndDrop.handleDragEnd}
                 draggedId={dragAndDrop.draggedId}
                 dragOverId={dragAndDrop.dragOverId}
+                repository={repository}
+                drawingService={drawingService}
               />
             ))}
           </div>
@@ -583,6 +580,8 @@ interface TreeNodeProps {
   onDragEnd: () => void
   draggedId: string | null
   dragOverId: string | null
+  repository: any
+  drawingService: any
 }
 
 function TreeNodeMenu({
@@ -816,6 +815,8 @@ function TreeNode({
   onDragEnd,
   draggedId,
   dragOverId,
+  repository,
+  drawingService,
 }: TreeNodeProps) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -1185,6 +1186,8 @@ function TreeNode({
               onDragEnd={onDragEnd}
               draggedId={draggedId}
               dragOverId={dragOverId}
+              repository={repository}
+              drawingService={drawingService}
             />
           ))}
         </div>

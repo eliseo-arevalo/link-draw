@@ -1,19 +1,17 @@
 import { useCallback, useEffect, useState } from "react"
-import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
+import { useServices } from "@/shared/providers/ServiceProvider"
 import type { Drawing, DrawingTreeNode } from "@/shared/types/drawing"
 import { DrawingList } from "./DrawingList"
 import { ElementList } from "./ElementList"
 import { ModalHeader } from "./ModalHeader"
 import { SearchInput } from "./SearchInput"
 
-const repository = new LocalStorageRepository()
-
 const Z_INDEX = {
   MODAL_BACKDROP: 300,
   MODAL_CONTENT: 301,
 }
 
-const loadDrawingElements = async (drawing: DrawingTreeNode) => {
+const loadDrawingElements = async (drawing: DrawingTreeNode, repository: any) => {
   const fullDrawing = await repository.loadDrawing(drawing.id)
   if (!fullDrawing) return null
 
@@ -49,6 +47,7 @@ export function DrawingPickerModal({
   onSelect,
   currentDrawingId,
 }: DrawingPickerModalProps) {
+  const { repository } = useServices()
   const [tree, setTree] = useState<DrawingTreeNode[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -110,7 +109,7 @@ export function DrawingPickerModal({
   const handleDrawingSelect = async (drawing: DrawingTreeNode) => {
     setIsLoadingElements(true)
     try {
-      const result = await loadDrawingElements(drawing)
+      const result = await loadDrawingElements(drawing, repository)
       if (result) {
         setSelectedDrawing(result.drawing)
         setElements(result.elements)

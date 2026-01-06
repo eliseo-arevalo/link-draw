@@ -25,33 +25,38 @@ export interface GraphData {
 }
 
 /**
- * Graph statistics
+ * Graph filters
+ */
+export interface GraphFilters {
+  showHierarchy: boolean
+  showLinks: boolean
+  showOrphans: boolean
+  showSemanticLinks?: boolean
+  showHierarchyLinks?: boolean
+  maxDepth?: number
+  searchQuery?: string
+}
+
+/**
+ * Simple graph statistics for current view
  */
 export interface GraphStats {
-  totalNodes: number
-  totalEdges: number
-  semanticEdges: number
-  hierarchyEdges: number
-  orphanNodes: number
+  nodes: number
+  edges: number
+  orphans: number
   maxDepth: number
-  mostConnectedNodes: Array<{
+  totalNodes?: number
+  totalEdges?: number
+  semanticEdges?: number
+  hierarchyEdges?: number
+  orphanNodes?: number
+  mostConnectedNodes?: Array<{
     id: string
     label: string
     connections: number
   }>
-  clusters: Array<{
+  clusters?: Array<{
     nodes: string[]
     size: number
   }>
-}
-
-/**
- * Graph filters
- */
-export interface GraphFilters {
-  showSemanticLinks: boolean
-  showHierarchyLinks: boolean
-  maxDepth?: number
-  showOrphans: boolean
-  searchQuery?: string
 }
