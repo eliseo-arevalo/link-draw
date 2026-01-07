@@ -131,18 +131,28 @@ export class LocalStorageRepository implements IGraphRepository {
       throw new Error(`Drawing ${id} not found`)
     }
 
-    // Recursively collect all descendant IDs
+    // Build parent-to-children map once: O(n)
+    const childrenMap = new Map<string, string[]>()
+    for (const drawing of drawings) {
+      if (drawing.parent_id) {
+        const children = childrenMap.get(drawing.parent_id) || []
+        children.push(drawing.id)
+        childrenMap.set(drawing.parent_id, children)
+      }
+    }
+
+    // Recursively collect all descendant IDs using map: O(d)
     const idsToDelete = new Set<string>([id])
     const collectDescendants = (parentId: string) => {
-      const children = drawings.filter((d) => d.parent_id === parentId)
-      for (const child of children) {
-        idsToDelete.add(child.id)
-        collectDescendants(child.id)
+      const children = childrenMap.get(parentId) || []
+      for (const childId of children) {
+        idsToDelete.add(childId)
+        collectDescendants(childId)
       }
     }
     collectDescendants(id)
 
-    // Filter out all drawings to delete
+    // Filter once: O(n)
     const filtered = drawings.filter((d) => !idsToDelete.has(d.id))
 
     this.saveAll(filtered)

@@ -16,13 +16,25 @@ export function buildGraphElements(
   const { elements, nodeIds, orphanCount } = buildNodes(drawings, filters, maps)
 
   // Build edges
+  let hierarchyEdges: ElementDefinition[] = []
+  let linkEdges: ElementDefinition[] = []
+
   if (filters.showHierarchy) {
-    elements.push(...buildHierarchyEdges(drawings, nodeIds))
+    hierarchyEdges = buildHierarchyEdges(drawings, nodeIds)
+    elements.push(...hierarchyEdges)
   }
 
   if (filters.showLinks) {
-    elements.push(...buildLinkEdges(drawings, nodeIds, extractLinks))
+    linkEdges = buildLinkEdges(drawings, nodeIds, extractLinks)
+    elements.push(...linkEdges)
   }
+
+  console.log("[Graph Builder]", {
+    filters,
+    hierarchyEdges: hierarchyEdges.length,
+    linkEdges: linkEdges.length,
+    totalElements: elements.length,
+  })
 
   // Calculate stats
   const edgeCount = elements.filter((el) => el.data.source).length
