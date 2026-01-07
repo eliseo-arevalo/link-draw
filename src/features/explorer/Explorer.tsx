@@ -178,6 +178,7 @@ export function Explorer({
           backgroundColor: colors.background,
           borderRight: `1px solid ${colors.border}`,
           padding: "0.5rem 0",
+          transition: "width 0.15s ease-out, min-width 0.15s ease-out",
         }}
       >
         <button
@@ -207,6 +208,7 @@ export function Explorer({
         minWidth: `${SIDEBAR_WIDTH}px`,
         backgroundColor: colors.background,
         borderRight: `1px solid ${colors.border}`,
+        transition: "width 0.15s ease-out, min-width 0.15s ease-out",
       }}
     >
       {/* Header */}

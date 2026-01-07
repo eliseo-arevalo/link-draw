@@ -27,14 +27,28 @@ function App() {
   ])
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        backgroundColor: "var(--color-surface-primary, #ffffff)",
+      }}
+    >
       <Explorer
         isCollapsed={!showSidebar}
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
         onToggleGraph={toggleView}
         isGraphView={viewMode === "graph"}
       />
-      <div style={{ flex: 1, overflow: "hidden" }}>
+      <div
+        style={{
+          flex: 1,
+          overflow: "hidden",
+          backgroundColor: "var(--color-surface-primary, #ffffff)",
+          transition: "all 0.15s ease-out",
+        }}
+      >
         {viewMode === "canvas" ? <Canvas /> : <Graph />}
       </div>
     </div>

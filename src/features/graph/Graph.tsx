@@ -7,6 +7,7 @@ import { useThemeStore } from "@/shared/store/themeStore"
 import { useTreeStore } from "@/shared/store/treeStore"
 import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
+import type { Drawing } from "@/shared/types/drawing"
 import type { GraphFilters, GraphStats } from "@/shared/types/graph"
 import { buildGraphElements } from "./lib/graph-builder"
 
@@ -156,6 +157,37 @@ export function Graph() {
     []
   )
 
+  // Helper to create tooltip element
+  const createTooltip = useCallback(
+    (drawing: Drawing, childCount: number, linkCount: number, x: number, y: number) => {
+      const tooltip = document.createElement("div")
+      tooltip.id = "graph-tooltip"
+      tooltip.style.cssText = `
+        position: fixed;
+        background: ${theme === "dark" ? "#1f2937" : "#ffffff"};
+        color: ${theme === "dark" ? "#e5e7eb" : "#1f2937"};
+        border: 1px solid ${theme === "dark" ? "#374151" : "#d1d5db"};
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 13px;
+        z-index: 999999;
+        pointer-events: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        max-width: 200px;
+      `
+      tooltip.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 4px;">${drawing.title}</div>
+        <div style="font-size: 12px; opacity: 0.8;">
+          ${childCount} children • ${linkCount} links
+        </div>
+      `
+      tooltip.style.left = `${x}px`
+      tooltip.style.top = `${y}px`
+      document.body.appendChild(tooltip)
+    },
+    [theme]
+  )
+
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -176,7 +208,7 @@ export function Graph() {
 
         // Add positions to elements before adding them
         const elementsWithPositions = elements.map((el) => {
-          if (el.group === 'nodes' && el.data.id && positions[el.data.id]) {
+          if (el.group === "nodes" && el.data.id && positions[el.data.id]) {
             return { ...el, position: positions[el.data.id] }
           }
           return el
@@ -236,36 +268,17 @@ export function Graph() {
               el.link?.startsWith("drawing://")
             ).length || 0
 
-          const tooltip = document.createElement("div")
-          tooltip.id = "graph-tooltip"
-          tooltip.style.cssText = `
-            position: fixed;
-            background: ${theme === "dark" ? "#1f2937" : "#ffffff"};
-            color: ${theme === "dark" ? "#e5e7eb" : "#1f2937"};
-            border: 1px solid ${theme === "dark" ? "#374151" : "#d1d5db"};
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 13px;
-            z-index: 999999;
-            pointer-events: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            max-width: 200px;
-          `
-          tooltip.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 4px;">${drawing.title}</div>
-            <div style="font-size: 12px; opacity: 0.8;">
-              ${childCount} children • ${linkCount} links
-            </div>
-          `
-
           const renderedPosition = node.renderedPosition()
           const containerRect = containerRef.current?.getBoundingClientRect()
           if (containerRect) {
-            tooltip.style.left = `${containerRect.left + renderedPosition.x + 15}px`
-            tooltip.style.top = `${containerRect.top + renderedPosition.y - 10}px`
+            createTooltip(
+              drawing,
+              childCount,
+              linkCount,
+              containerRect.left + renderedPosition.x + 15,
+              containerRect.top + renderedPosition.y - 10
+            )
           }
-
-          document.body.appendChild(tooltip)
         }, 300)
       })
 
@@ -302,6 +315,7 @@ export function Graph() {
     setViewMode,
     repository.listDrawings,
     getGraphStyles,
+    createTooltip,
   ])
 
   // Auto-refresh when tree changes (separate effect to avoid lint warnings)
@@ -324,6 +338,26 @@ export function Graph() {
       setRefreshTrigger((prev) => prev + 1)
     }
   }, [tree])
+
+  // Handle container resize (e.g., when sidebar collapses)
+  useEffect(() => {
+    if (!containerRef.current || !cyRef.current) return
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Force immediate resize without debouncing
+      if (cyRef.current) {
+        cyRef.current.resize()
+        // Force a second resize on next tick to catch any lag
+        setTimeout(() => cyRef.current?.resize(), 0)
+      }
+    })
+
+    resizeObserver.observe(containerRef.current)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
 
   const handleRefresh = () => {
     setRefreshTrigger((prev) => prev + 1)
@@ -515,8 +549,11 @@ export function Graph() {
       </div>
 
       {/* Graph Container */}
-      <div style={{ position: "relative", flex: 1 }}>
-        <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+      <div style={{ position: "relative", flex: 1, backgroundColor: colors.background }}>
+        <div
+          ref={containerRef}
+          style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
+        />
         <div
           style={{
             position: "absolute",
