@@ -1,4 +1,4 @@
-# Excaligraph
+# LinkDraw
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org)
@@ -8,7 +8,7 @@ Multi-canvas management and element relationships for [Excalidraw](https://excal
 
 ## Overview
 
-Excalidraw is excellent for individual drawings. Excaligraph extends it with:
+Excalidraw is excellent for individual drawings. LinkDraw extends it with:
 
 - **Multi-canvas projects**: Manage multiple canvases in a hierarchical tree structure
 - **Element relationships**: Link elements and entire drawings across canvases

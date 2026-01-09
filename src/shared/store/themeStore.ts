@@ -15,7 +15,7 @@ export const useThemeStore = create<ThemeStore>()(
       setTheme: (theme) => set({ theme }),
     }),
     {
-      name: "excaligraph-theme",
+      name: "linkdraw-theme",
     }
   )
 )

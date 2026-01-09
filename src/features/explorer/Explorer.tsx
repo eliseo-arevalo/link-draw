@@ -453,7 +453,7 @@ export function Explorer({
                         const url = URL.createObjectURL(blob)
                         const a = document.createElement("a")
                         a.href = url
-                        a.download = `excaligraph-export-${Date.now()}.json`
+                        a.download = `linkdraw-export-${Date.now()}.json`
                         a.click()
                         URL.revokeObjectURL(url)
                         setShowMenu(false)
@@ -506,7 +506,7 @@ export function Explorer({
                           }
 
                           // Clear existing data and import
-                          localStorage.setItem("excaligraph:drawings", JSON.stringify(data.drawings))
+                          localStorage.setItem("linkdraw:drawings", JSON.stringify(data.drawings))
                           
                           // Reload tree
                           const updatedTree = await repository.getDrawingsTree()
