@@ -89,8 +89,9 @@ export function Graph() {
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
   const [layout, setLayout] = useState<LayoutType>("cose")
-  const [_refreshTrigger, setRefreshTrigger] = useState(0)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isGraphReady, setIsGraphReady] = useState(false)
   const [stats, setStats] = useState<GraphStats>({
     nodes: 0,
     edges: 0,
@@ -113,6 +114,8 @@ export function Graph() {
           "font-size": "14px",
           "text-wrap": "wrap" as const,
           "text-max-width": "70px",
+          "transition-property": "opacity, background-color",
+          "transition-duration": 300,
         },
       },
       {
@@ -194,8 +197,32 @@ export function Graph() {
       const { elements, stats: graphStats } = buildGraphElements(drawings, filters)
       setStats(graphStats)
 
-      // Only create if doesn't exist
+      // If graph exists, update elements
       if (cyRef.current) {
+        // Save current positions
+        const positions: Record<string, { x: number; y: number }> = {}
+        cyRef.current.nodes().forEach((node) => {
+          const pos = node.position()
+          positions[node.id()] = { x: pos.x, y: pos.y }
+        })
+
+        // Update elements
+        cyRef.current.elements().remove()
+        cyRef.current.add(elements)
+
+        // Restore positions for existing nodes
+        cyRef.current.nodes().forEach((node) => {
+          const savedPos = positions[node.id()]
+          if (savedPos) {
+            node.position(savedPos)
+          }
+        })
+
+        // Only run layout for new nodes (those without saved positions)
+        const newNodes = cyRef.current.nodes().filter((node) => !positions[node.id()])
+        if (newNodes.length > 0) {
+          cyRef.current.layout(LAYOUTS[layout].config).run()
+        }
         return
       }
 
@@ -209,6 +236,8 @@ export function Graph() {
       // Run layout and store reference to stop it on cleanup
       layoutRef.current = cyRef.current.layout(LAYOUTS[layout].config)
       layoutRef.current.run()
+
+      setIsGraphReady(true)
 
       cyRef.current.on("tap", "node", (evt) => {
         const nodeId = evt.target.id()
@@ -279,7 +308,7 @@ export function Graph() {
         cyRef.current = null
       }
     }
-  }, [layout, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
+  }, [layout, refreshTrigger, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
 
   // Auto-refresh when tree changes (separate effect to avoid lint warnings)
   const { tree } = useTreeStore()
@@ -380,24 +409,28 @@ export function Graph() {
 
       {/* Graph Container */}
       <div style={{ position: "relative", flex: 1, backgroundColor: colors.background }}>
-        {stats.nodes === 0 ? (
+        <div
+          ref={containerRef}
+          style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
+        />
+        {!isGraphReady && stats.nodes === 0 && (
           <div 
             style={{ 
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
               display: "flex", 
               alignItems: "center", 
-              justifyContent: "center", 
-              height: "100%",
+              justifyContent: "center",
               color: colors.textSecondary,
-              fontSize: "14px"
+              fontSize: "14px",
+              backgroundColor: colors.background,
             }}
           >
             No drawings to display. Create a drawing to get started.
           </div>
-        ) : (
-          <div
-            ref={containerRef}
-            style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
-          />
         )}
         <div
           style={{

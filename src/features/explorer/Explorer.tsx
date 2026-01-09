@@ -59,6 +59,7 @@ export function Explorer({
       setActiveDrawingId(id)
     } catch (err) {
       setError("Failed to create drawing")
+      setTimeout(() => setError(null), 5000)
       console.error("Failed to create drawing:", err)
     } finally {
       setIsCreating(false)
@@ -77,7 +78,10 @@ export function Explorer({
       const updatedTree = await repository.getDrawingsTree()
       setTree(updatedTree)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to move drawing")
+      const errorMsg = err instanceof Error ? err.message : "Failed to move drawing"
+      setError(errorMsg)
+      // Auto-clear error after 5 seconds
+      setTimeout(() => setError(null), 5000)
     } finally {
       dragAndDrop.handleDragEnd()
     }
@@ -91,7 +95,10 @@ export function Explorer({
       setActiveDrawingId(newId)
     } catch (err) {
       console.error("[Explorer] Duplicate failed:", err)
-      setError(err instanceof Error ? err.message : "Failed to duplicate drawing")
+      const errorMsg = err instanceof Error ? err.message : "Failed to duplicate drawing"
+      setError(errorMsg)
+      // Auto-clear error after 5 seconds
+      setTimeout(() => setError(null), 5000)
     }
   }
 
@@ -275,29 +282,6 @@ export function Explorer({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => {
-                const { theme, setTheme } = useThemeStore.getState()
-                setTheme(theme === "light" ? "dark" : "light")
-              }}
-              className="excalidraw-button"
-              style={{
-                padding: "0.375rem",
-                minWidth: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: colors.text,
-              }}
-              title="Toggle theme"
-            >
-              {theme === "light" ? (
-                <Icon name="moon" aria-label="Toggle theme" />
-              ) : (
-                <Icon name="sun" aria-label="Toggle theme" />
-              )}
-            </button>
-            <button
-              type="button"
               onClick={handleCreateDrawing}
               disabled={isCreating}
               className="excalidraw-button"
@@ -436,6 +420,37 @@ export function Explorer({
                       <line x1="12" y1="22.08" x2="12" y2="12" />
                     </svg>
                     Graph view (Cmd+G)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const { theme: currentTheme, setTheme } = useThemeStore.getState()
+                      setTheme(currentTheme === "light" ? "dark" : "light")
+                      setShowMenu(false)
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.875rem",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      color: colors.text,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      borderRadius: "2px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent"
+                    }}
+                  >
+                    <Icon name={theme === "light" ? "moon" : "sun"} size={14} aria-label="Toggle theme" />
+                    {theme === "light" ? "Dark" : "Light"} mode
                   </button>
                 </div>
               )}
