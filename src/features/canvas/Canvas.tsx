@@ -1,5 +1,6 @@
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Toast } from "@/shared/components/Toast"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links"
@@ -22,9 +23,10 @@ export function Canvas() {
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const { theme } = useThemeStore()
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
+  const [canvasError, setCanvasError] = useState<string | null>(null)
 
   const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
-  const { handleLinkOpen } = useLinkNavigation(adapter)
+  const { handleLinkOpen, errorMessage, clearError } = useLinkNavigation(adapter)
   const { saveAllCachedDrawings } = useCanvasLoader(
     drawingService,
     repository,
@@ -117,6 +119,7 @@ export function Canvas() {
             return // No trigger save, ya guardamos al crear
           } catch (error) {
             console.error("[Canvas] Failed to auto-create drawing:", error)
+            setCanvasError("Failed to create drawing")
           }
         }
       }
@@ -184,6 +187,9 @@ export function Canvas() {
         onSelect={handleLinkSelect}
         currentDrawingId={activeDrawingId}
       />
+
+      {errorMessage && <Toast message={errorMessage} type="error" onClose={clearError} />}
+      {canvasError && <Toast message={canvasError} type="error" onClose={() => setCanvasError(null)} />}
     </div>
   )
 }

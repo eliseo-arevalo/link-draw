@@ -56,7 +56,15 @@ export function useCanvasLoader(
   }, [repository])
 
   useEffect(() => {
-    if (!activeDrawingId || !excalidrawAPI) return
+    if (!excalidrawAPI) return
+
+    // Si no hay drawing activo, limpiar el canvas
+    if (!activeDrawingId) {
+      console.log("[Canvas] No active drawing, clearing canvas")
+      adapter.setContent({ elements: [], appState: {}, files: {} })
+      previousDrawingIdRef.current = null
+      return
+    }
 
     let cancelled = false
 
@@ -72,7 +80,7 @@ export function useCanvasLoader(
       console.log("[Canvas] Cleanup for:", activeDrawingId)
       cancelled = true
     }
-  }, [activeDrawingId, excalidrawAPI, loadCurrentDrawing])
+  }, [activeDrawingId, excalidrawAPI, loadCurrentDrawing, adapter])
 
   // Guardar todo al desmontar
   useEffect(() => {

@@ -81,6 +81,40 @@ export class DrawingService {
   }
 
   async moveDrawing(drawingId: string, parentId: string | null): Promise<void> {
+    // Evitar mover a sí mismo
+    if (drawingId === parentId) {
+      throw new Error("Cannot move drawing to itself")
+    }
+
+    // Evitar crear loops: verificar que parentId no sea descendiente de drawingId
+    if (parentId) {
+      const tree = await this.repository.getDrawingsTree()
+      const isDescendant = (nodeId: string, ancestorId: string): boolean => {
+        const findNode = (nodes: typeof tree, id: string): typeof tree[0] | null => {
+          for (const node of nodes) {
+            if (node.id === id) return node
+            if (node.children) {
+              const found = findNode(node.children, id)
+              if (found) return found
+            }
+          }
+          return null
+        }
+
+        const node = findNode(tree, nodeId)
+        if (!node) return false
+        if (node.id === ancestorId) return true
+        if (node.children) {
+          return node.children.some(child => isDescendant(child.id, ancestorId))
+        }
+        return false
+      }
+
+      if (isDescendant(drawingId, parentId)) {
+        throw new Error("Cannot move drawing to its own descendant")
+      }
+    }
+
     await this.setParent(drawingId, parentId)
   }
 

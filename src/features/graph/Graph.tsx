@@ -380,10 +380,25 @@ export function Graph() {
 
       {/* Graph Container */}
       <div style={{ position: "relative", flex: 1, backgroundColor: colors.background }}>
-        <div
-          ref={containerRef}
-          style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
-        />
+        {stats.nodes === 0 ? (
+          <div 
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              height: "100%",
+              color: colors.textSecondary,
+              fontSize: "14px"
+            }}
+          >
+            No drawings to display. Create a drawing to get started.
+          </div>
+        ) : (
+          <div
+            ref={containerRef}
+            style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
+          />
+        )}
         <div
           style={{
             position: "absolute",
