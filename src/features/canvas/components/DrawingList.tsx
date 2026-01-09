@@ -4,12 +4,17 @@ import type { DrawingTreeNode } from "@/shared/types/drawing"
 interface DrawingListProps {
   drawings: DrawingTreeNode[]
   onSelect: (drawing: DrawingTreeNode) => void
+  textColor: string
+  hoverBg: string
 }
 
-export function DrawingList({ drawings, onSelect }: DrawingListProps) {
+export function DrawingList({ drawings, onSelect, textColor, hoverBg }: DrawingListProps) {
   if (drawings.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+      <div
+        className="flex items-center justify-center h-full text-sm"
+        style={{ color: textColor, opacity: 0.6 }}
+      >
         No drawings available
       </div>
     )
@@ -22,11 +27,26 @@ export function DrawingList({ drawings, onSelect }: DrawingListProps) {
           key={drawing.id}
           type="button"
           onClick={() => onSelect(drawing)}
-          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left w-full"
+          className="flex items-center gap-3 p-3 rounded-lg transition-colors text-left w-full"
+          style={{ 
+            backgroundColor: "transparent", 
+            color: textColor,
+            cursor: "pointer"
+          }}
+          onMouseEnter={(e) => {
+            const target = e.currentTarget
+            target.style.backgroundColor = hoverBg
+          }}
+          onMouseLeave={(e) => {
+            const target = e.currentTarget
+            target.style.backgroundColor = "transparent"
+          }}
         >
-          <Icon name="file" size={20} className="text-gray-500" aria-label="Drawing" />
+          <Icon name="file" size={20} color={textColor} aria-label="Drawing" />
           <span className="flex-1 text-sm truncate">{drawing.title}</span>
-          <Icon name="chevronRight" className="text-gray-500 opacity-50" aria-label="Select" />
+          <span style={{ opacity: 0.5 }}>
+            <Icon name="chevronRight" color={textColor} aria-label="Select" />
+          </span>
         </button>
       ))}
     </div>

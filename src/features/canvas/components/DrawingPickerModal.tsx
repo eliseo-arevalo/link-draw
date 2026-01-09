@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import { useServices } from "@/shared/providers/ServiceProvider"
+import { useThemeStore } from "@/shared/store/themeStore"
+import { getThemeColors } from "@/shared/styles/theme"
 import type { Drawing, DrawingTreeNode } from "@/shared/types/drawing"
 import { DrawingList } from "./DrawingList"
 import { ElementList } from "./ElementList"
@@ -49,6 +51,8 @@ export function DrawingPickerModal({
   currentDrawingId,
 }: DrawingPickerModalProps) {
   const { repository } = useServices()
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
   const [tree, setTree] = useState<DrawingTreeNode[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -150,15 +154,22 @@ export function DrawingPickerModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 bg-black/50 flex items-center justify-center"
-      style={{ zIndex: Z_INDEX.MODAL_BACKDROP }}
+      className="fixed inset-0 flex items-center justify-center"
+      style={{
+        zIndex: Z_INDEX.MODAL_BACKDROP,
+        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.5)",
+      }}
       onClick={onClose}
       onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <div
         role="document"
-        className="bg-white border border-gray-200 rounded-xl p-6 w-full max-w-md max-h-[70vh] flex flex-col shadow-2xl"
-        style={{ zIndex: Z_INDEX.MODAL_CONTENT }}
+        className="rounded-xl p-6 w-full max-w-md max-h-[70vh] flex flex-col shadow-2xl"
+        style={{
+          backgroundColor: colors.background,
+          border: `1px solid ${colors.border}`,
+          zIndex: Z_INDEX.MODAL_CONTENT,
+        }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -166,6 +177,9 @@ export function DrawingPickerModal({
           title={headerTitle}
           subtitle={headerSubtitle}
           onBack={selectedDrawing ? handleBack : undefined}
+          textColor={colors.text}
+          textSecondaryColor={colors.textSecondary}
+          hoverBg={colors.backgroundSecondary}
         />
 
         {!selectedDrawing && (
@@ -173,20 +187,37 @@ export function DrawingPickerModal({
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search drawings..."
+            backgroundColor={colors.backgroundSecondary}
+            borderColor={colors.border}
+            textColor={colors.text}
           />
         )}
 
         <div className="flex-1 overflow-y-auto mb-4 min-h-[200px]">
           {isLoading || isLoadingElements ? (
-            <div className="flex items-center justify-center h-full text-gray-500">Loading...</div>
+            <div
+              className="flex items-center justify-center h-full"
+              style={{ color: colors.textSecondary }}
+            >
+              Loading...
+            </div>
           ) : selectedDrawing ? (
             <ElementList
               elements={elements}
               onSelectElement={handleSelectElement}
               onSelectWholeDrawing={handleSelectWholeDrawing}
+              textColor={colors.text}
+              textSecondaryColor={colors.textSecondary}
+              hoverBg={colors.backgroundSecondary}
+              borderColor={colors.border}
             />
           ) : (
-            <DrawingList drawings={filteredDrawings} onSelect={handleDrawingSelect} />
+            <DrawingList
+              drawings={filteredDrawings}
+              onSelect={handleDrawingSelect}
+              textColor={colors.text}
+              hoverBg={colors.backgroundSecondary}
+            />
           )}
         </div>
 
@@ -194,7 +225,12 @@ export function DrawingPickerModal({
           <button
             type="button"
             onClick={selectedDrawing ? handleBack : onClose}
-            className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm rounded transition-colors"
+            style={{
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.backgroundSecondary,
+              color: colors.text,
+            }}
           >
             {selectedDrawing ? "Back" : "Cancel"}
           </button>

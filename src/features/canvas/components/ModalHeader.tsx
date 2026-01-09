@@ -4,9 +4,19 @@ interface ModalHeaderProps {
   title: string
   subtitle: string
   onBack?: () => void
+  textColor: string
+  textSecondaryColor: string
+  hoverBg: string
 }
 
-export function ModalHeader({ title, subtitle, onBack }: ModalHeaderProps) {
+export function ModalHeader({
+  title,
+  subtitle,
+  onBack,
+  textColor,
+  textSecondaryColor,
+  hoverBg,
+}: ModalHeaderProps) {
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2">
@@ -14,15 +24,28 @@ export function ModalHeader({ title, subtitle, onBack }: ModalHeaderProps) {
           <button
             type="button"
             onClick={onBack}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            className="p-1 rounded transition-colors"
+            style={{ backgroundColor: "transparent" }}
+            onMouseEnter={(e) => {
+              const target = e.currentTarget
+              target.style.backgroundColor = hoverBg
+            }}
+            onMouseLeave={(e) => {
+              const target = e.currentTarget
+              target.style.backgroundColor = "transparent"
+            }}
             aria-label="Back to drawing list"
           >
-            <Icon name="arrowLeft" size={20} className="text-gray-600" aria-label="Back" />
+            <Icon name="arrowLeft" size={20} color={textSecondaryColor} aria-label="Back" />
           </button>
         )}
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-lg font-semibold" style={{ color: textColor }}>
+          {title}
+        </h2>
       </div>
-      <p className="mt-2 text-sm text-gray-600">{subtitle}</p>
+      <p className="mt-2 text-sm" style={{ color: textSecondaryColor }}>
+        {subtitle}
+      </p>
     </div>
   )
 }
