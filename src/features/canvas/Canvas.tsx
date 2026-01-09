@@ -189,7 +189,9 @@ export function Canvas() {
       />
 
       {errorMessage && <Toast message={errorMessage} type="error" onClose={clearError} />}
-      {canvasError && <Toast message={canvasError} type="error" onClose={() => setCanvasError(null)} />}
+      {canvasError && (
+        <Toast message={canvasError} type="error" onClose={() => setCanvasError(null)} />
+      )}
     </div>
   )
 }

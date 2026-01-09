@@ -28,10 +28,10 @@ export function DrawingList({ drawings, onSelect, textColor, hoverBg }: DrawingL
           type="button"
           onClick={() => onSelect(drawing)}
           className="flex items-center gap-3 p-3 rounded-lg transition-colors text-left w-full"
-          style={{ 
-            backgroundColor: "transparent", 
+          style={{
+            backgroundColor: "transparent",
             color: textColor,
-            cursor: "pointer"
+            cursor: "pointer",
           }}
           onMouseEnter={(e) => {
             const target = e.currentTarget

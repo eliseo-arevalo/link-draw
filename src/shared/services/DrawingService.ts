@@ -80,6 +80,27 @@ export class DrawingService {
     await this.repository.setDrawingParent(drawingId, parentId)
   }
 
+  private findNodeInTree(nodes: DrawingTreeNode[], id: string): DrawingTreeNode | null {
+    for (const node of nodes) {
+      if (node.id === id) return node
+      if (node.children) {
+        const found = this.findNodeInTree(node.children, id)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  private isDescendant(tree: DrawingTreeNode[], nodeId: string, ancestorId: string): boolean {
+    const node = this.findNodeInTree(tree, nodeId)
+    if (!node) return false
+    if (node.id === ancestorId) return true
+    if (node.children) {
+      return node.children.some((child) => this.isDescendant(tree, child.id, ancestorId))
+    }
+    return false
+  }
+
   async moveDrawing(drawingId: string, parentId: string | null): Promise<void> {
     // Evitar mover a sí mismo
     if (drawingId === parentId) {
@@ -89,28 +110,7 @@ export class DrawingService {
     // Evitar crear loops: verificar que parentId no sea descendiente de drawingId
     if (parentId) {
       const tree = await this.repository.getDrawingsTree()
-      const isDescendant = (nodeId: string, ancestorId: string): boolean => {
-        const findNode = (nodes: typeof tree, id: string): typeof tree[0] | null => {
-          for (const node of nodes) {
-            if (node.id === id) return node
-            if (node.children) {
-              const found = findNode(node.children, id)
-              if (found) return found
-            }
-          }
-          return null
-        }
-
-        const node = findNode(tree, nodeId)
-        if (!node) return false
-        if (node.id === ancestorId) return true
-        if (node.children) {
-          return node.children.some(child => isDescendant(child.id, ancestorId))
-        }
-        return false
-      }
-
-      if (isDescendant(drawingId, parentId)) {
+      if (this.isDescendant(tree, drawingId, parentId)) {
         throw new Error("Cannot move drawing to its own descendant")
       }
     }

@@ -146,6 +146,30 @@ export function Explorer({
     [repository]
   )
 
+  // Helper to process a single node
+  const processNode = useCallback(
+    async (
+      node: DrawingTreeNode,
+      query: string,
+      filterTree: (nodes: DrawingTreeNode[], q: string) => Promise<DrawingTreeNode[]>
+    ): Promise<DrawingTreeNode | null> => {
+      const lowerQuery = query.toLowerCase()
+      const matchesTitle = node.title.toLowerCase().includes(lowerQuery)
+      const matchesContent = await drawingContentMatches(node.id, lowerQuery)
+      const filteredChildren = node.children ? await filterTree(node.children, query) : []
+
+      if (matchesTitle || matchesContent || filteredChildren.length > 0) {
+        return {
+          ...node,
+          children: filteredChildren.length > 0 ? filteredChildren : node.children,
+          metadata: { matchesContent: matchesContent && !matchesTitle },
+        }
+      }
+      return null
+    },
+    [drawingContentMatches]
+  )
+
   // Filter tree based on search query (searches in titles and content)
   const [filteredTree, setFilteredTree] = useState<DrawingTreeNode[]>(tree)
 
@@ -156,28 +180,16 @@ export function Explorer({
     ): Promise<DrawingTreeNode[]> => {
       if (!query.trim()) return nodes
 
-      const lowerQuery = query.toLowerCase()
       const filtered: DrawingTreeNode[] = []
-
       for (const node of nodes) {
-        const matchesTitle = node.title.toLowerCase().includes(lowerQuery)
-        const matchesContent = await drawingContentMatches(node.id, lowerQuery)
-        const filteredChildren = node.children ? await filterTree(node.children, query) : []
-
-        if (matchesTitle || matchesContent || filteredChildren.length > 0) {
-          filtered.push({
-            ...node,
-            children: filteredChildren.length > 0 ? filteredChildren : node.children,
-            metadata: { matchesContent: matchesContent && !matchesTitle },
-          })
-        }
+        const result = await processNode(node, query, filterTree)
+        if (result) filtered.push(result)
       }
-
       return filtered
     }
 
     filterTree(tree, searchQuery).then(setFilteredTree)
-  }, [tree, searchQuery, drawingContentMatches])
+  }, [tree, searchQuery, processNode])
 
   useEffect(() => {
     let cancelled = false
@@ -449,7 +461,11 @@ export function Explorer({
                       e.currentTarget.style.backgroundColor = "transparent"
                     }}
                   >
-                    <Icon name={theme === "light" ? "moon" : "sun"} size={14} aria-label="Toggle theme" />
+                    <Icon
+                      name={theme === "light" ? "moon" : "sun"}
+                      size={14}
+                      aria-label="Toggle theme"
+                    />
                     {theme === "light" ? "Dark" : "Light"} mode
                   </button>
                 </div>

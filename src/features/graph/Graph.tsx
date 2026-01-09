@@ -89,7 +89,7 @@ export function Graph() {
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
   const [layout, setLayout] = useState<LayoutType>("cose")
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [_refreshTrigger, setRefreshTrigger] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
   const [isGraphReady, setIsGraphReady] = useState(false)
   const [stats, setStats] = useState<GraphStats>({
@@ -308,7 +308,7 @@ export function Graph() {
         cyRef.current = null
       }
     }
-  }, [layout, refreshTrigger, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
+  }, [layout, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
 
   // Auto-refresh when tree changes (separate effect to avoid lint warnings)
   const { tree } = useTreeStore()
@@ -414,15 +414,15 @@ export function Graph() {
           style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
         />
         {!isGraphReady && stats.nodes === 0 && (
-          <div 
-            style={{ 
+          <div
+            style={{
               position: "absolute",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              display: "flex", 
-              alignItems: "center", 
+              display: "flex",
+              alignItems: "center",
               justifyContent: "center",
               color: colors.textSecondary,
               fontSize: "14px",
