@@ -1,39 +1,62 @@
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/shared/components/DropdownMenu"
 import { Icon } from "@/shared/components/Icon"
+import { useThemeStore } from "@/shared/store/themeStore"
+import { getThemeColors } from "@/shared/styles/theme"
 
 interface TreeNodeMenuProps {
   isOpen: boolean
   onCreateChild: () => void
+  onDuplicate: () => void
+  onDuplicateWithChildren: () => void
   onDelete: () => void
+  anchorRef?: React.RefObject<HTMLDivElement | null>
 }
 
-export function TreeNodeMenu({ isOpen, onCreateChild, onDelete }: TreeNodeMenuProps) {
-  if (!isOpen) return null
+export function TreeNodeMenu({
+  isOpen,
+  onCreateChild,
+  onDuplicate,
+  onDuplicateWithChildren,
+  onDelete,
+  anchorRef,
+}: TreeNodeMenuProps) {
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
 
   return (
-    <div
-      role="menu"
-      className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg min-w-[160px] z-[1000] p-1"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        type="button"
+    <DropdownMenu isOpen={isOpen} anchorRef={anchorRef}>
+      <DropdownMenuItem
+        icon={<Icon name="plus" size={14} color={colors.text} />}
+        label="Create Child"
         onClick={onCreateChild}
-        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded flex items-center gap-2"
-      >
-        <Icon name="plus" size={14} aria-label="Create child" />
-        Create Child
-      </button>
+      />
 
-      <div className="h-px bg-gray-200 my-1" />
+      <DropdownMenuSeparator />
 
-      <button
-        type="button"
+      <DropdownMenuItem
+        icon={<Icon name="copy" size={14} color={colors.text} />}
+        label="Duplicate"
+        onClick={onDuplicate}
+      />
+
+      <DropdownMenuItem
+        icon={<Icon name="copy" size={14} color={colors.text} />}
+        label="Duplicate with Children"
+        onClick={onDuplicateWithChildren}
+      />
+
+      <DropdownMenuSeparator />
+
+      <DropdownMenuItem
+        icon={<Icon name="trash" size={14} color="#ef4444" />}
+        label="Delete"
         onClick={onDelete}
-        className="w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 text-red-500 hover:bg-red-50"
-      >
-        <Icon name="trash" size={14} aria-label="Delete" />
-        Delete
-      </button>
-    </div>
+        variant="danger"
+      />
+    </DropdownMenu>
   )
 }

@@ -15,6 +15,7 @@ interface TreeNodeProps {
   onDragOver: (e: React.DragEvent, id: string) => void
   onDrop: (draggedId: string, targetId: string | null) => void
   onDragEnd: () => void
+  onDuplicate: (id: string, includeChildren: boolean) => void
   draggedId: string | null
   dragOverId: string | null
 }
@@ -58,6 +59,7 @@ export function TreeNode({
   onDragOver,
   onDrop,
   onDragEnd,
+  onDuplicate,
   draggedId,
   dragOverId,
 }: TreeNodeProps) {
@@ -235,7 +237,16 @@ export function TreeNode({
 
           <TreeNodeMenu
             isOpen={isMenuOpen}
+            anchorRef={menuRef}
             onCreateChild={handleCreateChild}
+            onDuplicate={() => {
+              onDuplicate(node.id, false)
+              setIsMenuOpen(false)
+            }}
+            onDuplicateWithChildren={() => {
+              onDuplicate(node.id, true)
+              setIsMenuOpen(false)
+            }}
             onDelete={handleDelete}
           />
         </div>
@@ -262,6 +273,7 @@ export function TreeNode({
               onDragOver={onDragOver}
               onDrop={onDrop}
               onDragEnd={onDragEnd}
+              onDuplicate={onDuplicate}
               draggedId={draggedId}
               dragOverId={dragOverId}
             />

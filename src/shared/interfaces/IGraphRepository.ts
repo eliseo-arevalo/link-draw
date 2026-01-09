@@ -91,4 +91,12 @@ export interface IGraphRepository {
    * @returns True if drawing exists
    */
   exists(id: string): Promise<boolean>
+
+  /**
+   * Duplicate a drawing
+   * @param id - Drawing ID to duplicate
+   * @param includeChildren - Whether to duplicate children recursively
+   * @returns The new drawing ID
+   */
+  duplicateDrawing(id: string, includeChildren: boolean): Promise<string>
 }

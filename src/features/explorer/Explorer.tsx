@@ -80,6 +80,18 @@ export function Explorer({
     }
   }
 
+  const handleDuplicate = async (id: string, includeChildren: boolean) => {
+    try {
+      const newId = await repository.duplicateDrawing(id, includeChildren)
+      const updatedTree = await repository.getDrawingsTree()
+      setTree(updatedTree)
+      setActiveDrawingId(newId)
+    } catch (err) {
+      console.error("[Explorer] Duplicate failed:", err)
+      setError(err instanceof Error ? err.message : "Failed to duplicate drawing")
+    }
+  }
+
   const toggleSearch = () => {
     setShowSearch(!showSearch)
     if (!showSearch) {
@@ -474,6 +486,7 @@ export function Explorer({
                 onDragOver={dragAndDrop.handleDragOver}
                 onDrop={handleDrop}
                 onDragEnd={dragAndDrop.handleDragEnd}
+                onDuplicate={handleDuplicate}
                 draggedId={dragAndDrop.draggedId}
                 dragOverId={dragAndDrop.dragOverId}
               />

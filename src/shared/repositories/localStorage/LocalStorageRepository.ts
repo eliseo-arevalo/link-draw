@@ -226,6 +226,54 @@ export class LocalStorageRepository implements IGraphRepository {
     return drawings.some((d) => d.id === id)
   }
 
+  async duplicateDrawing(id: string, includeChildren: boolean): Promise<string> {
+    const drawings = this.getAll()
+    const original = drawings.find((d) => d.id === id)
+
+    if (!original) {
+      console.error("[Repository] Drawing not found:", id)
+      throw new Error(`Drawing ${id} not found`)
+    }
+
+    // Map old IDs to new IDs for updating links
+    const idMap = new Map<string, string>()
+
+    const duplicateRecursive = (drawingId: string, newParentId: string | null): string => {
+      const drawing = drawings.find((d) => d.id === drawingId)
+      if (!drawing) return ""
+
+      const newId = this.generateId()
+      idMap.set(drawingId, newId)
+
+      // Create duplicate with new ID
+      const duplicate: Drawing = {
+        ...drawing,
+        id: newId,
+        title: `${drawing.title} (copy)`,
+        parent_id: newParentId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      drawings.push(duplicate)
+
+      // Recursively duplicate children if requested
+      if (includeChildren) {
+        const children = drawings.filter((d) => d.parent_id === drawingId)
+        for (const child of children) {
+          duplicateRecursive(child.id, newId)
+        }
+      }
+
+      return newId
+    }
+
+    const newId = duplicateRecursive(id, original.parent_id)
+    this.saveAll(drawings)
+
+    return newId
+  }
+
   /**
    * Clear all drawings (for testing/reset)
    */

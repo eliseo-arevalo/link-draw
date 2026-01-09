@@ -26,7 +26,13 @@ export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string 
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+
+      // Verificar si el click está dentro del menuRef O dentro de un dropdown menu
+      const isInsideMenu = menuRef.current?.contains(target)
+      const isInsideDropdown = (target as Element).closest?.('[data-dropdown-menu="true"]')
+
+      if (!isInsideMenu && !isInsideDropdown) {
         setIsMenuOpen(false)
       }
     }
