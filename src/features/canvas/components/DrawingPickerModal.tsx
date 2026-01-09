@@ -41,6 +41,7 @@ interface DrawingPickerModalProps {
   isOpen: boolean
   onClose: () => void
   onSelect: (drawingId: string, drawingTitle: string, elementId?: string) => void
+  onSelectUrl?: (url: string) => void
   currentDrawingId: string | null
 }
 
@@ -48,6 +49,7 @@ export function DrawingPickerModal({
   isOpen,
   onClose,
   onSelect,
+  onSelectUrl,
   currentDrawingId,
 }: DrawingPickerModalProps) {
   const { repository } = useServices()
@@ -59,6 +61,8 @@ export function DrawingPickerModal({
   const [selectedDrawing, setSelectedDrawing] = useState<Drawing | null>(null)
   const [elements, setElements] = useState<ElementInfo[]>([])
   const [isLoadingElements, setIsLoadingElements] = useState(false)
+  const [urlValue, setUrlValue] = useState("")
+  const [activeTab, setActiveTab] = useState<"drawing" | "url">("drawing")
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +70,8 @@ export function DrawingPickerModal({
       setSelectedDrawing(null)
       setElements([])
       setSearchQuery("")
+      setUrlValue("")
+      setActiveTab("drawing")
       repository
         .getDrawingsTree()
         .then(setTree)
@@ -126,6 +132,13 @@ export function DrawingPickerModal({
     }
   }
 
+  const handleUrlSubmit = () => {
+    if (urlValue.trim() && onSelectUrl) {
+      onSelectUrl(urlValue.trim())
+      onClose()
+    }
+  }
+
   if (!isOpen) return null
 
   const flattenTree = (nodes: DrawingTreeNode[]): DrawingTreeNode[] => {
@@ -145,10 +158,10 @@ export function DrawingPickerModal({
     (d) => d.id !== currentDrawingId && d.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const headerTitle = selectedDrawing ? selectedDrawing.title : "Link to Drawing"
+  const headerTitle = selectedDrawing ? selectedDrawing.title : "Add Link"
   const headerSubtitle = selectedDrawing
     ? "Choose how to link to this drawing"
-    : "Select a drawing to create a link"
+    : "Link to a drawing or external URL"
 
   return (
     <div
@@ -183,14 +196,46 @@ export function DrawingPickerModal({
         />
 
         {!selectedDrawing && (
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search drawings..."
-            backgroundColor={colors.backgroundSecondary}
-            borderColor={colors.border}
-            textColor={colors.text}
-          />
+          <>
+            {/* Tabs */}
+            <div className="flex gap-2 mb-4" style={{ borderBottom: `1px solid ${colors.border}` }}>
+              <button
+                type="button"
+                onClick={() => setActiveTab("drawing")}
+                className="px-4 py-2 text-sm font-medium transition-colors"
+                style={{
+                  color: activeTab === "drawing" ? "#6366f1" : colors.textSecondary,
+                  borderBottom: activeTab === "drawing" ? "2px solid #6366f1" : "2px solid transparent",
+                  marginBottom: "-1px",
+                }}
+              >
+                📄 Drawing
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("url")}
+                className="px-4 py-2 text-sm font-medium transition-colors"
+                style={{
+                  color: activeTab === "url" ? "#6366f1" : colors.textSecondary,
+                  borderBottom: activeTab === "url" ? "2px solid #6366f1" : "2px solid transparent",
+                  marginBottom: "-1px",
+                }}
+              >
+                🔗 External URL
+              </button>
+            </div>
+
+            {activeTab === "drawing" && (
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search drawings..."
+                backgroundColor={colors.backgroundSecondary}
+                borderColor={colors.border}
+                textColor={colors.text}
+              />
+            )}
+          </>
         )}
 
         <div className="flex-1 overflow-y-auto mb-4 min-h-[200px]">
@@ -211,6 +256,40 @@ export function DrawingPickerModal({
               hoverBg={colors.backgroundSecondary}
               borderColor={colors.border}
             />
+          ) : activeTab === "url" ? (
+            <div className="flex flex-col gap-4 pt-2">
+              <p className="text-sm" style={{ color: colors.textSecondary }}>
+                Enter the URL you want to link to:
+              </p>
+              <input
+                type="url"
+                value={urlValue}
+                onChange={(e) => setUrlValue(e.target.value)}
+                placeholder="https://example.com"
+                className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-colors"
+                style={{
+                  backgroundColor: colors.backgroundSecondary,
+                  border: `1px solid ${colors.border}`,
+                  color: colors.text,
+                }}
+                autoFocus
+                onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
+              />
+              <button
+                type="button"
+                onClick={handleUrlSubmit}
+                disabled={!urlValue.trim()}
+                className="px-4 py-2 text-sm rounded transition-colors font-medium"
+                style={{
+                  backgroundColor: urlValue.trim() ? "#6366f1" : colors.backgroundSecondary,
+                  color: urlValue.trim() ? "#ffffff" : colors.textSecondary,
+                  cursor: urlValue.trim() ? "pointer" : "not-allowed",
+                  opacity: urlValue.trim() ? 1 : 0.5,
+                }}
+              >
+                Add Link
+              </button>
+            </div>
           ) : (
             <DrawingList
               drawings={filteredDrawings}
@@ -224,7 +303,13 @@ export function DrawingPickerModal({
         <div className="flex justify-end gap-2">
           <button
             type="button"
-            onClick={selectedDrawing ? handleBack : onClose}
+            onClick={() => {
+              if (selectedDrawing) {
+                handleBack()
+              } else {
+                onClose()
+              }
+            }}
             className="px-4 py-2 text-sm rounded transition-colors"
             style={{
               border: `1px solid ${colors.border}`,

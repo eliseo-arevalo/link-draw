@@ -56,6 +56,29 @@ export function Canvas() {
   const triggerSaveRef = useRef(triggerSave)
   triggerSaveRef.current = triggerSave
 
+  // Center content when drawing changes
+  useEffect(() => {
+    if (!excalidrawAPI || !activeDrawingId) return
+
+    // Small delay to ensure content is loaded
+    const timer = setTimeout(() => {
+      try {
+        const elements = excalidrawAPI.getSceneElements()
+        // Only center if there are elements (avoid excessive zoom on empty canvas)
+        if (elements.length > 0) {
+          excalidrawAPI.scrollToContent(elements, {
+            fitToViewport: true,
+            animate: false,
+          })
+        }
+      } catch (error) {
+        console.error("[Canvas] Failed to center content:", error)
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [excalidrawAPI, activeDrawingId])
+
   // Keyboard shortcuts
   useKeyboardShortcuts([
     {
@@ -89,6 +112,19 @@ export function Canvas() {
       setIsLinkModalOpen(false)
       triggerSaveRef.current()
       console.log(`[Canvas] Linked ${selectedElementIds.length} element(s)`)
+    },
+    [selectedElementIds, adapter.setElementLink]
+  )
+
+  const handleUrlSelect = useCallback(
+    (url: string) => {
+      for (const elementId of selectedElementIds) {
+        adapter.setElementLink(elementId, url)
+      }
+
+      setIsLinkModalOpen(false)
+      triggerSaveRef.current()
+      console.log(`[Canvas] Linked ${selectedElementIds.length} element(s) to URL`)
     },
     [selectedElementIds, adapter.setElementLink]
   )
@@ -185,6 +221,7 @@ export function Canvas() {
         isOpen={isLinkModalOpen}
         onClose={() => setIsLinkModalOpen(false)}
         onSelect={handleLinkSelect}
+        onSelectUrl={handleUrlSelect}
         currentDrawingId={activeDrawingId}
       />
 

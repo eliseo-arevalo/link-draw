@@ -433,6 +433,114 @@ export function Explorer({
                     </svg>
                     Graph view (Cmd+G)
                   </button>
+                  <div style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }} />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const drawings = await repository.listDrawings()
+                        const data = {
+                          version: "1.0.0",
+                          exportDate: new Date().toISOString(),
+                          drawings,
+                        }
+                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement("a")
+                        a.href = url
+                        a.download = `excaligraph-export-${Date.now()}.json`
+                        a.click()
+                        URL.revokeObjectURL(url)
+                        setShowMenu(false)
+                      } catch (err) {
+                        console.error("Export failed:", err)
+                        setError("Failed to export project")
+                        setTimeout(() => setError(null), 5000)
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.875rem",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      color: colors.text,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      borderRadius: "2px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent"
+                    }}
+                  >
+                    <Icon name="download" size={14} aria-label="Export" />
+                    Export project
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.createElement("input")
+                      input.type = "file"
+                      input.accept = "application/json"
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0]
+                        if (!file) return
+
+                        try {
+                          const text = await file.text()
+                          const data = JSON.parse(text)
+                          
+                          if (!data.drawings || !Array.isArray(data.drawings)) {
+                            throw new Error("Invalid file format")
+                          }
+
+                          // Clear existing data and import
+                          localStorage.setItem("excaligraph:drawings", JSON.stringify(data.drawings))
+                          
+                          // Reload tree
+                          const updatedTree = await repository.getDrawingsTree()
+                          setTree(updatedTree)
+                          setShowMenu(false)
+                          setActiveDrawingId(null)
+                        } catch (err) {
+                          console.error("Import failed:", err)
+                          setError("Failed to import project. Check file format.")
+                          setTimeout(() => setError(null), 5000)
+                        }
+                      }
+                      input.click()
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.875rem",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      color: colors.text,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      borderRadius: "2px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent"
+                    }}
+                  >
+                    <Icon name="upload" size={14} aria-label="Import" />
+                    Import project
+                  </button>
+                  <div style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }} />
                   <button
                     type="button"
                     onClick={() => {

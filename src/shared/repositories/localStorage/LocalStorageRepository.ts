@@ -1,4 +1,5 @@
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
+import { EXAMPLE_DRAWINGS } from "@/shared/data/exampleDrawings"
 import type { Drawing, DrawingInput, DrawingSummary, DrawingTreeNode } from "@/shared/types/drawing"
 import { validateNoCircularReference } from "./helpers/circular-validator"
 import { buildTree } from "./helpers/tree-builder"
@@ -6,6 +7,7 @@ import { buildTree } from "./helpers/tree-builder"
 export class LocalStorageRepository implements IGraphRepository {
   private readonly STORAGE_KEY = "excaligraph:drawings"
   private readonly VERSION_KEY = "excaligraph:version"
+  private readonly INITIALIZED_KEY = "excaligraph:initialized"
   private readonly CURRENT_VERSION = "1.0.0"
 
   constructor() {
@@ -14,12 +16,30 @@ export class LocalStorageRepository implements IGraphRepository {
 
   private initializeStorage(): void {
     const version = localStorage.getItem(this.VERSION_KEY)
+    const initialized = localStorage.getItem(this.INITIALIZED_KEY)
 
     if (!version) {
       localStorage.setItem(this.VERSION_KEY, this.CURRENT_VERSION)
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify([]))
     } else if (version !== this.CURRENT_VERSION) {
       console.warn(`Storage version mismatch. Current: ${this.CURRENT_VERSION}, Found: ${version}`)
+    }
+
+    // Load example drawings on first use
+    if (!initialized) {
+      const drawings = this.getAll()
+      if (drawings.length === 0) {
+        console.log("[LocalStorage] First time use - loading example drawings")
+        const now = new Date().toISOString()
+        const exampleDrawings: Drawing[] = EXAMPLE_DRAWINGS.map((example) => ({
+          ...example,
+          is_public: false,
+          created_at: now,
+          updated_at: now,
+        }))
+        this.saveAll(exampleDrawings)
+      }
+      localStorage.setItem(this.INITIALIZED_KEY, "true")
     }
   }
 
