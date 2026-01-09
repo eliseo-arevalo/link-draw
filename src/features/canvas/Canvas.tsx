@@ -56,28 +56,34 @@ export function Canvas() {
   const triggerSaveRef = useRef(triggerSave)
   triggerSaveRef.current = triggerSave
 
-  // Center content when drawing changes
+  // Center content only on first load (when no scroll position saved)
   useEffect(() => {
     if (!excalidrawAPI || !activeDrawingId) return
 
-    // Small delay to ensure content is loaded
-    const timer = setTimeout(() => {
+    const centerIfNeeded = async () => {
       try {
-        const elements = excalidrawAPI.getSceneElements()
-        // Only center if there are elements (avoid excessive zoom on empty canvas)
-        if (elements.length > 0) {
-          excalidrawAPI.scrollToContent(elements, {
-            fitToViewport: true,
-            animate: false,
-          })
+        const drawing = await repository.loadDrawing(activeDrawingId)
+        const appState = drawing?.content?.appState
+        const hasScrollPosition = appState?.scrollX !== undefined && appState?.scrollY !== undefined
+        
+        // Only center if no saved scroll position
+        if (!hasScrollPosition) {
+          const elements = excalidrawAPI.getSceneElements()
+          if (elements.length > 0) {
+            excalidrawAPI.scrollToContent(elements, {
+              fitToViewport: true,
+              animate: false,
+            })
+          }
         }
       } catch (error) {
-        console.error("[Canvas] Failed to center content:", error)
+        console.error("[Canvas] Failed to check scroll position:", error)
       }
-    }, 100)
+    }
 
+    const timer = setTimeout(centerIfNeeded, 100)
     return () => clearTimeout(timer)
-  }, [excalidrawAPI, activeDrawingId])
+  }, [excalidrawAPI, activeDrawingId, repository])
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
