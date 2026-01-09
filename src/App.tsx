@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Canvas } from "./features/canvas/Canvas"
 import { Explorer } from "./features/explorer/Explorer"
 import { Graph } from "./features/graph/Graph"
-import { GlobalSearch } from "./features/search/GlobalSearch"
+import { Search } from "./features/search/Search"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
 import { useThemeDetector } from "./shared/hooks/useThemeDetector"
 import { useViewStore } from "./shared/store/viewStore"
@@ -36,7 +36,7 @@ function App() {
         backgroundColor: "var(--color-surface-primary, #ffffff)",
       }}
     >
-      <GlobalSearch />
+      <Search />
       <Explorer
         isCollapsed={!showSidebar}
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
@@ -57,4 +57,4 @@ function App() {
   )
 }
 
-export default App
+export { App }

@@ -205,6 +205,23 @@ export function TreeNode({
               {node.title}
             </span>
           )}
+
+          {/* Content match indicator */}
+          {node.metadata?.matchesContent && (
+            <span
+              style={{
+                fontSize: "10px",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                backgroundColor: colors.backgroundSecondary,
+                color: colors.textSecondary,
+                fontWeight: 500,
+              }}
+              title="Match found in drawing content"
+            >
+              content
+            </span>
+          )}
         </div>
 
         {/* Menu */}

@@ -53,6 +53,9 @@ export interface DrawingInput {
  */
 export interface DrawingTreeNode extends Drawing {
   children?: DrawingTreeNode[]
+  metadata?: {
+    matchesContent?: boolean
+  }
 }
 
 /**

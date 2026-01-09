@@ -14,7 +14,7 @@ interface SearchResult {
   preview: string
 }
 
-export function GlobalSearch() {
+export function Search() {
   const { repository } = useServices()
   const { theme } = useThemeStore()
   const { setActiveDrawingId } = useDrawingStore()

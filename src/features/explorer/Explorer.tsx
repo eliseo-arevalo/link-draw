@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Icon } from "@/shared/components/Icon"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
@@ -6,6 +6,7 @@ import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { useTreeStore } from "@/shared/store/treeStore"
+import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 import { TreeNode } from "./components/TreeNode"
@@ -27,6 +28,7 @@ export function Explorer({
   const { drawingService, repository } = useServices()
   const { tree, setTree } = useTreeStore()
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
+  const { setViewMode } = useViewStore()
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
   const [isCreating, setIsCreating] = useState(false)
@@ -66,6 +68,7 @@ export function Explorer({
   const handleSelectDrawing = (id: string) => {
     console.log("[Sidebar] Selecting drawing:", id)
     setActiveDrawingId(id)
+    setViewMode("canvas")
   }
 
   const handleDrop = async (draggedId: string, targetId: string | null) => {
@@ -117,28 +120,57 @@ export function Explorer({
     },
   ])
 
-  // Filter tree based on search query
-  const filterTree = (nodes: DrawingTreeNode[], query: string): DrawingTreeNode[] => {
-    if (!query.trim()) return nodes
+  // Helper to check if drawing content matches query
+  const drawingContentMatches = useCallback(
+    async (drawingId: string, query: string): Promise<boolean> => {
+      try {
+        const drawing = await repository.loadDrawing(drawingId)
+        if (!drawing?.content?.elements) return false
 
-    const lowerQuery = query.toLowerCase()
-
-    return nodes.reduce<DrawingTreeNode[]>((acc, node) => {
-      const matchesTitle = node.title.toLowerCase().includes(lowerQuery)
-      const filteredChildren = node.children ? filterTree(node.children, query) : []
-
-      if (matchesTitle || filteredChildren.length > 0) {
-        acc.push({
-          ...node,
-          children: filteredChildren.length > 0 ? filteredChildren : node.children,
+        return drawing.content.elements.some((el) => {
+          const text = el.text?.toLowerCase() || ""
+          const label = el.label?.toLowerCase() || ""
+          return text.includes(query) || label.includes(query)
         })
+      } catch {
+        return false
+      }
+    },
+    [repository]
+  )
+
+  // Filter tree based on search query (searches in titles and content)
+  const [filteredTree, setFilteredTree] = useState<DrawingTreeNode[]>(tree)
+
+  useEffect(() => {
+    const filterTree = async (
+      nodes: DrawingTreeNode[],
+      query: string
+    ): Promise<DrawingTreeNode[]> => {
+      if (!query.trim()) return nodes
+
+      const lowerQuery = query.toLowerCase()
+      const filtered: DrawingTreeNode[] = []
+
+      for (const node of nodes) {
+        const matchesTitle = node.title.toLowerCase().includes(lowerQuery)
+        const matchesContent = await drawingContentMatches(node.id, lowerQuery)
+        const filteredChildren = node.children ? await filterTree(node.children, query) : []
+
+        if (matchesTitle || matchesContent || filteredChildren.length > 0) {
+          filtered.push({
+            ...node,
+            children: filteredChildren.length > 0 ? filteredChildren : node.children,
+            metadata: { matchesContent: matchesContent && !matchesTitle },
+          })
+        }
       }
 
-      return acc
-    }, [])
-  }
+      return filtered
+    }
 
-  const filteredTree = filterTree(tree, searchQuery)
+    filterTree(tree, searchQuery).then(setFilteredTree)
+  }, [tree, searchQuery, drawingContentMatches])
 
   useEffect(() => {
     let cancelled = false
@@ -413,7 +445,7 @@ export function Explorer({
 
         {/* Search Input - Conditional */}
         {showSearch && (
-          <div style={{ padding: "0.5rem 1rem" }}>
+          <div style={{ padding: "0.5rem 1rem", position: "relative" }}>
             <input
               ref={searchInputRef}
               type="text"
@@ -425,8 +457,31 @@ export function Explorer({
                 backgroundColor: colors.backgroundSecondary,
                 borderColor: colors.border,
                 color: colors.text,
+                paddingRight: searchQuery ? "2rem" : "0.75rem",
               }}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: "1.5rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "0.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  color: colors.textSecondary,
+                }}
+                title="Clear search"
+              >
+                <Icon name="x" size={14} color={colors.textSecondary} />
+              </button>
+            )}
           </div>
         )}
       </div>

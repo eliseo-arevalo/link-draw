@@ -8,7 +8,8 @@ import { useTreeStore } from "@/shared/store/treeStore"
 import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { Drawing } from "@/shared/types/drawing"
-import type { GraphFilters, GraphStats } from "@/shared/types/graph"
+import type { GraphStats } from "@/shared/types/graph"
+import { GraphHeader } from "./components/GraphHeader"
 import { buildGraphElements } from "./lib/graph-builder"
 
 type LayoutType = "cose" | "breadthfirst" | "circle" | "grid" | "concentric"
@@ -82,18 +83,14 @@ export function Graph() {
   const { repository } = useServices()
   const containerRef = useRef<HTMLDivElement>(null)
   const cyRef = useRef<Core | null>(null)
+  const layoutRef = useRef<ReturnType<Core["layout"]> | null>(null)
   const { setActiveDrawingId } = useDrawingStore()
   const { setViewMode } = useViewStore()
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
   const [layout, setLayout] = useState<LayoutType>("cose")
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [_refreshTrigger, setRefreshTrigger] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
-  const [filters, setFilters] = useState<GraphFilters>({
-    showHierarchy: true,
-    showLinks: true,
-    showOrphans: true,
-  })
   const [stats, setStats] = useState<GraphStats>({
     nodes: 0,
     edges: 0,
@@ -192,55 +189,29 @@ export function Graph() {
     if (!containerRef.current) return
 
     const loadGraph = async () => {
-      console.log("[Graph] Loading graph, trigger:", refreshTrigger)
       const drawings = await repository.listDrawings()
+      const filters = { showHierarchy: true, showLinks: true, showOrphans: true }
       const { elements, stats: graphStats } = buildGraphElements(drawings, filters)
       setStats(graphStats)
 
-      // If graph exists, update it instead of destroying
+      // Only create if doesn't exist
       if (cyRef.current) {
-        // Save current positions
-        const positions: Record<string, { x: number; y: number }> = {}
-        cyRef.current.nodes().forEach((node) => {
-          const pos = node.position()
-          positions[node.id()] = { x: pos.x, y: pos.y }
-        })
-
-        // Add positions to elements before adding them
-        const elementsWithPositions = elements.map((el) => {
-          if (el.group === "nodes" && el.data.id && positions[el.data.id]) {
-            return { ...el, position: positions[el.data.id] }
-          }
-          return el
-        })
-
-        cyRef.current.elements().remove()
-        cyRef.current.add(elementsWithPositions)
-        cyRef.current.style(getGraphStyles(theme))
-
-        // Position new nodes near center
-        const newNodes = cyRef.current.nodes().filter((node) => !positions[node.id()])
-        if (newNodes.length > 0) {
-          newNodes.forEach((node, i) => {
-            node.position({ x: 400 + i * 100, y: 300 })
-          })
-        }
         return
       }
 
-      // Create new graph on first load
+      // Create new graph
       cyRef.current = cytoscape({
         container: containerRef.current,
         elements,
         style: getGraphStyles(theme),
       })
 
-      // Run layout only on first load
-      cyRef.current.layout(LAYOUTS[layout].config).run()
+      // Run layout and store reference to stop it on cleanup
+      layoutRef.current = cyRef.current.layout(LAYOUTS[layout].config)
+      layoutRef.current.run()
 
       cyRef.current.on("tap", "node", (evt) => {
         const nodeId = evt.target.id()
-        // Remove tooltip on click
         const existingTooltip = document.getElementById("graph-tooltip")
         if (existingTooltip) {
           existingTooltip.remove()
@@ -297,26 +268,18 @@ export function Graph() {
     loadGraph()
 
     return () => {
+      // Stop layout if running
+      if (layoutRef.current) {
+        layoutRef.current.stop()
+        layoutRef.current = null
+      }
+      // Destroy graph
       if (cyRef.current) {
-        try {
-          cyRef.current.destroy()
-        } catch {
-          // Ignore cleanup errors
-        }
+        cyRef.current.destroy()
         cyRef.current = null
       }
     }
-  }, [
-    filters,
-    layout,
-    refreshTrigger,
-    theme,
-    setActiveDrawingId,
-    setViewMode,
-    repository.listDrawings,
-    getGraphStyles,
-    createTooltip,
-  ])
+  }, [layout, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
 
   // Auto-refresh when tree changes (separate effect to avoid lint warnings)
   const { tree } = useTreeStore()
@@ -404,149 +367,16 @@ export function Graph() {
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: colors.backgroundSecondary }}>
       {/* Header with Controls */}
-      <div
-        className="border-b"
-        style={{
-          backgroundColor: colors.background,
-          borderColor: colors.border,
-        }}
-      >
-        {/* Top Row: Layout, Search, Refresh */}
-        <div className="px-4 py-2 flex items-center gap-3">
-          {/* Layout Selector */}
-          <div className="flex items-center gap-2">
-            <Icon name="box" size={16} color={colors.textSecondary} />
-            <select
-              value={layout}
-              onChange={(e) => handleLayoutChange(e.target.value as LayoutType)}
-              className="text-sm px-2 py-1 rounded border cursor-pointer"
-              style={{
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-                minWidth: "140px",
-              }}
-            >
-              {(Object.keys(LAYOUTS) as LayoutType[]).map((key) => (
-                <option key={key} value={key}>
-                  {LAYOUTS[key].name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search Input */}
-          <div className="flex items-center gap-2 flex-1" style={{ maxWidth: "300px" }}>
-            <Icon name="search" size={16} color={colors.textSecondary} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search nodes..."
-              className="text-sm px-3 py-1.5 rounded border flex-1"
-              style={{
-                backgroundColor: colors.background,
-                color: colors.text,
-                borderColor: colors.border,
-              }}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => handleSearch("")}
-                className="text-xs"
-                style={{ color: colors.textSecondary }}
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <div style={{ flex: 1 }} />
-
-          {/* Refresh Button */}
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="excalidraw-button px-3 py-1.5 flex items-center gap-2"
-            style={{
-              backgroundColor: colors.background,
-              color: colors.text,
-              borderColor: colors.border,
-            }}
-            title="Refresh graph"
-          >
-            <span style={{ fontSize: "16px" }}>↻</span>
-            <span className="text-sm">Refresh</span>
-          </button>
-        </div>
-
-        {/* Bottom Row: Filters and Stats */}
-        <div
-          className="px-4 py-2 flex items-center gap-4 border-t"
-          style={{ borderColor: colors.border }}
-        >
-          {/* Filters */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold" style={{ color: colors.textSecondary }}>
-              SHOW:
-            </span>
-            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.showHierarchy}
-                onChange={(e) => setFilters({ ...filters, showHierarchy: e.target.checked })}
-                className="cursor-pointer"
-              />
-              <span style={{ color: colors.text }}>Hierarchy</span>
-            </label>
-            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.showLinks}
-                onChange={(e) => setFilters({ ...filters, showLinks: e.target.checked })}
-                className="cursor-pointer"
-              />
-              <span style={{ color: colors.text }}>Links</span>
-            </label>
-            <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.showOrphans}
-                onChange={(e) => setFilters({ ...filters, showOrphans: e.target.checked })}
-                className="cursor-pointer"
-              />
-              <span style={{ color: colors.text }}>Orphans</span>
-            </label>
-          </div>
-
-          <div style={{ flex: 1 }} />
-
-          {/* Stats */}
-          <div className="flex items-center gap-3 text-xs" style={{ color: colors.textSecondary }}>
-            <div className="flex items-center gap-1">
-              <span style={{ fontWeight: 600 }}>{stats.nodes}</span>
-              <span>nodes</span>
-            </div>
-            <span>•</span>
-            <div className="flex items-center gap-1">
-              <span style={{ fontWeight: 600 }}>{stats.edges}</span>
-              <span>edges</span>
-            </div>
-            <span>•</span>
-            <div className="flex items-center gap-1">
-              <span style={{ fontWeight: 600 }}>{stats.orphans}</span>
-              <span>orphans</span>
-            </div>
-            <span>•</span>
-            <div className="flex items-center gap-1">
-              <span>depth</span>
-              <span style={{ fontWeight: 600 }}>{stats.maxDepth}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <GraphHeader
+        theme={theme}
+        layout={layout}
+        searchQuery={searchQuery}
+        stats={stats}
+        layouts={LAYOUTS}
+        onLayoutChange={handleLayoutChange}
+        onSearchChange={handleSearch}
+        onRefresh={handleRefresh}
+      />
 
       {/* Graph Container */}
       <div style={{ position: "relative", flex: 1, backgroundColor: colors.background }}>
