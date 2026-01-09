@@ -200,6 +200,11 @@ export function Explorer({
         if (!cancelled) {
           setTree(drawings)
           setError(null)
+          
+          // Auto-select if only one root drawing and nothing selected
+          if (drawings.length === 1 && !activeDrawingId) {
+            setActiveDrawingId(drawings[0].id)
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -213,7 +218,7 @@ export function Explorer({
     return () => {
       cancelled = true
     }
-  }, [setTree, repository.getDrawingsTree])
+  }, [setTree, repository.getDrawingsTree, activeDrawingId, setActiveDrawingId])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
