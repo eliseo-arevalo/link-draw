@@ -36,7 +36,7 @@ export class LocalStorageRepository implements IGraphRepository {
           is_public: false,
           created_at: now,
           updated_at: now,
-        })) as Drawing[]
+        })) as unknown as Drawing[]
         this.saveAll(exampleDrawings)
       }
       localStorage.setItem(this.INITIALIZED_KEY, "true")
