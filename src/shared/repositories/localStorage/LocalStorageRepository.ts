@@ -31,12 +31,12 @@ export class LocalStorageRepository implements IGraphRepository {
       if (drawings.length === 0) {
         console.log("[LocalStorage] First time use - loading example drawings")
         const now = new Date().toISOString()
-        const exampleDrawings: Drawing[] = EXAMPLE_DRAWINGS.map((example) => ({
+        const exampleDrawings = EXAMPLE_DRAWINGS.map((example) => ({
           ...example,
           is_public: false,
           created_at: now,
           updated_at: now,
-        }))
+        })) as Drawing[]
         this.saveAll(exampleDrawings)
       }
       localStorage.setItem(this.INITIALIZED_KEY, "true")
