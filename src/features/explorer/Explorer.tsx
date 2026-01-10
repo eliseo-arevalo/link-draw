@@ -11,6 +11,7 @@ import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
 import { TreeNode } from "./components/TreeNode"
 import { useDragAndDrop } from "./hooks/useDragAndDrop"
+import { CollaborationPanel } from "../collaboration/CollaborationPanel"
 
 interface DrawingsExplorerProps {
   isCollapsed: boolean
@@ -673,6 +674,9 @@ export function Explorer({
           </div>
         )}
       </div>
+
+      {/* Collaboration Panel */}
+      <CollaborationPanel />
 
       {/* Error Message */}
       {error && (

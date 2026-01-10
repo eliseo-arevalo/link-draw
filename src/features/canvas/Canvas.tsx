@@ -10,6 +10,7 @@ import { useThemeStore } from "@/shared/store/themeStore"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { LinkButton } from "./components/LinkButton"
 import { useCanvasLoader } from "./hooks/useCanvasLoader"
+import { useCollaborativeCanvas } from "./hooks/useCollaborativeCanvas"
 import { useElementSelection } from "./hooks/useElementSelection"
 import { useLinkNavigation } from "./hooks/useLinkNavigation"
 
@@ -35,6 +36,17 @@ export function Canvas() {
     excalidrawAPI,
     adapter
   )
+
+  // Collaboration hook
+  const isRemoteUpdate = useRef(false)
+  const { broadcastElements } = useCollaborativeCanvas(activeDrawingId, (elements) => {
+    isRemoteUpdate.current = true
+    adapter.setElements(elements)
+    // Reset flag after update is processed
+    setTimeout(() => {
+      isRemoteUpdate.current = false
+    }, 0)
+  })
 
   const saveAllRef = useRef(saveAllCachedDrawings)
   saveAllRef.current = saveAllCachedDrawings
@@ -225,6 +237,11 @@ export function Canvas() {
         }
 
         triggerSaveRef.current()
+
+        // Broadcast changes
+        if (activeDrawingId) {
+          broadcastElements(adapter.getElements())
+        }
       }, 100) // 100ms debounce
     }
 
@@ -302,7 +319,11 @@ export function Canvas() {
             },
           }}
           theme={theme}
-          onChange={() => adapter.notifyChange()}
+          onChange={() => {
+            if (!isRemoteUpdate.current) {
+              adapter.notifyChange()
+            }
+          }}
           onLinkOpen={handleLinkOpen}
           UIOptions={{
             canvasActions: {

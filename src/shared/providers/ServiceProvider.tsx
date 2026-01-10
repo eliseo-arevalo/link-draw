@@ -1,17 +1,18 @@
 import { createContext, type ReactNode, useContext } from "react"
 import { ExcalidrawAdapter } from "@/shared/adapters/excalidraw/ExcalidrawAdapter"
-import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
+import { HybridRepository } from "@/shared/repositories/hybrid/HybridRepository"
 import { DrawingService } from "@/shared/services/DrawingService"
+import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 
 interface Services {
-  repository: LocalStorageRepository
+  repository: IGraphRepository
   adapter: ExcalidrawAdapter
   drawingService: DrawingService
 }
 
 const ServiceContext = createContext<Services | null>(null)
 
-const repository = new LocalStorageRepository()
+const repository = new HybridRepository()
 const adapter = new ExcalidrawAdapter()
 const drawingService = new DrawingService(repository, adapter)
 
