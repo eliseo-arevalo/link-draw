@@ -209,9 +209,29 @@ export function Explorer({
           setTree(drawings)
           setError(null)
 
-          // Auto-select if only one root drawing and nothing selected
-          if (drawings.length === 1 && !activeDrawingId) {
-            setActiveDrawingId(drawings[0].id)
+          // Auto-select drawing: last active > single root > first root
+          if (!activeDrawingId && drawings.length > 0) {
+            // Try to load last active drawing
+            const lastDrawingId = localStorage.getItem("linkdraw:last-active-drawing")
+            
+            // Check if last drawing still exists
+            const findDrawing = (nodes: typeof drawings, id: string): boolean => {
+              for (const node of nodes) {
+                if (node.id === id) return true
+                if (node.children && findDrawing(node.children, id)) return true
+              }
+              return false
+            }
+
+            if (lastDrawingId && findDrawing(drawings, lastDrawingId)) {
+              setActiveDrawingId(lastDrawingId)
+            } else if (drawings.length === 1) {
+              // Single root drawing
+              setActiveDrawingId(drawings[0].id)
+            } else {
+              // Multiple roots, select first
+              setActiveDrawingId(drawings[0].id)
+            }
           }
         }
       } catch (err) {

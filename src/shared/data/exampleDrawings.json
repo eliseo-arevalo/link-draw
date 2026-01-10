@@ -1,10 +1,11 @@
 {
   "version": "1.0.0",
-  "exportDate": "2026-01-09T22:22:43.633Z",
+  "exportDate": "2026-01-10T16:52:40.007Z",
   "drawings": [
     {
       "id": "1e6a9009-a446-4ee0-ba67-9501229ebca2",
       "title": "Welcome to Link Draw",
+      "parent_id": null,
       "content": {
         "elements": [
           {
@@ -214,112 +215,22 @@
             "originalText": "This is a multi-canvas drawing tool",
             "autoResize": true,
             "lineHeight": 1.25
-          },
-          {
-            "id": "W0L-lQxDOtziFRc4RLG52",
-            "type": "line",
-            "x": 344.95086411311024,
-            "y": 25.307707610430995,
-            "width": 357.6020025712145,
-            "height": 0,
-            "angle": 0,
-            "strokeColor": "#1e1e1e",
-            "backgroundColor": "transparent",
-            "fillStyle": "solid",
-            "strokeWidth": 1,
-            "strokeStyle": "solid",
-            "roughness": 1,
-            "opacity": 30,
-            "groupIds": [],
-            "frameId": null,
-            "index": "a7",
-            "roundness": {
-              "type": 2
-            },
-            "seed": 2140760191,
-            "version": 40,
-            "versionNonce": 1283794531,
-            "isDeleted": false,
-            "boundElements": null,
-            "updated": 1767996024814,
-            "link": null,
-            "locked": false,
-            "points": [
-              [
-                0,
-                0
-              ],
-              [
-                357.6020025712145,
-                0
-              ]
-            ],
-            "lastCommittedPoint": null,
-            "startBinding": null,
-            "endBinding": null,
-            "startArrowhead": null,
-            "endArrowhead": null
-          },
-          {
-            "id": "2jyyBcveWqefxnljJGxoZ",
-            "type": "line",
-            "x": 341.70906666222555,
-            "y": 438.2276940366381,
-            "width": 357.6020025712145,
-            "height": 0,
-            "angle": 0,
-            "strokeColor": "#1e1e1e",
-            "backgroundColor": "transparent",
-            "fillStyle": "solid",
-            "strokeWidth": 1,
-            "strokeStyle": "solid",
-            "roughness": 1,
-            "opacity": 30,
-            "groupIds": [],
-            "frameId": null,
-            "index": "a8",
-            "roundness": {
-              "type": 2
-            },
-            "seed": 1994890015,
-            "version": 124,
-            "versionNonce": 1249921261,
-            "isDeleted": false,
-            "boundElements": [],
-            "updated": 1767996614170,
-            "link": null,
-            "locked": false,
-            "points": [
-              [
-                0,
-                0
-              ],
-              [
-                357.6020025712145,
-                0
-              ]
-            ],
-            "lastCommittedPoint": null,
-            "startBinding": null,
-            "endBinding": null,
-            "startArrowhead": null,
-            "endArrowhead": null
           }
         ],
         "appState": {
-          "showWelcomeScreen": true,
+          "showWelcomeScreen": false,
           "theme": "dark",
           "collaborators": {},
           "currentChartType": "bar",
           "currentItemBackgroundColor": "transparent",
           "currentItemEndArrowhead": "arrow",
           "currentItemFillStyle": "solid",
-          "currentItemFontFamily": 6,
-          "currentItemFontSize": 16,
-          "currentItemOpacity": 80,
+          "currentItemFontFamily": 5,
+          "currentItemFontSize": 20,
+          "currentItemOpacity": 100,
           "currentItemRoughness": 1,
           "currentItemStartArrowhead": null,
-          "currentItemStrokeColor": "#6741d9",
+          "currentItemStrokeColor": "#1e1e1e",
           "currentItemRoundness": "round",
           "currentItemArrowType": "round",
           "currentItemStrokeStyle": "solid",
@@ -356,7 +267,7 @@
           "isRotating": false,
           "lastPointerDownWith": "mouse",
           "multiElement": null,
-          "name": "Untitled-2026-01-09-1613",
+          "name": "Untitled-2026-01-10-1052",
           "contextMenu": null,
           "openMenu": null,
           "openPopup": null,
@@ -366,13 +277,11 @@
             "shown": false,
             "data": null
           },
-          "previousSelectedElementIds": {
-            "-kWaW8RyqA6iu8tsPAZF6": true
-          },
+          "previousSelectedElementIds": {},
           "resizingElement": null,
           "scrolledOutside": false,
-          "scrollX": -122.95832824707031,
-          "scrollY": -11.963645774332008,
+          "scrollX": -97.50367758818459,
+          "scrollY": 7.151669939712817,
           "selectedElementIds": {},
           "hoveredElementIds": {},
           "selectedGroupIds": {},
@@ -398,14 +307,17 @@
           "viewBackgroundColor": "#ffffff",
           "zenModeEnabled": false,
           "zoom": {
-            "value": 1.6
+            "value": 1.435302
           },
           "viewModeEnabled": false,
           "pendingImageElementId": null,
           "showHyperlinkPopup": false,
           "selectedLinearElement": null,
           "snapLines": [],
-          "originSnapOffset": null,
+          "originSnapOffset": {
+            "x": 0,
+            "y": 0
+          },
           "objectsSnapModeEnabled": false,
           "userToFollow": null,
           "followedBy": {},
@@ -419,21 +331,21 @@
         },
         "files": {}
       },
-      "parent_id": null,
       "is_public": false,
-      "created_at": "2026-01-09T21:50:10.871Z",
-      "updated_at": "2026-01-09T22:22:43.126Z"
+      "created_at": "2026-01-10T02:16:21.852Z",
+      "updated_at": "2026-01-10T16:52:37.110Z"
     },
     {
       "id": "51c88807-3bee-448a-897a-9bd551ea5733",
       "title": "Features",
+      "parent_id": "1e6a9009-a446-4ee0-ba67-9501229ebca2",
       "content": {
         "elements": [
           {
             "id": "vrwPQDOiXsC-1GAg-mR9G",
             "type": "text",
-            "x": 299.8120419377858,
-            "y": -91.19269024742377,
+            "x": 293.3676685604589,
+            "y": -125.02565047839013,
             "width": 362.4666748046875,
             "height": 35,
             "angle": 0,
@@ -449,11 +361,11 @@
             "index": "a0",
             "roundness": null,
             "seed": 117124205,
-            "version": 177,
-            "versionNonce": 24355597,
+            "version": 191,
+            "versionNonce": 1234644233,
             "isDeleted": false,
             "boundElements": null,
-            "updated": 1767997039676,
+            "updated": 1768062629700,
             "link": null,
             "locked": false,
             "text": "All Feautures of Link Draw",
@@ -467,102 +379,12 @@
             "lineHeight": 1.25
           },
           {
-            "id": "kkcNSbklj7vqeJZ1qyWfN",
-            "type": "line",
-            "x": 290.57511186556894,
-            "y": -155.57665384501348,
-            "width": 357.6020025712145,
-            "height": 0,
-            "angle": 0,
-            "strokeColor": "#1e1e1e",
-            "backgroundColor": "transparent",
-            "fillStyle": "solid",
-            "strokeWidth": 1,
-            "strokeStyle": "solid",
-            "roughness": 1,
-            "opacity": 30,
-            "groupIds": [],
-            "frameId": null,
-            "index": "a1",
-            "roundness": {
-              "type": 2
-            },
-            "seed": 1013787053,
-            "version": 43,
-            "versionNonce": 1237738093,
-            "isDeleted": false,
-            "boundElements": [],
-            "updated": 1767996846348,
-            "link": null,
-            "locked": false,
-            "points": [
-              [
-                0,
-                0
-              ],
-              [
-                357.6020025712145,
-                0
-              ]
-            ],
-            "lastCommittedPoint": null,
-            "startBinding": null,
-            "endBinding": null,
-            "startArrowhead": null,
-            "endArrowhead": null
-          },
-          {
-            "id": "tbUQTXoHEPmryRstl9ln6",
-            "type": "line",
-            "x": 287.3333144146843,
-            "y": 257.3433325811937,
-            "width": 357.6020025712145,
-            "height": 0,
-            "angle": 0,
-            "strokeColor": "#1e1e1e",
-            "backgroundColor": "transparent",
-            "fillStyle": "solid",
-            "strokeWidth": 1,
-            "strokeStyle": "solid",
-            "roughness": 1,
-            "opacity": 30,
-            "groupIds": [],
-            "frameId": null,
-            "index": "a2",
-            "roundness": {
-              "type": 2
-            },
-            "seed": 1104505869,
-            "version": 127,
-            "versionNonce": 1712916195,
-            "isDeleted": false,
-            "boundElements": [],
-            "updated": 1767996846348,
-            "link": null,
-            "locked": false,
-            "points": [
-              [
-                0,
-                0
-              ],
-              [
-                357.6020025712145,
-                0
-              ]
-            ],
-            "lastCommittedPoint": null,
-            "startBinding": null,
-            "endBinding": null,
-            "startArrowhead": null,
-            "endArrowhead": null
-          },
-          {
             "id": "-kWaW8RyqA6iu8tsPAZF6",
             "type": "text",
-            "x": 246.49612514546664,
-            "y": -40.134072824618045,
+            "x": 221.52385850629594,
+            "y": -66.52297948028632,
             "width": 627.5499877929688,
-            "height": 259.20000000000005,
+            "height": 324,
             "angle": 0,
             "strokeColor": "#1e1e1e",
             "backgroundColor": "transparent",
@@ -576,38 +398,38 @@
             "index": "aJ",
             "roundness": null,
             "seed": 253435053,
-            "version": 86,
-            "versionNonce": 1989987181,
+            "version": 124,
+            "versionNonce": 1937889993,
             "isDeleted": false,
             "boundElements": null,
-            "updated": 1767997211012,
+            "updated": 1768062675190,
             "link": null,
             "locked": false,
-            "text": "\n- Multi-canvas Excalidraw projects with hierarchical tree organization\n- Internal drawing links with element-specific navigation and auto-scroll\n- External URL links with tabbed modal interface\n- Drag & drop tree reorganization with circular reference prevention\n- Create, rename, delete, duplicate drawings (with/without children)\n- Tree search (Cmd+K), content search, and global full-text search (Cmd+Shift+F)\n- Interactive graph view (Cmd+G) with 5 layouts, auto-updates, and smooth transitions\n- Dark/Light mode with theme persistence\n\n\n",
+            "text": "\n- Multi-canvas Excalidraw projects with hierarchical tree organization\n\n- Internal drawing links with element-specific navigation and auto-scroll\n\n- Drag & drop tree reorganization with circular reference prevention\n\n- Tree search (Cmd+K), content search, and global full-text search (Cmd+Shift+F)\n\n- Interactive graph view (Cmd+G) with 5 layouts, auto-updates, and smooth transitions\n\n- Dark/Light mode with theme persistence\n\n\n",
             "fontSize": 16,
             "fontFamily": 6,
             "textAlign": "left",
             "verticalAlign": "top",
             "containerId": null,
-            "originalText": "\n- Multi-canvas Excalidraw projects with hierarchical tree organization\n- Internal drawing links with element-specific navigation and auto-scroll\n- External URL links with tabbed modal interface\n- Drag & drop tree reorganization with circular reference prevention\n- Create, rename, delete, duplicate drawings (with/without children)\n- Tree search (Cmd+K), content search, and global full-text search (Cmd+Shift+F)\n- Interactive graph view (Cmd+G) with 5 layouts, auto-updates, and smooth transitions\n- Dark/Light mode with theme persistence\n\n\n",
+            "originalText": "\n- Multi-canvas Excalidraw projects with hierarchical tree organization\n\n- Internal drawing links with element-specific navigation and auto-scroll\n\n- Drag & drop tree reorganization with circular reference prevention\n\n- Tree search (Cmd+K), content search, and global full-text search (Cmd+Shift+F)\n\n- Interactive graph view (Cmd+G) with 5 layouts, auto-updates, and smooth transitions\n\n- Dark/Light mode with theme persistence\n\n\n",
             "autoResize": true,
             "lineHeight": 1.35
           }
         ],
         "appState": {
-          "showWelcomeScreen": true,
+          "showWelcomeScreen": false,
           "theme": "dark",
           "collaborators": {},
           "currentChartType": "bar",
           "currentItemBackgroundColor": "transparent",
           "currentItemEndArrowhead": "arrow",
           "currentItemFillStyle": "solid",
-          "currentItemFontFamily": 6,
-          "currentItemFontSize": 16,
-          "currentItemOpacity": 80,
+          "currentItemFontFamily": 5,
+          "currentItemFontSize": 20,
+          "currentItemOpacity": 100,
           "currentItemRoughness": 1,
           "currentItemStartArrowhead": null,
-          "currentItemStrokeColor": "#6741d9",
+          "currentItemStrokeColor": "#1e1e1e",
           "currentItemRoundness": "round",
           "currentItemArrowType": "round",
           "currentItemStrokeStyle": "solid",
@@ -644,7 +466,7 @@
           "isRotating": false,
           "lastPointerDownWith": "mouse",
           "multiElement": null,
-          "name": "Untitled-2026-01-09-1613",
+          "name": "Untitled-2026-01-10-1052",
           "contextMenu": null,
           "openMenu": null,
           "openPopup": null,
@@ -654,13 +476,11 @@
             "shown": false,
             "data": null
           },
-          "previousSelectedElementIds": {
-            "-kWaW8RyqA6iu8tsPAZF6": true
-          },
+          "previousSelectedElementIds": {},
           "resizingElement": null,
           "scrolledOutside": false,
-          "scrollX": -144.021119041951,
-          "scrollY": 168.88407282461804,
+          "scrollX": 42.19781421501333,
+          "scrollY": 254.31856617379154,
           "selectedElementIds": {},
           "hoveredElementIds": {},
           "selectedGroupIds": {},
@@ -686,14 +506,17 @@
           "viewBackgroundColor": "#ffffff",
           "zenModeEnabled": false,
           "zoom": {
-            "value": 1.6
+            "value": 1.241393
           },
           "viewModeEnabled": false,
           "pendingImageElementId": null,
           "showHyperlinkPopup": false,
           "selectedLinearElement": null,
           "snapLines": [],
-          "originSnapOffset": null,
+          "originSnapOffset": {
+            "x": 0,
+            "y": 0
+          },
           "objectsSnapModeEnabled": false,
           "userToFollow": null,
           "followedBy": {},
@@ -707,14 +530,14 @@
         },
         "files": {}
       },
-      "parent_id": "1e6a9009-a446-4ee0-ba67-9501229ebca2",
       "is_public": false,
-      "created_at": "2026-01-09T21:57:54.680Z",
-      "updated_at": "2026-01-09T22:20:17.310Z"
+      "created_at": "2026-01-10T02:16:21.852Z",
+      "updated_at": "2026-01-10T16:52:34.459Z"
     },
     {
       "id": "86614d5e-1931-4c7f-b170-6ffc229f68d2",
       "title": "Gitlab",
+      "parent_id": "1e6a9009-a446-4ee0-ba67-9501229ebca2",
       "content": {
         "elements": [
           {
@@ -1090,112 +913,22 @@
             "originalText": "https://github.com/eliseo-arevalo/link-draw",
             "autoResize": true,
             "lineHeight": 1.25
-          },
-          {
-            "id": "HTZW4hURQiOsg4YFlG45y",
-            "type": "line",
-            "x": 328.7461573072351,
-            "y": -7.217480166690329,
-            "width": 357.6020025712145,
-            "height": 0,
-            "angle": 0,
-            "strokeColor": "#1e1e1e",
-            "backgroundColor": "transparent",
-            "fillStyle": "solid",
-            "strokeWidth": 1,
-            "strokeStyle": "solid",
-            "roughness": 1,
-            "opacity": 30,
-            "groupIds": [],
-            "frameId": null,
-            "index": "b3o",
-            "roundness": {
-              "type": 2
-            },
-            "seed": 2099694573,
-            "version": 43,
-            "versionNonce": 1504474285,
-            "isDeleted": false,
-            "boundElements": [],
-            "updated": 1767996619648,
-            "link": null,
-            "locked": false,
-            "points": [
-              [
-                0,
-                0
-              ],
-              [
-                357.6020025712145,
-                0
-              ]
-            ],
-            "lastCommittedPoint": null,
-            "startBinding": null,
-            "endBinding": null,
-            "startArrowhead": null,
-            "endArrowhead": null
-          },
-          {
-            "id": "cYtV6-zWS1HtCUld0AVfB",
-            "type": "line",
-            "x": 325.50435985635033,
-            "y": 405.70250625951684,
-            "width": 357.6020025712145,
-            "height": 0,
-            "angle": 0,
-            "strokeColor": "#1e1e1e",
-            "backgroundColor": "transparent",
-            "fillStyle": "solid",
-            "strokeWidth": 1,
-            "strokeStyle": "solid",
-            "roughness": 1,
-            "opacity": 30,
-            "groupIds": [],
-            "frameId": null,
-            "index": "b3p",
-            "roundness": {
-              "type": 2
-            },
-            "seed": 2007025229,
-            "version": 127,
-            "versionNonce": 1023686819,
-            "isDeleted": false,
-            "boundElements": [],
-            "updated": 1767996619648,
-            "link": null,
-            "locked": false,
-            "points": [
-              [
-                0,
-                0
-              ],
-              [
-                357.6020025712145,
-                0
-              ]
-            ],
-            "lastCommittedPoint": null,
-            "startBinding": null,
-            "endBinding": null,
-            "startArrowhead": null,
-            "endArrowhead": null
           }
         ],
         "appState": {
-          "showWelcomeScreen": true,
+          "showWelcomeScreen": false,
           "theme": "dark",
           "collaborators": {},
           "currentChartType": "bar",
           "currentItemBackgroundColor": "transparent",
           "currentItemEndArrowhead": "arrow",
           "currentItemFillStyle": "solid",
-          "currentItemFontFamily": 6,
-          "currentItemFontSize": 16,
-          "currentItemOpacity": 80,
+          "currentItemFontFamily": 5,
+          "currentItemFontSize": 20,
+          "currentItemOpacity": 100,
           "currentItemRoughness": 1,
           "currentItemStartArrowhead": null,
-          "currentItemStrokeColor": "#6741d9",
+          "currentItemStrokeColor": "#1e1e1e",
           "currentItemRoundness": "round",
           "currentItemArrowType": "round",
           "currentItemStrokeStyle": "solid",
@@ -1232,7 +965,7 @@
           "isRotating": false,
           "lastPointerDownWith": "mouse",
           "multiElement": null,
-          "name": "Untitled-2026-01-09-1613",
+          "name": "Untitled-2026-01-10-1052",
           "contextMenu": null,
           "openMenu": null,
           "openPopup": null,
@@ -1242,13 +975,11 @@
             "shown": false,
             "data": null
           },
-          "previousSelectedElementIds": {
-            "FX3gmgFu7GCzaaytqnCja": true
-          },
+          "previousSelectedElementIds": {},
           "resizingElement": null,
           "scrolledOutside": false,
-          "scrollX": -137.6179590565515,
-          "scrollY": 20.43298486304863,
+          "scrollX": -47.13349637922856,
+          "scrollY": 16.015254639269727,
           "selectedElementIds": {},
           "hoveredElementIds": {},
           "selectedGroupIds": {},
@@ -1274,14 +1005,17 @@
           "viewBackgroundColor": "#ffffff",
           "zenModeEnabled": false,
           "zoom": {
-            "value": 1.6
+            "value": 1.280101
           },
           "viewModeEnabled": false,
           "pendingImageElementId": null,
           "showHyperlinkPopup": false,
           "selectedLinearElement": null,
           "snapLines": [],
-          "originSnapOffset": null,
+          "originSnapOffset": {
+            "x": 0,
+            "y": 0
+          },
           "objectsSnapModeEnabled": false,
           "userToFollow": null,
           "followedBy": {},
@@ -1295,10 +1029,9 @@
         },
         "files": {}
       },
-      "parent_id": "1e6a9009-a446-4ee0-ba67-9501229ebca2",
       "is_public": false,
-      "created_at": "2026-01-09T21:58:02.541Z",
-      "updated_at": "2026-01-09T22:20:08.407Z"
+      "created_at": "2026-01-10T02:16:21.852Z",
+      "updated_at": "2026-01-10T16:52:37.108Z"
     }
   ]
 }
