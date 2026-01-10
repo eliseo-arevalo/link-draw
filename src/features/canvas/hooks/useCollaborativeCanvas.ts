@@ -1,6 +1,8 @@
 import { useEffect } from "react"
-import type { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types"
 import { useTreeStore } from "@/shared/store/treeStore"
+
+// biome-ignore lint/suspicious/noExplicitAny: Excalidraw types not exported
+type ExcalidrawElement = any
 
 export function useCollaborativeCanvas(
   drawingId: string | null,

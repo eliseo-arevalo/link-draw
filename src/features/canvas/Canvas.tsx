@@ -240,7 +240,8 @@ export function Canvas() {
 
         // Broadcast changes
         if (activeDrawingId) {
-          broadcastElements(adapter.getElements())
+          // biome-ignore lint/suspicious/noExplicitAny: Cast readonly to mutable
+          broadcastElements(adapter.getElements() as any)
         }
       }, 100) // 100ms debounce
     }

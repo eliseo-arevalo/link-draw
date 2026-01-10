@@ -106,8 +106,7 @@ export function CollaborationPanel() {
             type="button"
             onClick={handleJoin}
             disabled={isJoining}
-            className="px-3 py-1.5 text-xs text-white rounded transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-            style={{ backgroundColor: colors.primary }}
+            className="px-3 py-1.5 text-xs text-white bg-blue-600 rounded transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-blue-700"
         >
             {isJoining ? "Joining..." : "Join Room"}
         </button>

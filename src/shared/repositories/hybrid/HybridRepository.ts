@@ -147,7 +147,7 @@ export class HybridRepository implements IGraphRepository {
       if (!nodeToMove) throw new Error("Node not found")
 
       // biome-ignore lint/suspicious/noExplicitAny: Casting for node move
-      const movedNode = { ...nodeToMove, parent_id: parentId } as any as DrawingTreeNode
+      const movedNode = Object.assign({}, nodeToMove, { parent_id: parentId }) as any as DrawingTreeNode
 
       const addNode = (nodes: DrawingTreeNode[]): DrawingTreeNode[] => {
         if (!parentId) return [...nodes, movedNode]

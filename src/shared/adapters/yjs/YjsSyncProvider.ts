@@ -24,7 +24,7 @@ export class YjsSyncProvider implements ISyncProvider {
     // Setup WebRTC provider (P2P sync)
     this.webrtcProvider = new WebrtcProvider(roomId, this.ydoc, {
       signaling: ["wss://signaling.yjs.dev"], // Use custom server in production
-      password: password || null,
+      password: password || undefined,
     })
 
     // Setup IndexedDB persistence (local storage)
@@ -83,7 +83,9 @@ export class YjsSyncProvider implements ISyncProvider {
 
   getPeers(): string[] {
     if (!this.webrtcProvider) return []
-    return Array.from(this.webrtcProvider.room?.peers.keys() || [])
+    // biome-ignore lint/suspicious/noExplicitAny: Accessing internal room peers
+    const room = this.webrtcProvider.room as any
+    return Array.from(room?.peers?.keys() || [])
   }
 
   isConnected(): boolean {
