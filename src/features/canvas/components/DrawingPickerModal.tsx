@@ -205,7 +205,8 @@ export function DrawingPickerModal({
                 className="px-4 py-2 text-sm font-medium transition-colors"
                 style={{
                   color: activeTab === "drawing" ? "#6366f1" : colors.textSecondary,
-                  borderBottom: activeTab === "drawing" ? "2px solid #6366f1" : "2px solid transparent",
+                  borderBottom:
+                    activeTab === "drawing" ? "2px solid #6366f1" : "2px solid transparent",
                   marginBottom: "-1px",
                 }}
               >
@@ -272,7 +273,6 @@ export function DrawingPickerModal({
                   border: `1px solid ${colors.border}`,
                   color: colors.text,
                 }}
-                autoFocus
                 onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
               />
               <button

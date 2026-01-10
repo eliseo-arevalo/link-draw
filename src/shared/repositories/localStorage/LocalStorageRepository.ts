@@ -1,5 +1,5 @@
-import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import { EXAMPLE_DRAWINGS } from "@/shared/data/exampleDrawings"
+import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import type { Drawing, DrawingInput, DrawingSummary, DrawingTreeNode } from "@/shared/types/drawing"
 import { validateNoCircularReference } from "./helpers/circular-validator"
 import { buildTree } from "./helpers/tree-builder"

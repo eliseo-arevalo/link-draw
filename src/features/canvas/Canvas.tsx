@@ -65,7 +65,7 @@ export function Canvas() {
         const drawing = await repository.loadDrawing(activeDrawingId)
         const appState = drawing?.content?.appState
         const hasScrollPosition = appState?.scrollX !== undefined && appState?.scrollY !== undefined
-        
+
         // Only center if no saved scroll position
         if (!hasScrollPosition) {
           const elements = excalidrawAPI.getSceneElements()
@@ -198,6 +198,8 @@ export function Canvas() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [hasSelection, isLinkModalOpen])
 
+  const isMobile = window.innerWidth < 768
+
   return (
     <div className="w-full h-screen relative overflow-hidden">
       <Suspense
@@ -212,14 +214,22 @@ export function Canvas() {
           initialData={{
             appState: {
               viewBackgroundColor: "#ffffff",
+              ...(isMobile && { viewModeEnabled: false }),
             },
           }}
           theme={theme}
           onChange={() => adapter.notifyChange()}
           onLinkOpen={handleLinkOpen}
-          renderTopRightUI={() => (
-            <LinkButton onClick={handleOpenLinkModal} disabled={!hasSelection} />
-          )}
+          UIOptions={{
+            canvasActions: {
+              toggleTheme: false,
+            },
+          }}
+          renderTopRightUI={
+            isMobile
+              ? undefined
+              : () => <LinkButton onClick={handleOpenLinkModal} disabled={!hasSelection} />
+          }
         />
       </Suspense>
 

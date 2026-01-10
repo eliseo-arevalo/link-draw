@@ -17,6 +17,7 @@ interface DrawingsExplorerProps {
   onToggleSidebar: () => void
   onToggleGraph: () => void
   isGraphView: boolean
+  isMobile?: boolean
 }
 
 export function Explorer({
@@ -24,6 +25,7 @@ export function Explorer({
   onToggleSidebar,
   onToggleGraph,
   isGraphView,
+  isMobile = false,
 }: DrawingsExplorerProps) {
   const { drawingService, repository } = useServices()
   const { tree, setTree } = useTreeStore()
@@ -200,7 +202,7 @@ export function Explorer({
         if (!cancelled) {
           setTree(drawings)
           setError(null)
-          
+
           // Auto-select if only one root drawing and nothing selected
           if (drawings.length === 1 && !activeDrawingId) {
             setActiveDrawingId(drawings[0].id)
@@ -276,6 +278,14 @@ export function Explorer({
         minWidth: `${SIDEBAR_WIDTH}px`,
         backgroundColor: colors.background,
         borderRight: `1px solid ${colors.border}`,
+        ...(isMobile && {
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 1000,
+          boxShadow: "2px 0 8px rgba(0, 0, 0, 0.2)",
+        }),
         transition: "width 0.15s ease-out, min-width 0.15s ease-out",
       }}
     >
@@ -438,7 +448,9 @@ export function Explorer({
                     </svg>
                     Graph view (Cmd+G)
                   </button>
-                  <div style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }} />
+                  <div
+                    style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }}
+                  />
                   <button
                     type="button"
                     onClick={async () => {
@@ -449,7 +461,9 @@ export function Explorer({
                           exportDate: new Date().toISOString(),
                           drawings,
                         }
-                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+                        const blob = new Blob([JSON.stringify(data, null, 2)], {
+                          type: "application/json",
+                        })
                         const url = URL.createObjectURL(blob)
                         const a = document.createElement("a")
                         a.href = url
@@ -500,14 +514,14 @@ export function Explorer({
                         try {
                           const text = await file.text()
                           const data = JSON.parse(text)
-                          
+
                           if (!data.drawings || !Array.isArray(data.drawings)) {
                             throw new Error("Invalid file format")
                           }
 
                           // Clear existing data and import
                           localStorage.setItem("linkdraw:drawings", JSON.stringify(data.drawings))
-                          
+
                           // Reload tree
                           const updatedTree = await repository.getDrawingsTree()
                           setTree(updatedTree)
@@ -545,7 +559,9 @@ export function Explorer({
                     <Icon name="upload" size={14} aria-label="Import" />
                     Import project
                   </button>
-                  <div style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }} />
+                  <div
+                    style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }}
+                  />
                   <button
                     type="button"
                     onClick={() => {
