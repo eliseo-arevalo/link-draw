@@ -45,6 +45,7 @@ interface DrawingPickerModalProps {
   currentDrawingId: string | null
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Modal with tabs, tree navigation, and element selection requires complex logic
 export function DrawingPickerModal({
   isOpen,
   onClose,

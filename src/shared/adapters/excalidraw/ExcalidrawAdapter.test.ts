@@ -133,17 +133,19 @@ describe("ExcalidrawAdapter", () => {
     it("setContent should update scene and add files", () => {
       const content: ExcalidrawContent = {
         elements: [{ id: "1" }] as never,
-        appState: { zoom: 1 } as never,
+        appState: { zoom: 1, scrollX: 100, scrollY: 200 } as never,
         files: { f1: { id: "f1" } } as never,
       }
 
       adapter.setContent(content)
 
-      // It should update elements
-      expect(mockApi.updateScene).toHaveBeenCalledWith({ elements: content.elements })
+      // It should update elements and appState (scroll/zoom only)
+      expect(mockApi.updateScene).toHaveBeenCalledWith({
+        elements: content.elements,
+        appState: { zoom: 1, scrollX: 100, scrollY: 200 },
+      })
       // It should add files
       expect(mockApi.addFiles).toHaveBeenCalledWith([{ id: "f1" }])
-      // Note: Implementation says it doesn't pass appState to avoid bugs
     })
 
     it("extractDrawingLinks should return links", () => {
