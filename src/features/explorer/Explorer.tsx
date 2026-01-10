@@ -202,6 +202,7 @@ export function Explorer({
   useEffect(() => {
     let cancelled = false
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Tree loading with last drawing restoration requires conditional logic
     const loadTree = async () => {
       try {
         const drawings = await repository.getDrawingsTree()
@@ -213,8 +214,9 @@ export function Explorer({
           if (!activeDrawingId && drawings.length > 0) {
             // Try to load last active drawing
             const lastDrawingId = localStorage.getItem("linkdraw:last-active-drawing")
-            
+
             // Check if last drawing still exists
+            // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Recursive tree search is inherently complex
             const findDrawing = (nodes: typeof drawings, id: string): boolean => {
               for (const node of nodes) {
                 if (node.id === id) return true

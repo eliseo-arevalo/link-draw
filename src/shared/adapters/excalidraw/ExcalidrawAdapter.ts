@@ -71,20 +71,19 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       return
     }
 
-    // Clean appState - only keep scroll/zoom, remove problematic fields
+    // Clean appState - fix collaborators to be a Map
     const cleanAppState = content.appState
       ? {
-          scrollX: content.appState.scrollX,
-          scrollY: content.appState.scrollY,
-          zoom: content.appState.zoom,
+          ...content.appState,
+          collaborators: new Map(),
         }
-      : {}
+      : undefined
 
-    // Load elements and appState (including scroll position and zoom)
+    // Load elements and appState
     this.api.updateScene({
       elements: content.elements || [],
       // biome-ignore lint/suspicious/noExplicitAny: Excalidraw appState type mismatch
-      appState: cleanAppState as any,
+      ...(cleanAppState && { appState: cleanAppState as any }),
     })
 
     // Add files if they exist
