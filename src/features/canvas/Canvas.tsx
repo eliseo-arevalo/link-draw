@@ -10,7 +10,10 @@ import { useThemeStore } from "@/shared/store/themeStore"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { LinkButton } from "./components/LinkButton"
 import { useCanvasLoader } from "./hooks/useCanvasLoader"
-import { useCollaborativeCanvas } from "./hooks/useCollaborativeCanvas"
+import {
+  type CollaborativeExcalidrawElement,
+  useCollaborativeCanvas,
+} from "./hooks/useCollaborativeCanvas"
 import { useElementSelection } from "./hooks/useElementSelection"
 import { useLinkNavigation } from "./hooks/useLinkNavigation"
 
@@ -240,8 +243,8 @@ export function Canvas() {
 
         // Broadcast changes
         if (activeDrawingId) {
-          // biome-ignore lint/suspicious/noExplicitAny: Cast readonly to mutable
-          broadcastElements(adapter.getElements() as any)
+          // Cast to unknown first to handle readonly -> mutable interface
+          broadcastElements(adapter.getElements() as unknown as CollaborativeExcalidrawElement[])
         }
       }, 100) // 100ms debounce
     }
@@ -260,6 +263,8 @@ export function Canvas() {
     adapter.onChange,
     adapter.setAPI,
     drawingService.createDrawing,
+    adapter.getElements,
+    broadcastElements,
   ])
 
   useEffect(() => {

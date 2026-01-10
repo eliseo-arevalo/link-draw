@@ -1,4 +1,5 @@
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
+import { findInTree } from "@/shared/lib/tree-utils"
 import { LocalStorageRepository } from "@/shared/repositories/localStorage/LocalStorageRepository"
 import { useTreeStore } from "@/shared/store/treeStore"
 import type { Drawing, DrawingInput, DrawingSummary, DrawingTreeNode } from "@/shared/types/drawing"
@@ -169,17 +170,7 @@ export class HybridRepository implements IGraphRepository {
   async getDrawingChildren(id: string): Promise<Drawing[]> {
     if (this.isCollaborating && this.syncProvider) {
       const tree = this.syncProvider.getTree()
-      const findNode = (nodes: DrawingTreeNode[]): DrawingTreeNode | null => {
-        for (const n of nodes) {
-          if (n.id === id) return n
-          if (n.children) {
-            const found = findNode(n.children)
-            if (found) return found
-          }
-        }
-        return null
-      }
-      const node = findNode(tree)
+      const node = findInTree(tree, (n) => n.id === id)
       return node?.children || []
     }
     return this.localStorage.getDrawingChildren(id)

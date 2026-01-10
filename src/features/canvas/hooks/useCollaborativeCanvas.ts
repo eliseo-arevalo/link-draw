@@ -1,12 +1,15 @@
 import { useEffect } from "react"
 import { useTreeStore } from "@/shared/store/treeStore"
 
-// biome-ignore lint/suspicious/noExplicitAny: Excalidraw types not exported
-type ExcalidrawElement = any
+export interface CollaborativeExcalidrawElement {
+  id: string
+  // biome-ignore lint/suspicious/noExplicitAny: Excalidraw elements have dynamic properties
+  [key: string]: any
+}
 
 export function useCollaborativeCanvas(
   drawingId: string | null,
-  onElementsChange: (elements: ExcalidrawElement[]) => void
+  onElementsChange: (elements: CollaborativeExcalidrawElement[]) => void
 ) {
   const { syncProvider, isCollaborating } = useTreeStore()
 
@@ -21,7 +24,7 @@ export function useCollaborativeCanvas(
 
     // Observe remote changes
     const observer = () => {
-      const elements = Array.from(yElements.values()) as ExcalidrawElement[]
+      const elements = Array.from(yElements.values()) as CollaborativeExcalidrawElement[]
       // Only update if we have elements (avoid clearing on empty init)
       if (elements.length > 0) {
         onElementsChange(elements)
@@ -39,7 +42,7 @@ export function useCollaborativeCanvas(
   }, [drawingId, syncProvider, isCollaborating, onElementsChange])
 
   // Function to broadcast local changes
-  const broadcastElements = (elements: ExcalidrawElement[]) => {
+  const broadcastElements = (elements: CollaborativeExcalidrawElement[]) => {
     if (!isCollaborating || !syncProvider || !drawingId) return
     const doc = syncProvider.getDoc()
     if (!doc) return
