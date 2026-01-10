@@ -24,6 +24,19 @@ export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string 
     }
   }, [isEditing])
 
+  // Listen for edit-node events
+  useEffect(() => {
+    const handleEditNode = (e: Event) => {
+      const customEvent = e as CustomEvent<{ nodeId: string }>
+      if (customEvent.detail.nodeId === nodeId) {
+        setIsEditing(true)
+      }
+    }
+
+    window.addEventListener("edit-node", handleEditNode)
+    return () => window.removeEventListener("edit-node", handleEditNode)
+  }, [nodeId])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
@@ -68,6 +81,12 @@ export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string 
       const updatedTree = await repository.getDrawingsTree()
       setTree(updatedTree)
       setActiveDrawingId(childId)
+      
+      // Trigger edit mode for the new child
+      setTimeout(() => {
+        const event = new CustomEvent("edit-node", { detail: { nodeId: childId } })
+        window.dispatchEvent(event)
+      }, 100)
     } catch (err) {
       console.error("[TreeNode] Failed to create child:", err)
     }

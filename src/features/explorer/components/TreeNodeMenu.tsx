@@ -9,6 +9,7 @@ import { getThemeColors } from "@/shared/styles/theme"
 
 interface TreeNodeMenuProps {
   isOpen: boolean
+  onRename: () => void
   onCreateChild: () => void
   onDuplicate: () => void
   onDuplicateWithChildren: () => void
@@ -18,6 +19,7 @@ interface TreeNodeMenuProps {
 
 export function TreeNodeMenu({
   isOpen,
+  onRename,
   onCreateChild,
   onDuplicate,
   onDuplicateWithChildren,
@@ -29,6 +31,12 @@ export function TreeNodeMenu({
 
   return (
     <DropdownMenu isOpen={isOpen} anchorRef={anchorRef}>
+      <DropdownMenuItem
+        icon={<Icon name="pencil" size={14} color={colors.text} />}
+        label="Rename"
+        onClick={onRename}
+      />
+
       <DropdownMenuItem
         icon={<Icon name="plus" size={14} color={colors.text} />}
         label="Create Child"

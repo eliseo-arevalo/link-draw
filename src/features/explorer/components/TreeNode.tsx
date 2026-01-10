@@ -255,6 +255,10 @@ export function TreeNode({
           <TreeNodeMenu
             isOpen={isMenuOpen}
             anchorRef={menuRef}
+            onRename={() => {
+              setIsEditing(true)
+              setIsMenuOpen(false)
+            }}
             onCreateChild={handleCreateChild}
             onDuplicate={() => {
               onDuplicate(node.id, false)
