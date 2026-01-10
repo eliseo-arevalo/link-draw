@@ -12,6 +12,24 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks
+          "react-vendor": ["react", "react-dom"],
+          "excalidraw-vendor": ["@excalidraw/excalidraw"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
+  optimizeDeps: {
+    exclude: [
+      // Exclude mermaid if not used
+      "mermaid",
+    ],
+  },
   test: {
     environment: "happy-dom",
     exclude: [...configDefaults.exclude],

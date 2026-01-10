@@ -14,8 +14,10 @@ import { useElementSelection } from "./hooks/useElementSelection"
 import { useLinkNavigation } from "./hooks/useLinkNavigation"
 
 const Excalidraw = lazy(() =>
-  import("@excalidraw/excalidraw").then((mod) => ({ default: mod.Excalidraw }))
-)
+	import(/* webpackChunkName: "excalidraw" */ "@excalidraw/excalidraw").then(
+		(mod) => ({ default: mod.Excalidraw }),
+	),
+);
 
 export function Canvas() {
   const { adapter, drawingService, repository } = useServices()
@@ -198,17 +200,43 @@ export function Canvas() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [hasSelection, isLinkModalOpen])
 
-  const isMobile = window.innerWidth < 768
+	const isMobile = window.innerWidth < 768;
 
-  return (
-    <div className="w-full h-screen relative overflow-hidden">
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center h-full">
-            <div className="text-lg">Loading editor...</div>
-          </div>
-        }
-      >
+	return (
+		<div className="w-full h-screen relative overflow-hidden">
+			<Suspense
+				fallback={
+					<div
+						className="flex items-center justify-center h-full"
+						style={{
+							backgroundColor: "var(--color-surface-primary, #ffffff)",
+						}}
+					>
+						<div
+							style={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								gap: "1rem",
+							}}
+						>
+							<div
+								style={{
+									width: "40px",
+									height: "40px",
+									border: "3px solid rgba(0, 0, 0, 0.1)",
+									borderTopColor: "rgba(0, 0, 0, 0.6)",
+									borderRadius: "50%",
+									animation: "spin 0.8s linear infinite",
+								}}
+							/>
+							<div style={{ fontSize: "14px", color: "rgba(0, 0, 0, 0.6)" }}>
+								Loading canvas...
+							</div>
+						</div>
+					</div>
+				}
+			>
         <Excalidraw
           excalidrawAPI={(api) => setExcalidrawAPI(api)}
           initialData={{
