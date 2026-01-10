@@ -81,7 +81,7 @@ export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string 
       const updatedTree = await repository.getDrawingsTree()
       setTree(updatedTree)
       setActiveDrawingId(childId)
-      
+
       // Trigger edit mode for the new child
       setTimeout(() => {
         const event = new CustomEvent("edit-node", { detail: { nodeId: childId } })

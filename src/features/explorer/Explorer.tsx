@@ -59,7 +59,7 @@ export function Explorer({
       const updatedTree = await repository.getDrawingsTree()
       setTree(updatedTree)
       setActiveDrawingId(id)
-      
+
       // Trigger edit mode for the new drawing
       setTimeout(() => {
         const event = new CustomEvent("edit-node", { detail: { nodeId: id } })

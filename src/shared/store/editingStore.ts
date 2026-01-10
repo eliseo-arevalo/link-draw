@@ -1,11 +1,11 @@
-import { create } from "zustand";
+import { create } from "zustand"
 
 interface EditingState {
-	editingNodeId: string | null;
-	setEditingNodeId: (id: string | null) => void;
+  editingNodeId: string | null
+  setEditingNodeId: (id: string | null) => void
 }
 
 export const useEditingStore = create<EditingState>((set) => ({
-	editingNodeId: null,
-	setEditingNodeId: (id) => set({ editingNodeId: id }),
-}));
+  editingNodeId: null,
+  setEditingNodeId: (id) => set({ editingNodeId: id }),
+}))
