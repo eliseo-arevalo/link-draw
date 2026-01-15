@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { generateUniqueDrawingName } from "@/shared/lib/drawing-names"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
@@ -11,7 +12,7 @@ export function useTreeNode(
   hasChildren: boolean
 ) {
   const { repository } = useServices()
-  const { setTree } = useTreeStore()
+  const { tree, setTree } = useTreeStore()
   const { setActiveDrawingId } = useDrawingStore()
 
   const { isExpanded, setIsExpanded } = useExpandedNodes(nodeId, hasChildren)
@@ -80,7 +81,8 @@ export function useTreeNode(
   const handleCreateChild = async () => {
     setIsMenuOpen(false)
     try {
-      const childId = await repository.createDrawing("New Drawing", nodeId)
+      const uniqueName = generateUniqueDrawingName(tree)
+      const childId = await repository.createDrawing(uniqueName, nodeId)
       await repository.saveDrawing(childId, {
         content: { elements: [], appState: {}, files: {} },
       })

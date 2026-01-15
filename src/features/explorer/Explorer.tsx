@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Icon } from "@/shared/components/Icon"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
+import { generateUniqueDrawingName } from "@/shared/lib/drawing-names"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
@@ -47,7 +48,8 @@ export function Explorer({
     setIsCreating(true)
     setError(null)
     try {
-      const id = await repository.createDrawing("New Drawing", null)
+      const uniqueName = generateUniqueDrawingName(tree)
+      const id = await repository.createDrawing(uniqueName, null)
       await repository.saveDrawing(id, {
         content: {
           elements: [],
