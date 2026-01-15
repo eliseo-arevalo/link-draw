@@ -2,13 +2,19 @@ import { useEffect, useRef, useState } from "react"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useTreeStore } from "@/shared/store/treeStore"
+import { useExpandedNodes } from "./useExpandedNodes"
 
-export function useTreeNode(nodeId: string, nodeTitle: string, activeId: string | null) {
+export function useTreeNode(
+  nodeId: string,
+  nodeTitle: string,
+  activeId: string | null,
+  hasChildren: boolean
+) {
   const { repository } = useServices()
   const { setTree } = useTreeStore()
   const { setActiveDrawingId } = useDrawingStore()
 
-  const [isExpanded, setIsExpanded] = useState(true)
+  const { isExpanded, setIsExpanded } = useExpandedNodes(nodeId, hasChildren)
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(nodeTitle)
   const [isMenuOpen, setIsMenuOpen] = useState(false)

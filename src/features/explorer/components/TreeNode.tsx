@@ -87,7 +87,7 @@ export function TreeNode({
     handleCreateChild,
     handleDelete,
     confirmDelete,
-  } = useTreeNode(node.id, node.title, activeId)
+  } = useTreeNode(node.id, node.title, activeId, !!hasChildren)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
