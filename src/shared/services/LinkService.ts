@@ -1,5 +1,6 @@
 import type { ICanvasAdapter } from "@/shared/interfaces/ICanvasAdapter"
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
+import { findDrawingLinks } from "@/shared/lib/drawing-links"
 import { findInTree, getPathToNode, nodeExists } from "@/shared/lib/tree-utils"
 import type { DrawingLink, DrawingTreeNode, ExcalidrawContent } from "@/shared/types/drawing"
 import { buildLinkGraph, detectCycle } from "./link/graph-algorithms"
@@ -37,24 +38,14 @@ export class LinkService {
 
   private extractLinksFromContent(content: ExcalidrawContent): DrawingLink[] {
     // Extract links directly from content without mutating canvas state
-    // Use the same logic as ExcalidrawAdapter.extractDrawingLinks but stateless
     const elements = content.elements || []
-    const links: DrawingLink[] = []
+    const linkInfos = findDrawingLinks(elements)
 
-    for (const element of elements) {
-      if (element.link) {
-        const match = element.link.match(/^excaligraph:\/\/drawing\/([a-f0-9-]+)$/i)
-        if (match) {
-          links.push({
-            elementId: element.id,
-            targetDrawingId: match[1],
-            targetType: "drawing",
-          })
-        }
-      }
-    }
-
-    return links
+    return linkInfos.map((info) => ({
+      elementId: info.elementId,
+      targetDrawingId: info.drawingId,
+      targetType: info.targetType,
+    }))
   }
 
   async wouldCreateCircularReference(

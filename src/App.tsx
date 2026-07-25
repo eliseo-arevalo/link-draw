@@ -63,6 +63,10 @@ function App() {
       <div
         style={{
           flex: 1,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
           overflow: "hidden",
           backgroundColor: "var(--color-surface-primary, #ffffff)",
           transition: "all 0.15s ease-out",

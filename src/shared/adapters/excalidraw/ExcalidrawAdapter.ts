@@ -2,6 +2,7 @@ import type { BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidra
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type { ICanvasAdapter } from "@/shared/interfaces/ICanvasAdapter"
 import { type DrawingLinkInfo, findDrawingLinks } from "@/shared/lib/drawing-links"
+import { useThemeStore } from "@/shared/store/themeStore"
 import type {
   DrawingLink,
   ExcalidrawAppState,
@@ -71,24 +72,37 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       return
     }
 
-    // Clean appState - fix collaborators to be a Map
+    const currentTheme = useThemeStore.getState().theme
+
+    // Clean appState - fix collaborators to be a Map, force current theme and remove static layout dimensions
     const cleanAppState = content.appState
       ? {
           ...content.appState,
           collaborators: new Map(),
+          theme: currentTheme,
         }
-      : undefined
+      : { theme: currentTheme }
+
+    delete (cleanAppState as Partial<ExcalidrawAppState>).width
+    delete (cleanAppState as Partial<ExcalidrawAppState>).height
+    delete (cleanAppState as Partial<ExcalidrawAppState>).offsetTop
+    delete (cleanAppState as Partial<ExcalidrawAppState>).offsetLeft
 
     // Load elements and appState
     this.api.updateScene({
       elements: content.elements || [],
       // biome-ignore lint/suspicious/noExplicitAny: Excalidraw appState type mismatch
-      ...(cleanAppState && { appState: cleanAppState as any }),
+      appState: cleanAppState as any,
     })
 
     // Add files if they exist
     if (content.files && Object.keys(content.files).length > 0) {
       this.api.addFiles(Object.values(content.files))
+    }
+
+    // Trigger resize to ensure canvas recalculates viewport dimensions
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("resize"))
     }
   }
 

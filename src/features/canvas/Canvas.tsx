@@ -258,10 +258,31 @@ export function Canvas() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [hasSelection, isLinkModalOpen])
 
+  // Imperative theme sync to Excalidraw scene
+  useEffect(() => {
+    if (!excalidrawAPI) return
+    excalidrawAPI.updateScene({
+      appState: {
+        theme,
+      },
+    })
+  }, [theme, excalidrawAPI])
+
+  // Recalculate dimensions on drawing navigation or canvas API init
+  useEffect(() => {
+    if (!excalidrawAPI || !activeDrawingId) return
+
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"))
+    }, 50)
+
+    return () => clearTimeout(timer)
+  }, [excalidrawAPI, activeDrawingId])
+
   const isMobile = window.innerWidth < 768
 
   return (
-    <div className="w-full h-screen relative overflow-hidden">
+    <div className="w-full h-full relative overflow-hidden flex-1 min-h-0">
       <Suspense
         fallback={
           <div
@@ -297,7 +318,6 @@ export function Canvas() {
           excalidrawAPI={(api) => setExcalidrawAPI(api)}
           initialData={{
             appState: {
-              viewBackgroundColor: "#ffffff",
               ...(isMobile && { viewModeEnabled: false }),
             },
           }}

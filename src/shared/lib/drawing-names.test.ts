@@ -26,7 +26,11 @@ describe("generateUniqueDrawingName", () => {
       {
         id: "1",
         title: existingName,
-        parentId: null,
+        parent_id: null,
+        is_public: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        content: { elements: [], appState: {}, files: {} },
         children: [],
       },
     ]
@@ -40,12 +44,20 @@ describe("generateUniqueDrawingName", () => {
       {
         id: "1",
         title: "Parent",
-        parentId: null,
+        parent_id: null,
+        is_public: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        content: { elements: [], appState: {}, files: {} },
         children: [
           {
             id: "2",
             title: "Drawing - Jan 14, 9:27 PM",
-            parentId: "1",
+            parent_id: "1",
+            is_public: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            content: { elements: [], appState: {}, files: {} },
             children: [],
           },
         ],
