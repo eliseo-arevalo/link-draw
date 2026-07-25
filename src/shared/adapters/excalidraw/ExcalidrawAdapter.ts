@@ -301,6 +301,7 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
         this.api.updateScene({
           elements: [...currentElements, ...withLinks],
         })
+        this.notifyChange()
       })
       .catch(console.error)
   }

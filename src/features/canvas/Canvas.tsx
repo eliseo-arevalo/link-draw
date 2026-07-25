@@ -349,22 +349,32 @@ export function Canvas() {
     }
 
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Drop handler with position calculation and element/link creation
-    const onDrop = (e: DragEvent) => {
+    const onDrop = async (e: DragEvent) => {
       e.preventDefault()
       e.stopPropagation()
       setIsDraggingOver(false)
 
       const globalDragged = window.__linkdraw_dragged_drawing ?? null
-      const rawData = e.dataTransfer?.getData("text/plain") ?? ""
-      const drawingId =
-        globalDragged?.id ||
-        e.dataTransfer?.getData("application/linkdraw-drawing-id") ||
-        (rawData.startsWith("drawing://") ? rawData.replace("drawing://", "") : null)
+      const rawData = e.dataTransfer?.getData("text/plain")?.trim() ?? ""
+      const customId = e.dataTransfer?.getData("application/linkdraw-drawing-id")?.trim() ?? ""
+      const customTitle =
+        e.dataTransfer?.getData("application/linkdraw-drawing-title")?.trim() ?? ""
 
-      const drawingTitle =
-        globalDragged?.title ||
-        e.dataTransfer?.getData("application/linkdraw-drawing-title") ||
-        "Linked Drawing"
+      let drawingId = globalDragged?.id || customId
+      if (!drawingId && rawData) {
+        drawingId = rawData.startsWith("drawing://") ? rawData.replace("drawing://", "") : rawData
+      }
+
+      let drawingTitle = globalDragged?.title || customTitle
+      if (!drawingTitle && drawingId) {
+        try {
+          const loaded = await repository.loadDrawing(drawingId)
+          if (loaded?.title) drawingTitle = loaded.title
+        } catch (err) {
+          console.error("Failed to load title for dropped drawing:", err)
+        }
+      }
+      if (!drawingTitle) drawingTitle = "Linked Drawing"
 
       window.__linkdraw_dragged_drawing = null
 
@@ -420,7 +430,7 @@ export function Canvas() {
       el.removeEventListener("dragleave", onDragLeave, true)
       el.removeEventListener("drop", onDrop, true)
     }
-  }, [adapter.getSelectedElementIds, adapter.setElementLink, adapter.addElements])
+  }, [adapter.getSelectedElementIds, adapter.setElementLink, adapter.addElements, repository])
 
   // ── Wiki [[ selection handler ──
   // When user picks a drawing from the [[ autocomplete:
