@@ -443,12 +443,18 @@ export function Canvas() {
       }
     }
 
+    const handleGlobalDragEnd = () => {
+      setIsDraggingOver(false)
+    }
+
     window.addEventListener("dragover", handleGlobalDragOver, true)
     window.addEventListener("drop", handleGlobalDrop, true)
+    window.addEventListener("dragend", handleGlobalDragEnd, true)
 
     return () => {
       window.removeEventListener("dragover", handleGlobalDragOver, true)
       window.removeEventListener("drop", handleGlobalDrop, true)
+      window.removeEventListener("dragend", handleGlobalDragEnd, true)
     }
   }, [adapter.getSelectedElementIds, adapter.setElementLink, adapter.addElements, repository])
 
