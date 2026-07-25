@@ -329,30 +329,47 @@ export function Canvas() {
     return () => clearTimeout(timer)
   }, [excalidrawAPI, activeDrawingId])
 
-  // ── Drag & Drop handling via capture-phase native listeners ──
-  // Using capture phase ensures our handler fires BEFORE Excalidraw can intercept/stop the event.
+  // ── Drag & Drop handling via window capture-phase listeners ──
+  // Using window capture phase guarantees we intercept dragover and drop BEFORE Excalidraw can cancel/stop them.
   const [isDraggingOver, setIsDraggingOver] = useState(false)
 
   useEffect(() => {
-    const el = canvasRef.current
-    if (!el) return
+    const handleGlobalDragOver = (e: DragEvent) => {
+      const el = canvasRef.current
+      if (!el) return
 
-    const onDragOver = (e: DragEvent) => {
-      e.preventDefault()
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "link"
-      setIsDraggingOver(true)
+      const rect = el.getBoundingClientRect()
+      const isInside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+
+      if (isInside) {
+        e.preventDefault()
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "link"
+        setIsDraggingOver(true)
+      } else {
+        setIsDraggingOver(false)
+      }
     }
 
-    const onDragLeave = (e: DragEvent) => {
-      if (el.contains(e.relatedTarget as Node)) return
-      setIsDraggingOver(false)
-    }
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Global drop handler with position calculation and element/link creation
+    const handleGlobalDrop = async (e: DragEvent) => {
+      const el = canvasRef.current
+      if (!el) return
 
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Drop handler with position calculation and element/link creation
-    const onDrop = async (e: DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(false)
+      const rect = el.getBoundingClientRect()
+      const isInside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+
+      if (!isInside) {
+        setIsDraggingOver(false)
+        return
+      }
 
       const globalDragged = window.__linkdraw_dragged_drawing ?? null
       const rawData = e.dataTransfer?.getData("text/plain")?.trim() ?? ""
@@ -364,6 +381,15 @@ export function Canvas() {
       if (!drawingId && rawData) {
         drawingId = rawData.startsWith("drawing://") ? rawData.replace("drawing://", "") : rawData
       }
+
+      if (!drawingId) {
+        setIsDraggingOver(false)
+        return
+      }
+
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDraggingOver(false)
 
       let drawingTitle = globalDragged?.title || customTitle
       if (!drawingTitle && drawingId) {
@@ -379,10 +405,7 @@ export function Canvas() {
       window.__linkdraw_dragged_drawing = null
 
       const api = excalidrawAPIRef.current
-      if (!drawingId || !api) {
-        console.log("[Canvas] Drop ignored: no drawingId or API", { drawingId, hasAPI: !!api })
-        return
-      }
+      if (!api) return
 
       console.log(`[Canvas] Drop detected: ${drawingTitle} (${drawingId})`)
 
@@ -397,7 +420,6 @@ export function Canvas() {
         console.log(`[Canvas] Linked ${selectedIds.length} element(s) via Drag & Drop`)
       } else {
         const appState = api.getAppState()
-        const rect = el.getBoundingClientRect()
         const zoom = appState.zoom?.value || 1
         const dropX = (e.clientX - rect.left - appState.scrollX) / zoom
         const dropY = (e.clientY - rect.top - appState.scrollY) / zoom
@@ -421,14 +443,12 @@ export function Canvas() {
       }
     }
 
-    el.addEventListener("dragover", onDragOver, true)
-    el.addEventListener("dragleave", onDragLeave, true)
-    el.addEventListener("drop", onDrop, true)
+    window.addEventListener("dragover", handleGlobalDragOver, true)
+    window.addEventListener("drop", handleGlobalDrop, true)
 
     return () => {
-      el.removeEventListener("dragover", onDragOver, true)
-      el.removeEventListener("dragleave", onDragLeave, true)
-      el.removeEventListener("drop", onDrop, true)
+      window.removeEventListener("dragover", handleGlobalDragOver, true)
+      window.removeEventListener("drop", handleGlobalDrop, true)
     }
   }, [adapter.getSelectedElementIds, adapter.setElementLink, adapter.addElements, repository])
 
