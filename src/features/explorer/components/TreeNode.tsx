@@ -24,17 +24,24 @@ const getNodeStyles = (
   level: number,
   isActive: boolean,
   isDragging: boolean,
-  isDragOver: boolean
+  isDragOver: boolean,
+  colors: ReturnType<typeof getThemeColors>
 ) => ({
-  paddingLeft: `${level * 1.25 + 1}rem`,
+  paddingLeft: `${level * 1.25 + 0.5}rem`,
+  paddingRight: "0.5rem",
+  paddingTop: "0.35rem",
+  paddingBottom: "0.35rem",
+  margin: "1px 6px",
   backgroundColor: isDragOver
-    ? "rgba(99, 102, 241, 0.1)"
+    ? colors.activeBackground
     : isActive
-      ? "var(--excalidraw-bg-secondary)"
+      ? colors.activeBackground
       : "transparent",
-  borderLeft: isActive ? "2px solid var(--excalidraw-button-primary)" : "2px solid transparent",
-  opacity: isDragging ? 0.5 : 1,
+  borderRadius: "6px",
+  borderLeft: "none",
+  opacity: isDragging ? 0.4 : 1,
   cursor: isDragging ? "grabbing" : "pointer",
+  transition: "background-color 0.15s ease",
 })
 
 const handleNodeDrop = (
@@ -50,6 +57,7 @@ const handleNodeDrop = (
   }
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Tree node UI rendering requires complex drag and state logic
 export function TreeNode({
   node,
   level,
@@ -108,10 +116,10 @@ export function TreeNode({
         onDragOver={(e) => onDragOver(e, node.id)}
         onDrop={(e) => handleNodeDrop(e, node.id, draggedId, onDrop)}
         onDragEnd={onDragEnd}
-        className="flex items-center gap-2 py-1.5 px-4 transition-colors group"
-        style={getNodeStyles(level, isActive, isDragging, isDragOver)}
+        className="flex items-center gap-1.5 transition-all group"
+        style={getNodeStyles(level, isActive, isDragging, isDragOver, colors)}
         onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+          if (!isActive) e.currentTarget.style.backgroundColor = colors.hoverBackground
         }}
         onMouseLeave={(e) => {
           if (!isActive) e.currentTarget.style.backgroundColor = "transparent"
@@ -135,13 +143,15 @@ export function TreeNode({
               border: "none",
               background: "transparent",
               cursor: "pointer",
+              borderRadius: "4px",
+              transition: "transform 0.15s ease",
             }}
             aria-label={isExpanded ? "Collapse" : "Expand"}
           >
             <Icon
               name={isExpanded ? "chevronDown" : "chevronRight"}
-              size={10}
-              color={colors.textSecondary}
+              size={12}
+              color={isActive ? colors.accent : colors.textSecondary}
             />
           </button>
         ) : (
@@ -166,15 +176,16 @@ export function TreeNode({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.5rem",
+            gap: "0.4rem",
             flex: 1,
+            minWidth: 0,
             cursor: "pointer",
           }}
         >
           <Icon
             name={hasChildren ? "folderOpen" : "file"}
-            size={16}
-            color={isActive ? "#6366f1" : colors.textSecondary}
+            size={15}
+            color={isActive ? colors.iconActive : colors.iconColor}
           />
 
           {isEditing ? (
@@ -186,13 +197,16 @@ export function TreeNode({
               onBlur={handleSaveTitle}
               onKeyDown={handleKeyDown}
               onClick={(e) => e.stopPropagation()}
-              className="text-sm flex-1"
+              className="text-sm flex-1 min-w-0 w-full"
               style={{
                 color: colors.text,
-                backgroundColor: colors.background,
-                border: "1px solid #6366f1",
-                borderRadius: "2px",
-                padding: "2px 4px",
+                backgroundColor: colors.inputBg,
+                border: `1px solid ${colors.accent}`,
+                borderRadius: "3px",
+                padding: "0 4px",
+                height: "1.375rem",
+                lineHeight: "1.375rem",
+                boxSizing: "border-box",
                 outline: "none",
                 fontWeight: 500,
               }}
@@ -200,9 +214,40 @@ export function TreeNode({
           ) : (
             <span
               className="text-sm truncate flex-1"
-              style={{ color: colors.text, fontWeight: isActive ? 500 : 400 }}
+              style={{
+                color: colors.text,
+                fontWeight: isActive ? 600 : 400,
+              }}
             >
               {node.title}
+            </span>
+          )}
+
+          {/* Active Dot Indicator */}
+          {isActive && (
+            <span
+              style={{
+                width: "5px",
+                height: "5px",
+                borderRadius: "50%",
+                backgroundColor: colors.accent,
+                flexShrink: 0,
+              }}
+              title="Active page"
+            />
+          )}
+
+          {/* Child count */}
+          {hasChildren && !isActive && (
+            <span
+              style={{
+                fontSize: "11px",
+                color: colors.textSecondary,
+                fontWeight: 400,
+                opacity: 0.7,
+              }}
+            >
+              {node.children?.length}
             </span>
           )}
 
@@ -211,22 +256,24 @@ export function TreeNode({
             <span
               style={{
                 fontSize: "10px",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                backgroundColor: colors.backgroundSecondary,
+                padding: "1px 5px",
+                borderRadius: "3px",
+                backgroundColor: colors.badgeBg,
                 color: colors.textSecondary,
                 fontWeight: 500,
               }}
-              title="Match found in drawing content"
+              title="Match found in content"
             >
-              content
+              match
             </span>
           )}
         </div>
 
-        {/* Menu */}
+        {/* Action Buttons (visible on hover or when active/menu open) */}
         <div
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          className={`flex items-center gap-0.5 transition-opacity ${
+            isActive || isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
           style={{ position: "relative", zIndex: 10001 }}
           ref={menuRef}
         >
@@ -234,10 +281,10 @@ export function TreeNode({
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              setIsMenuOpen(!isMenuOpen)
+              handleCreateChild()
             }}
             style={{
-              padding: "0.25rem",
+              padding: "0.2rem",
               minWidth: "1.25rem",
               height: "1.25rem",
               display: "flex",
@@ -246,10 +293,51 @@ export function TreeNode({
               border: "none",
               background: "transparent",
               cursor: "pointer",
+              borderRadius: "4px",
+              color: colors.textSecondary,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.accentLight
+              e.currentTarget.style.color = colors.accent
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
+            }}
+            title="Add child drawing"
+          >
+            <Icon name="plus" size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsMenuOpen(!isMenuOpen)
+            }}
+            style={{
+              padding: "0.2rem",
+              minWidth: "1.25rem",
+              height: "1.25rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              borderRadius: "4px",
+              color: colors.textSecondary,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hoverBackground
+              e.currentTarget.style.color = colors.text
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
             }}
             title="More options"
           >
-            <Icon name="moreVertical" size={14} color={colors.text} />
+            <Icon name="moreVertical" size={12} />
           </button>
 
           <TreeNodeMenu

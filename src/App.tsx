@@ -6,10 +6,14 @@ import { Search } from "./features/search/Search"
 import { MobileWarning } from "./shared/components/MobileWarning"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
 import { useThemeDetector } from "./shared/hooks/useThemeDetector"
+import { useThemeStore } from "./shared/store/themeStore"
 import { useViewStore } from "./shared/store/viewStore"
+import { getThemeColors } from "./shared/styles/theme"
 
 function App() {
   const { viewMode, toggleView } = useViewStore()
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
   const [showSidebar, setShowSidebar] = useState(() => window.innerWidth >= 768)
   useThemeDetector() // Detectar cambios de theme
 
@@ -36,7 +40,7 @@ function App() {
         display: "flex",
         height: "100vh",
         overflow: "hidden",
-        backgroundColor: "var(--color-surface-primary, #ffffff)",
+        backgroundColor: colors.background,
       }}
     >
       <MobileWarning />
@@ -68,8 +72,7 @@ function App() {
           flexDirection: "column",
           minHeight: 0,
           overflow: "hidden",
-          backgroundColor: "var(--color-surface-primary, #ffffff)",
-          transition: "all 0.15s ease-out",
+          backgroundColor: colors.background,
         }}
       >
         {viewMode === "canvas" ? <Canvas /> : <Graph />}

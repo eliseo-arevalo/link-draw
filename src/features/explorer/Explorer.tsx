@@ -21,6 +21,7 @@ interface DrawingsExplorerProps {
   isMobile?: boolean
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Sidebar UI rendering requires complex conditional states
 export function Explorer({
   isCollapsed,
   onToggleSidebar,
@@ -268,37 +269,161 @@ export function Explorer({
     }
   }, [showMenu])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resize event triggered on collapse state change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"))
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [isCollapsed])
+
   if (isCollapsed) {
     return (
       <div
-        className="h-full flex flex-col items-center"
+        className="h-full flex flex-col items-center justify-between"
         style={{
           width: "48px",
           minWidth: "48px",
           backgroundColor: colors.background,
           borderRight: `1px solid ${colors.border}`,
-          padding: "0.5rem 0",
+          padding: "0.75rem 0",
           transition: "width 0.15s ease-out, min-width 0.15s ease-out",
+          zIndex: 10,
         }}
       >
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            style={{
+              padding: "0.4rem",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: colors.textSecondary,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hoverBackground
+              e.currentTarget.style.color = colors.text
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
+            }}
+            title="Expand sidebar (Cmd+B)"
+          >
+            <Icon name="sidebar" size={16} aria-label="Expand sidebar" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCreateDrawing}
+            disabled={isCreating}
+            style={{
+              padding: "0.4rem",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: colors.textSecondary,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hoverBackground
+              e.currentTarget.style.color = colors.text
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
+            }}
+            title="New drawing (Cmd+N)"
+          >
+            <Icon name="plus" size={16} aria-label="New drawing" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleGraph}
+            style={{
+              padding: "0.4rem",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: isGraphView ? colors.accent : colors.textSecondary,
+              backgroundColor: isGraphView ? colors.activeBackground : "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
+            title="Toggle Graph view (Cmd+G)"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              role="img"
+              aria-label="Graph view"
+            >
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Bottom Theme Quick Toggle */}
         <button
           type="button"
-          onClick={onToggleSidebar}
-          className="excalidraw-button"
+          onClick={() => {
+            const { theme: currentTheme, setTheme } = useThemeStore.getState()
+            setTheme(currentTheme === "light" ? "dark" : "light")
+          }}
           style={{
-            padding: "0.5rem",
+            padding: "0.4rem",
+            borderRadius: "4px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: colors.text,
+            color: colors.textSecondary,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
           }}
-          title="Show sidebar (Cmd+B)"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.hoverBackground
+            e.currentTarget.style.color = colors.text
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent"
+            e.currentTarget.style.color = colors.textSecondary
+          }}
+          title={`Switch to ${theme === "light" ? "Dark" : "Light"} mode`}
         >
-          <Icon name="sidebar" size={20} aria-label="Show sidebar" />
+          <Icon name={theme === "light" ? "moon" : "sun"} size={16} />
         </button>
       </div>
     )
   }
+
+  const countTotalDrawings = (nodes: DrawingTreeNode[]): number => {
+    let count = 0
+    for (const node of nodes) {
+      count += 1
+      if (node.children) count += countTotalDrawings(node.children)
+    }
+    return count
+  }
+
+  const totalDrawings = countTotalDrawings(tree)
 
   return (
     <div
@@ -314,78 +439,121 @@ export function Explorer({
           top: 0,
           bottom: 0,
           zIndex: 1000,
-          boxShadow: "2px 0 8px rgba(0, 0, 0, 0.2)",
+          boxShadow: "2px 0 12px rgba(0, 0, 0, 0.15)",
         }),
         transition: "width 0.15s ease-out, min-width 0.15s ease-out",
       }}
     >
       {/* Header */}
       <div
-        className="border-b"
         style={{
-          borderColor: "var(--excalidraw-border)",
+          borderBottom: `1px solid ${colors.border}`,
+          padding: "0.625rem 0.875rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
         }}
       >
-        <div
-          className="flex items-center justify-between"
-          style={{
-            minHeight: "3rem",
-            padding: "0 1rem",
-          }}
-        >
-          <h2 className="text-sm font-semibold" style={{ color: colors.text }}>
-            EXPLORER
-          </h2>
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs font-semibold tracking-wider uppercase"
+              style={{ color: colors.textSecondary, letterSpacing: "0.06em" }}
+            >
+              EXPLORER
+            </span>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 500,
+                color: colors.textSecondary,
+                opacity: 0.7,
+              }}
+            >
+              ({totalDrawings})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={handleCreateDrawing}
               disabled={isCreating}
-              className="excalidraw-button"
               style={{
-                padding: "0.375rem",
-                minWidth: "1.5rem",
+                padding: "0.3rem",
+                borderRadius: "4px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: colors.text,
+                color: colors.textSecondary,
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.hoverBackground
+                e.currentTarget.style.color = colors.text
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent"
+                e.currentTarget.style.color = colors.textSecondary
               }}
               title="New drawing (Cmd+N)"
             >
-              <Icon name="plus" aria-label="New drawing" />
+              <Icon name="plus" size={14} aria-label="New drawing" />
             </button>
             <button
               type="button"
               onClick={onToggleSidebar}
-              className="excalidraw-button"
               style={{
-                padding: "0.375rem",
-                minWidth: "1.5rem",
+                padding: "0.3rem",
+                borderRadius: "4px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: colors.text,
+                color: colors.textSecondary,
+                border: "none",
+                background: "transparent",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = colors.hoverBackground
+                e.currentTarget.style.color = colors.text
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent"
+                e.currentTarget.style.color = colors.textSecondary
               }}
               title="Hide sidebar (Cmd+B)"
             >
-              <Icon name="sidebar" aria-label="Hide sidebar" />
+              <Icon name="sidebar" size={14} aria-label="Hide sidebar" />
             </button>
             <div style={{ position: "relative", zIndex: 10001 }} ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setShowMenu(!showMenu)}
-                className="excalidraw-button"
                 style={{
-                  padding: "0.375rem",
-                  minWidth: "1.5rem",
+                  padding: "0.3rem",
+                  borderRadius: "4px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: colors.text,
+                  color: colors.textSecondary,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.hoverBackground
+                  e.currentTarget.style.color = colors.text
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent"
+                  e.currentTarget.style.color = colors.textSecondary
                 }}
                 title="More options"
               >
-                <Icon name="moreVertical" aria-label="More options" />
+                <Icon name="moreVertical" size={14} aria-label="More options" />
               </button>
               {showMenu && (
                 <div
@@ -396,7 +564,7 @@ export function Explorer({
                     marginTop: "0.25rem",
                     backgroundColor: colors.background,
                     border: `1px solid ${colors.border}`,
-                    borderRadius: "4px",
+                    borderRadius: "6px",
                     boxShadow: colors.shadowIsland,
                     minWidth: "160px",
                     zIndex: 10000,
@@ -412,8 +580,8 @@ export function Explorer({
                     style={{
                       width: "100%",
                       textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
+                      padding: "0.4rem 0.6rem",
+                      fontSize: "0.8125rem",
                       border: "none",
                       background: "transparent",
                       cursor: "pointer",
@@ -421,10 +589,10 @@ export function Explorer({
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
-                      borderRadius: "2px",
+                      borderRadius: "4px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                      e.currentTarget.style.backgroundColor = colors.hoverBackground
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent"
@@ -442,19 +610,19 @@ export function Explorer({
                     style={{
                       width: "100%",
                       textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
+                      padding: "0.4rem 0.6rem",
+                      fontSize: "0.8125rem",
                       border: "none",
-                      background: isGraphView ? colors.backgroundSecondary : "transparent",
+                      background: isGraphView ? colors.activeBackground : "transparent",
                       cursor: "pointer",
                       color: colors.text,
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
-                      borderRadius: "2px",
+                      borderRadius: "4px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                      e.currentTarget.style.backgroundColor = colors.hoverBackground
                     }}
                     onMouseLeave={(e) => {
                       if (!isGraphView) {
@@ -510,8 +678,8 @@ export function Explorer({
                     style={{
                       width: "100%",
                       textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
+                      padding: "0.4rem 0.6rem",
+                      fontSize: "0.8125rem",
                       border: "none",
                       background: "transparent",
                       cursor: "pointer",
@@ -519,10 +687,10 @@ export function Explorer({
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
-                      borderRadius: "2px",
+                      borderRadius: "4px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                      e.currentTarget.style.backgroundColor = colors.hoverBackground
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent"
@@ -568,8 +736,8 @@ export function Explorer({
                     style={{
                       width: "100%",
                       textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
+                      padding: "0.4rem 0.6rem",
+                      fontSize: "0.8125rem",
                       border: "none",
                       background: "transparent",
                       cursor: "pointer",
@@ -577,10 +745,10 @@ export function Explorer({
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
-                      borderRadius: "2px",
+                      borderRadius: "4px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                      e.currentTarget.style.backgroundColor = colors.hoverBackground
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent"
@@ -602,8 +770,8 @@ export function Explorer({
                     style={{
                       width: "100%",
                       textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
+                      padding: "0.4rem 0.6rem",
+                      fontSize: "0.8125rem",
                       border: "none",
                       background: "transparent",
                       cursor: "pointer",
@@ -611,10 +779,10 @@ export function Explorer({
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
-                      borderRadius: "2px",
+                      borderRadius: "4px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
+                      e.currentTarget.style.backgroundColor = colors.hoverBackground
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "transparent"
@@ -633,56 +801,74 @@ export function Explorer({
           </div>
         </div>
 
-        {/* Search Input - Conditional */}
-        {showSearch && (
-          <div style={{ padding: "0.5rem 1rem", position: "relative" }}>
+        {/* Embedded Search */}
+        <div style={{ position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              backgroundColor: colors.inputBg,
+              border: `1px solid ${colors.border}`,
+              borderRadius: "4px",
+              padding: "0.3rem 0.5rem",
+            }}
+          >
+            <Icon name="search" size={13} color={colors.textSecondary} />
             <input
               ref={searchInputRef}
               type="text"
               placeholder="Search drawings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm rounded border"
               style={{
-                backgroundColor: colors.backgroundSecondary,
-                borderColor: colors.border,
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontSize: "0.8125rem",
                 color: colors.text,
-                paddingRight: searchQuery ? "2rem" : "0.75rem",
               }}
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
                 style={{
-                  position: "absolute",
-                  right: "1.5rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
                   background: "transparent",
                   border: "none",
                   cursor: "pointer",
-                  padding: "0.25rem",
+                  padding: "0.1rem",
                   display: "flex",
                   alignItems: "center",
                   color: colors.textSecondary,
                 }}
                 title="Clear search"
               >
-                <Icon name="x" size={14} color={colors.textSecondary} />
+                <Icon name="x" size={12} color={colors.textSecondary} />
               </button>
+            ) : (
+              <span
+                style={{
+                  fontSize: "10px",
+                  color: colors.textSecondary,
+                  opacity: 0.6,
+                }}
+              >
+                ⌘K
+              </span>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Error Message */}
       {error && (
         <div
-          className="mx-4 mt-2 px-3 py-2 rounded"
+          className="mx-3 mt-2 px-3 py-1.5 rounded"
           style={{
-            backgroundColor: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid #ef4444",
+            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
             color: "#ef4444",
           }}
         >
@@ -692,7 +878,7 @@ export function Explorer({
 
       {/* Tree View */}
       <div
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto px-1"
         style={{
           scrollbarWidth: "thin",
           scrollbarColor: "var(--excalidraw-border) transparent",
@@ -707,19 +893,18 @@ export function Explorer({
           e.preventDefault()
           e.stopPropagation()
           if (dragAndDrop.draggedId) {
-            // Drop on root (no parent)
             handleDrop(dragAndDrop.draggedId, null)
           }
         }}
       >
         {filteredTree.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <p className="text-sm" style={{ color: colors.textSecondary }}>
-              {searchQuery ? "No drawings found" : "No drawings yet"}
+            <p className="text-xs" style={{ color: colors.textSecondary }}>
+              {searchQuery ? "No matching drawings" : "No drawings yet"}
             </p>
           </div>
         ) : (
-          <div className="py-2">
+          <div className="py-1">
             {filteredTree.map((node) => (
               <TreeNode
                 key={node.id}
@@ -738,6 +923,96 @@ export function Explorer({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          borderTop: `1px solid ${colors.border}`,
+          padding: "0.4rem 0.75rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: colors.backgroundSecondary,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            const { theme: currentTheme, setTheme } = useThemeStore.getState()
+            setTheme(currentTheme === "light" ? "dark" : "light")
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.375rem",
+            padding: "0.2rem 0.4rem",
+            borderRadius: "4px",
+            fontSize: "0.75rem",
+            color: colors.textSecondary,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.hoverBackground
+            e.currentTarget.style.color = colors.text
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent"
+            e.currentTarget.style.color = colors.textSecondary
+          }}
+          title="Toggle theme"
+        >
+          <Icon name={theme === "light" ? "moon" : "sun"} size={13} />
+          <span>{theme === "light" ? "Dark" : "Light"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleGraph}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.375rem",
+            padding: "0.2rem 0.4rem",
+            borderRadius: "4px",
+            fontSize: "0.75rem",
+            color: isGraphView ? colors.accent : colors.textSecondary,
+            backgroundColor: isGraphView ? colors.activeBackground : "transparent",
+            border: "none",
+            cursor: "pointer",
+          }}
+          onMouseEnter={(e) => {
+            if (!isGraphView) {
+              e.currentTarget.style.backgroundColor = colors.hoverBackground
+              e.currentTarget.style.color = colors.text
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isGraphView) {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
+            }
+          }}
+          title="Toggle Graph View (Cmd+G)"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            role="img"
+            aria-label="Graph"
+          >
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+            <line x1="12" y1="22.08" x2="12" y2="12" />
+          </svg>
+          <span>Graph</span>
+        </button>
       </div>
     </div>
   )
