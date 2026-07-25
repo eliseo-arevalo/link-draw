@@ -392,30 +392,22 @@ export function Canvas() {
         const dropX = (e.clientX - rect.left - appState.scrollX) / zoom
         const dropY = (e.clientY - rect.top - appState.scrollY) / zoom
 
-        // Use convertToExcalidrawElements for proper element creation
-        import("@excalidraw/excalidraw").then((mod) => {
-          const currentElements = api.getSceneElements()
-          const converted = mod.convertToExcalidrawElements([
-            {
-              type: "text" as const,
-              x: dropX,
-              y: dropY,
-              text: `📄 ${drawingTitle}`,
-              fontSize: 18,
-              fontFamily: 1,
-            },
-          ])
-          // Apply link after conversion (converter may not preserve it)
-          const withLink = converted.map((el) => ({ ...el, link }))
-
-          api.updateScene({
-            elements: [...currentElements, ...withLink],
-          })
-          triggerSaveRef.current()
-          console.log(
-            `[Canvas] Created linked element for '${drawingTitle}' at (${dropX}, ${dropY})`
-          )
-        })
+        const labelText = `📄 ${drawingTitle}`
+        adapter.addElements([
+          {
+            type: "text",
+            x: dropX,
+            y: dropY,
+            text: labelText,
+            fontSize: 18,
+            fontFamily: 1,
+            link,
+            width: Math.max(160, labelText.length * 12),
+            height: 36,
+          },
+        ])
+        triggerSaveRef.current()
+        console.log(`[Canvas] Created linked element for '${drawingTitle}' at (${dropX}, ${dropY})`)
       }
     }
 
@@ -428,7 +420,7 @@ export function Canvas() {
       el.removeEventListener("dragleave", onDragLeave, true)
       el.removeEventListener("drop", onDrop, true)
     }
-  }, [adapter.getSelectedElementIds, adapter.setElementLink])
+  }, [adapter.getSelectedElementIds, adapter.setElementLink, adapter.addElements])
 
   // ── Wiki [[ selection handler ──
   // When user picks a drawing from the [[ autocomplete:

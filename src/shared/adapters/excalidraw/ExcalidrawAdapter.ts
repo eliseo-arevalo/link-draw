@@ -268,21 +268,34 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       .then((mod) => {
         if (!this.api) return
         const currentElements = this.getElements()
-        const skeletons = newElements.map((el) => ({
-          type: el.type || "text",
-          x: el.x ?? 100,
-          y: el.y ?? 100,
-          text: el.text || "",
-          fontSize: el.fontSize ?? 18,
-          fontFamily: el.fontFamily ?? 1,
-        }))
+        const skeletons = newElements.map((el) => {
+          const text = el.text || ""
+          const calculatedWidth = el.width ?? Math.max(160, text.length * 12)
+          const calculatedHeight = el.height ?? 36
+          return {
+            type: el.type || "text",
+            x: el.x ?? 100,
+            y: el.y ?? 100,
+            text,
+            fontSize: el.fontSize ?? 18,
+            fontFamily: el.fontFamily ?? 1,
+            width: calculatedWidth,
+            height: calculatedHeight,
+          }
+        })
 
         const converted = mod.convertToExcalidrawElements(skeletons)
 
-        // Re-apply link from original input (converter strips non-skeleton props)
+        // Re-apply link, width, height from original input (converter strips non-skeleton props or zero-sizes text without DOM metrics)
         const withLinks = converted.map((convEl, i) => {
-          const originalLink = newElements[i]?.link
-          return originalLink ? { ...convEl, link: originalLink } : convEl
+          const orig = newElements[i]
+          const skel = skeletons[i]
+          return {
+            ...convEl,
+            width: skel.width,
+            height: skel.height,
+            ...(orig?.link ? { link: orig.link } : {}),
+          }
         })
 
         this.api.updateScene({
