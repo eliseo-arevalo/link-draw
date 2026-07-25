@@ -42,6 +42,9 @@ const getNodeStyles = (
   opacity: isDragging ? 0.4 : 1,
   cursor: isDragging ? "grabbing" : "pointer",
   transition: "background-color 0.15s ease",
+  userSelect: "none",
+  WebkitUserSelect: "none",
+  MozUserSelect: "none",
 })
 
 const handleNodeDrop = (
@@ -112,7 +115,15 @@ export function TreeNode({
         role="treeitem"
         aria-expanded={hasChildren ? isExpanded : undefined}
         draggable={!isEditing}
-        onDragStart={(e) => onDragStart(e, node.id)}
+        onDragStart={(e) => {
+          if (typeof window !== "undefined") {
+            window.__linkdraw_dragged_drawing = { id: node.id, title: node.title }
+          }
+          e.dataTransfer.setData("application/linkdraw-drawing-id", node.id)
+          e.dataTransfer.setData("application/linkdraw-drawing-title", node.title)
+          e.dataTransfer.setData("text/plain", `drawing://${node.id}`)
+          onDragStart(e, node.id)
+        }}
         onDragOver={(e) => onDragOver(e, node.id)}
         onDrop={(e) => handleNodeDrop(e, node.id, draggedId, onDrop)}
         onDragEnd={onDragEnd}

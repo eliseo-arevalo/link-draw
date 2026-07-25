@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Icon } from "@/shared/components/Icon"
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useThemeStore } from "@/shared/store/themeStore"
@@ -8,10 +9,22 @@ import { DrawingList } from "./DrawingList"
 import { ElementList } from "./ElementList"
 import { ModalHeader } from "./ModalHeader"
 import { SearchInput } from "./SearchInput"
+import { WikiLinkAutocomplete } from "./WikiLinkAutocomplete"
 
 const Z_INDEX = {
   MODAL_BACKDROP: 300,
   MODAL_CONTENT: 301,
+}
+
+const isUrl = (str: string) => {
+  const trimmed = str.trim()
+  return (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("drawing://") ||
+    trimmed.startsWith("excaligraph://") ||
+    trimmed.startsWith("www.")
+  )
 }
 
 const loadDrawingElements = async (drawing: DrawingTreeNode, repository: IGraphRepository) => {
@@ -65,6 +78,9 @@ export function DrawingPickerModal({
   const [urlValue, setUrlValue] = useState("")
   const [activeTab, setActiveTab] = useState<"drawing" | "url">("drawing")
 
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const urlInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true)
@@ -78,8 +94,26 @@ export function DrawingPickerModal({
         .then(setTree)
         .catch(console.error)
         .finally(() => setIsLoading(false))
+
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 50)
+      return () => clearTimeout(timer)
     }
   }, [isOpen, repository.getDrawingsTree])
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        if (activeTab === "drawing") {
+          searchInputRef.current?.focus()
+        } else if (activeTab === "url") {
+          urlInputRef.current?.focus()
+        }
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, activeTab])
 
   const handleBack = useCallback(() => {
     setSelectedDrawing(null)
@@ -154,10 +188,29 @@ export function DrawingPickerModal({
     return result
   }
 
+  const cleanSearchQuery = searchQuery.replace(/^\[\[/, "").replace(/\]\]$/, "").trim()
+  const isWikiLink = searchQuery.startsWith("[[")
+
   const allDrawings = flattenTree(tree)
   const filteredDrawings = allDrawings.filter(
-    (d) => d.id !== currentDrawingId && d.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (d) =>
+      d.id !== currentDrawingId && d.title.toLowerCase().includes(cleanSearchQuery.toLowerCase())
   )
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      const query = searchQuery.trim()
+      if (!query) return
+
+      if (isUrl(query) && onSelectUrl) {
+        onSelectUrl(query)
+        onClose()
+      } else if (filteredDrawings.length > 0) {
+        handleDrawingSelect(filteredDrawings[0])
+      }
+    }
+  }
 
   const headerTitle = selectedDrawing ? selectedDrawing.title : "Add Link"
   const headerSubtitle = selectedDrawing
@@ -171,14 +224,14 @@ export function DrawingPickerModal({
       className="fixed inset-0 flex items-center justify-center"
       style={{
         zIndex: Z_INDEX.MODAL_BACKDROP,
-        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.5)",
+        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.75)" : "rgba(15, 23, 42, 0.4)",
       }}
       onClick={onClose}
       onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <div
         role="document"
-        className="rounded-xl p-6 w-full max-w-md max-h-[70vh] flex flex-col shadow-2xl"
+        className="rounded-xl p-6 w-full max-w-md max-h-[75vh] flex flex-col shadow-2xl"
         style={{
           backgroundColor: colors.background,
           border: `1px solid ${colors.border}`,
@@ -193,7 +246,7 @@ export function DrawingPickerModal({
           onBack={selectedDrawing ? handleBack : undefined}
           textColor={colors.text}
           textSecondaryColor={colors.textSecondary}
-          hoverBg={colors.backgroundSecondary}
+          hoverBg={colors.hoverBackground}
         />
 
         {!selectedDrawing && (
@@ -203,39 +256,67 @@ export function DrawingPickerModal({
               <button
                 type="button"
                 onClick={() => setActiveTab("drawing")}
-                className="px-4 py-2 text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors"
                 style={{
-                  color: activeTab === "drawing" ? "#6366f1" : colors.textSecondary,
+                  color: activeTab === "drawing" ? colors.accent : colors.textSecondary,
                   borderBottom:
-                    activeTab === "drawing" ? "2px solid #6366f1" : "2px solid transparent",
+                    activeTab === "drawing"
+                      ? `2px solid ${colors.accent}`
+                      : "2px solid transparent",
                   marginBottom: "-1px",
                 }}
               >
-                📄 Drawing
+                <Icon
+                  name="file"
+                  size={14}
+                  color={activeTab === "drawing" ? colors.accent : colors.textSecondary}
+                />
+                <span>Drawing</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab("url")}
-                className="px-4 py-2 text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors"
                 style={{
-                  color: activeTab === "url" ? "#6366f1" : colors.textSecondary,
-                  borderBottom: activeTab === "url" ? "2px solid #6366f1" : "2px solid transparent",
+                  color: activeTab === "url" ? colors.accent : colors.textSecondary,
+                  borderBottom:
+                    activeTab === "url" ? `2px solid ${colors.accent}` : "2px solid transparent",
                   marginBottom: "-1px",
                 }}
               >
-                🔗 External URL
+                <Icon
+                  name="link"
+                  size={14}
+                  color={activeTab === "url" ? colors.accent : colors.textSecondary}
+                />
+                <span>External URL</span>
               </button>
             </div>
 
             {activeTab === "drawing" && (
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search drawings..."
-                backgroundColor={colors.backgroundSecondary}
-                borderColor={colors.border}
-                textColor={colors.text}
-              />
+              <>
+                <SearchInput
+                  inputRef={searchInputRef}
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="Search drawings, paste URL, or type [[..."
+                  backgroundColor={colors.inputBg}
+                  borderColor={colors.border}
+                  textColor={colors.text}
+                />
+                {isWikiLink && (
+                  <WikiLinkAutocomplete
+                    query={cleanSearchQuery}
+                    drawings={allDrawings.filter((d) => d.id !== currentDrawingId)}
+                    onSelect={handleDrawingSelect}
+                    textColor={colors.text}
+                    bgColor={colors.backgroundSecondary}
+                    borderColor={colors.border}
+                    hoverBg={colors.hoverBackground}
+                  />
+                )}
+              </>
             )}
           </>
         )}
@@ -243,7 +324,7 @@ export function DrawingPickerModal({
         <div className="flex-1 overflow-y-auto mb-4 min-h-[200px]">
           {isLoading || isLoadingElements ? (
             <div
-              className="flex items-center justify-center h-full"
+              className="flex items-center justify-center h-full text-sm"
               style={{ color: colors.textSecondary }}
             >
               Loading...
@@ -255,22 +336,23 @@ export function DrawingPickerModal({
               onSelectWholeDrawing={handleSelectWholeDrawing}
               textColor={colors.text}
               textSecondaryColor={colors.textSecondary}
-              hoverBg={colors.backgroundSecondary}
+              hoverBg={colors.hoverBackground}
               borderColor={colors.border}
             />
           ) : activeTab === "url" ? (
             <div className="flex flex-col gap-4 pt-2">
               <p className="text-sm" style={{ color: colors.textSecondary }}>
-                Enter the URL you want to link to:
+                Enter or paste the URL you want to link to:
               </p>
               <input
+                ref={urlInputRef}
                 type="url"
                 value={urlValue}
                 onChange={(e) => setUrlValue(e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-4 py-3 text-sm rounded-lg outline-none transition-colors"
+                className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-colors"
                 style={{
-                  backgroundColor: colors.backgroundSecondary,
+                  backgroundColor: colors.inputBg,
                   border: `1px solid ${colors.border}`,
                   color: colors.text,
                 }}
@@ -280,24 +362,65 @@ export function DrawingPickerModal({
                 type="button"
                 onClick={handleUrlSubmit}
                 disabled={!urlValue.trim()}
-                className="px-4 py-2 text-sm rounded transition-colors font-medium"
+                className="px-4 py-2 text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
                 style={{
-                  backgroundColor: urlValue.trim() ? "#6366f1" : colors.backgroundSecondary,
+                  backgroundColor: urlValue.trim() ? colors.accent : colors.inputBg,
                   color: urlValue.trim() ? "#ffffff" : colors.textSecondary,
                   cursor: urlValue.trim() ? "pointer" : "not-allowed",
-                  opacity: urlValue.trim() ? 1 : 0.5,
+                  opacity: urlValue.trim() ? 1 : 0.6,
                 }}
               >
-                Add Link
+                <Icon
+                  name="link"
+                  size={14}
+                  color={urlValue.trim() ? "#ffffff" : colors.textSecondary}
+                />
+                <span>Add Link</span>
               </button>
             </div>
           ) : (
-            <DrawingList
-              drawings={filteredDrawings}
-              onSelect={handleDrawingSelect}
-              textColor={colors.text}
-              hoverBg={colors.backgroundSecondary}
-            />
+            <>
+              {isWikiLink && (
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded mb-2.5 text-xs font-mono"
+                  style={{
+                    backgroundColor: colors.accentLight,
+                    color: colors.accent,
+                  }}
+                >
+                  <Icon name="file" size={12} color={colors.accent} />
+                  <span>Wiki link search mode: [[{cleanSearchQuery}]]</span>
+                </div>
+              )}
+              {isUrl(searchQuery) && onSelectUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectUrl(searchQuery.trim())
+                    onClose()
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-lg w-full mb-3 text-left transition-colors text-sm font-medium cursor-pointer"
+                  style={{
+                    backgroundColor: colors.accentLight,
+                    color: colors.accent,
+                    border: `1px solid ${colors.accent}`,
+                  }}
+                >
+                  <Icon name="link" size={16} color={colors.accent} />
+                  <div className="flex-1 truncate">
+                    <span>Link to URL: </span>
+                    <span className="font-semibold underline">{searchQuery.trim()}</span>
+                  </div>
+                  <span className="text-xs opacity-75">Press ↵</span>
+                </button>
+              )}
+              <DrawingList
+                drawings={filteredDrawings}
+                onSelect={handleDrawingSelect}
+                textColor={colors.text}
+                hoverBg={colors.hoverBackground}
+              />
+            </>
           )}
         </div>
 
@@ -311,10 +434,10 @@ export function DrawingPickerModal({
                 onClose()
               }
             }}
-            className="px-4 py-2 text-sm rounded transition-colors"
+            className="px-4 py-2 text-sm rounded-lg transition-colors font-medium cursor-pointer"
             style={{
               border: `1px solid ${colors.border}`,
-              backgroundColor: colors.backgroundSecondary,
+              backgroundColor: colors.hoverBackground,
               color: colors.text,
             }}
           >

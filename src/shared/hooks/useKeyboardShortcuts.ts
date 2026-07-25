@@ -32,13 +32,14 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
       for (const shortcut of shortcuts) {
         if (matchesShortcut(event, shortcut)) {
           event.preventDefault()
+          event.stopPropagation()
           shortcut.handler()
           break
         }
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown, true)
+    return () => window.removeEventListener("keydown", handleKeyDown, true)
   }, [shortcuts])
 }

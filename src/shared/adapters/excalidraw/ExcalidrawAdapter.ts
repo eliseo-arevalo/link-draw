@@ -259,4 +259,36 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
     const element = elements.find((el) => el.id === elementId)
     return element?.link ?? null
   }
+
+  // biome-ignore lint/suspicious/noExplicitAny: Excalidraw element skeleton type
+  addElements(newElements: any[]): void {
+    if (!this.api) return
+
+    import("@excalidraw/excalidraw")
+      .then((mod) => {
+        if (!this.api) return
+        const currentElements = this.getElements()
+        const skeletons = newElements.map((el) => ({
+          type: el.type || "text",
+          x: el.x ?? 100,
+          y: el.y ?? 100,
+          text: el.text || "",
+          fontSize: el.fontSize ?? 18,
+          fontFamily: el.fontFamily ?? 1,
+        }))
+
+        const converted = mod.convertToExcalidrawElements(skeletons)
+
+        // Re-apply link from original input (converter strips non-skeleton props)
+        const withLinks = converted.map((convEl, i) => {
+          const originalLink = newElements[i]?.link
+          return originalLink ? { ...convEl, link: originalLink } : convEl
+        })
+
+        this.api.updateScene({
+          elements: [...currentElements, ...withLinks],
+        })
+      })
+      .catch(console.error)
+  }
 }

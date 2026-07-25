@@ -1,5 +1,6 @@
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Icon } from "@/shared/components/Icon"
 import { Toast } from "@/shared/components/Toast"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
@@ -7,7 +8,9 @@ import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
+import { getThemeColors } from "@/shared/styles/theme"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
+import { GlobalWikiModal } from "./components/GlobalWikiModal"
 import { LinkButton } from "./components/LinkButton"
 import { useCanvasLoader } from "./hooks/useCanvasLoader"
 import { useElementSelection } from "./hooks/useElementSelection"
@@ -24,8 +27,53 @@ export function Canvas() {
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
   const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
+  const [isWikiModalOpen, setIsWikiModalOpen] = useState(false)
   const [canvasError, setCanvasError] = useState<string | null>(null)
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const excalidrawAPIRef = useRef(excalidrawAPI)
+  excalidrawAPIRef.current = excalidrawAPI
+
+  const [wikiFilterText, setWikiFilterText] = useState("")
+
+  useEffect(() => {
+    const checkTextareaForWiki = () => {
+      const textarea = document.querySelector<HTMLTextAreaElement>(".excalidraw-wysiwyg")
+      if (!textarea) {
+        setIsWikiModalOpen(false)
+        return
+      }
+
+      const cursorPos = textarea.selectionStart ?? textarea.value.length
+      const textBeforeCursor = textarea.value.slice(0, cursorPos)
+      const lastWikiIdx = textBeforeCursor.lastIndexOf("[[")
+
+      if (lastWikiIdx !== -1) {
+        const queryText = textBeforeCursor.slice(lastWikiIdx + 2)
+        if (!queryText.includes("\n")) {
+          setWikiFilterText(queryText)
+          setIsWikiModalOpen(true)
+          return
+        }
+      }
+
+      setIsWikiModalOpen(false)
+    }
+
+    document.addEventListener("input", checkTextareaForWiki, true)
+    document.addEventListener("keyup", checkTextareaForWiki, true)
+    document.addEventListener("selectionchange", checkTextareaForWiki, true)
+
+    const interval = setInterval(checkTextareaForWiki, 150)
+
+    return () => {
+      document.removeEventListener("input", checkTextareaForWiki, true)
+      document.removeEventListener("keyup", checkTextareaForWiki, true)
+      document.removeEventListener("selectionchange", checkTextareaForWiki, true)
+      clearInterval(interval)
+    }
+  }, [])
 
   const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
   const { handleLinkOpen, errorMessage, clearError } = useLinkNavigation(adapter)
@@ -147,7 +195,23 @@ export function Canvas() {
     {
       key: "l",
       meta: true,
-      handler: () => hasSelection && setIsLinkModalOpen(true),
+      handler: () => {
+        const selected = adapter.getSelectedElementIds()
+        if (selected.length > 0 || hasSelection) {
+          setIsLinkModalOpen(true)
+        }
+      },
+      description: "Add link to selection",
+    },
+    {
+      key: "k",
+      meta: true,
+      handler: () => {
+        const selected = adapter.getSelectedElementIds()
+        if (selected.length > 0 || hasSelection) {
+          setIsLinkModalOpen(true)
+        }
+      },
       description: "Add link to selection",
     },
   ])
@@ -244,20 +308,6 @@ export function Canvas() {
     drawingService.createDrawing,
   ])
 
-  useEffect(() => {
-    if (!hasSelection || isLinkModalOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "l") {
-        e.preventDefault()
-        setIsLinkModalOpen(true)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [hasSelection, isLinkModalOpen])
-
   // Imperative theme sync to Excalidraw scene
   useEffect(() => {
     if (!excalidrawAPI) return
@@ -279,10 +329,212 @@ export function Canvas() {
     return () => clearTimeout(timer)
   }, [excalidrawAPI, activeDrawingId])
 
+  // ── Drag & Drop handling via capture-phase native listeners ──
+  // Using capture phase ensures our handler fires BEFORE Excalidraw can intercept/stop the event.
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+
+    const onDragOver = (e: DragEvent) => {
+      e.preventDefault()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = "link"
+      setIsDraggingOver(true)
+    }
+
+    const onDragLeave = (e: DragEvent) => {
+      if (el.contains(e.relatedTarget as Node)) return
+      setIsDraggingOver(false)
+    }
+
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Drop handler with position calculation and element/link creation
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsDraggingOver(false)
+
+      const globalDragged = window.__linkdraw_dragged_drawing ?? null
+      const rawData = e.dataTransfer?.getData("text/plain") ?? ""
+      const drawingId =
+        globalDragged?.id ||
+        e.dataTransfer?.getData("application/linkdraw-drawing-id") ||
+        (rawData.startsWith("drawing://") ? rawData.replace("drawing://", "") : null)
+
+      const drawingTitle =
+        globalDragged?.title ||
+        e.dataTransfer?.getData("application/linkdraw-drawing-title") ||
+        "Linked Drawing"
+
+      window.__linkdraw_dragged_drawing = null
+
+      const api = excalidrawAPIRef.current
+      if (!drawingId || !api) {
+        console.log("[Canvas] Drop ignored: no drawingId or API", { drawingId, hasAPI: !!api })
+        return
+      }
+
+      console.log(`[Canvas] Drop detected: ${drawingTitle} (${drawingId})`)
+
+      const link = createDrawingLink(drawingId)
+      const selectedIds = adapter.getSelectedElementIds()
+
+      if (selectedIds.length > 0) {
+        for (const id of selectedIds) {
+          adapter.setElementLink(id, link)
+        }
+        triggerSaveRef.current()
+        console.log(`[Canvas] Linked ${selectedIds.length} element(s) via Drag & Drop`)
+      } else {
+        const appState = api.getAppState()
+        const rect = el.getBoundingClientRect()
+        const zoom = appState.zoom?.value || 1
+        const dropX = (e.clientX - rect.left - appState.scrollX) / zoom
+        const dropY = (e.clientY - rect.top - appState.scrollY) / zoom
+
+        // Use convertToExcalidrawElements for proper element creation
+        import("@excalidraw/excalidraw").then((mod) => {
+          const currentElements = api.getSceneElements()
+          const converted = mod.convertToExcalidrawElements([
+            {
+              type: "text" as const,
+              x: dropX,
+              y: dropY,
+              text: `📄 ${drawingTitle}`,
+              fontSize: 18,
+              fontFamily: 1,
+            },
+          ])
+          // Apply link after conversion (converter may not preserve it)
+          const withLink = converted.map((el) => ({ ...el, link }))
+
+          api.updateScene({
+            elements: [...currentElements, ...withLink],
+          })
+          triggerSaveRef.current()
+          console.log(
+            `[Canvas] Created linked element for '${drawingTitle}' at (${dropX}, ${dropY})`
+          )
+        })
+      }
+    }
+
+    el.addEventListener("dragover", onDragOver, true)
+    el.addEventListener("dragleave", onDragLeave, true)
+    el.addEventListener("drop", onDrop, true)
+
+    return () => {
+      el.removeEventListener("dragover", onDragOver, true)
+      el.removeEventListener("dragleave", onDragLeave, true)
+      el.removeEventListener("drop", onDrop, true)
+    }
+  }, [adapter.getSelectedElementIds, adapter.setElementLink])
+
+  // ── Wiki [[ selection handler ──
+  // When user picks a drawing from the [[ autocomplete:
+  //   1. Replace [[query in the WYSIWYG textarea with the drawing title
+  //   2. Exit text editing (blur)
+  //   3. Apply the drawing:// link to the element
+  const handleWikiSelect = useCallback(
+    (id: string, title: string) => {
+      const link = createDrawingLink(id)
+      const api = excalidrawAPIRef.current
+
+      // Get the editing element ID before we exit edit mode
+      let editingElementId: string | null = null
+      if (api) {
+        // biome-ignore lint/suspicious/noExplicitAny: editingTextElement exists on Excalidraw appState but not in our partial type
+        const appState = api.getAppState() as any
+        editingElementId = appState.editingTextElement?.id ?? null
+      }
+
+      // Replace [[query in the textarea with the drawing title
+      const textarea = document.querySelector<HTMLTextAreaElement>(".excalidraw-wysiwyg")
+      if (textarea) {
+        const text = textarea.value
+        const idx = text.lastIndexOf("[[")
+        if (idx !== -1) {
+          const newText = text.substring(0, idx) + title
+          const nativeSet = Object.getOwnPropertyDescriptor(
+            HTMLTextAreaElement.prototype,
+            "value"
+          )?.set
+          if (nativeSet) nativeSet.call(textarea, newText)
+          else textarea.value = newText
+          textarea.dispatchEvent(new Event("input", { bubbles: true }))
+        }
+        // Exit text editing
+        textarea.blur()
+      }
+
+      // Apply link after text editing commits (small delay to let Excalidraw process the blur)
+      setTimeout(() => {
+        if (editingElementId) {
+          // Also update the element text directly (in case blur didn't commit textarea value)
+          if (api) {
+            const elements = api.getSceneElements()
+            const updatedElements = elements.map((el) => {
+              if (el.id === editingElementId) {
+                // biome-ignore lint/suspicious/noExplicitAny: Excalidraw text element has .text property
+                const currentText = (el as any).text || ""
+                const idx = currentText.lastIndexOf("[[")
+                const cleanText = idx !== -1 ? currentText.substring(0, idx) + title : currentText
+                return {
+                  ...el,
+                  text: cleanText,
+                  originalText: cleanText,
+                  link,
+                }
+              }
+              return el
+            })
+            api.updateScene({ elements: updatedElements })
+          } else {
+            adapter.setElementLink(editingElementId, link)
+          }
+          triggerSaveRef.current()
+        } else {
+          // Fallback: if elements are selected, link them
+          const selectedIds = adapter.getSelectedElementIds()
+          if (selectedIds.length > 0) {
+            for (const elId of selectedIds) {
+              adapter.setElementLink(elId, link)
+            }
+            triggerSaveRef.current()
+          }
+        }
+      }, 150)
+    },
+    [adapter.setElementLink, adapter.getSelectedElementIds]
+  )
+
   const isMobile = window.innerWidth < 768
 
   return (
-    <div className="w-full h-full relative overflow-hidden flex-1 min-h-0">
+    <div ref={canvasRef} className="w-full h-full relative overflow-hidden flex-1 min-h-0">
+      {isDraggingOver && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none transition-all m-3 rounded-2xl"
+          style={{
+            backgroundColor:
+              theme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.12)",
+            border: `2px dashed ${colors.accent}`,
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <div
+            className="px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-semibold"
+            style={{
+              backgroundColor: colors.background,
+              color: colors.accent,
+              border: `1px solid ${colors.border}`,
+            }}
+          >
+            <Icon name="link" size={20} color={colors.accent} />
+            <span>Drop drawing here to link element or create card</span>
+          </div>
+        </div>
+      )}
       <Suspense
         fallback={
           <div
@@ -343,6 +595,14 @@ export function Canvas() {
         onSelect={handleLinkSelect}
         onSelectUrl={handleUrlSelect}
         currentDrawingId={activeDrawingId}
+      />
+
+      <GlobalWikiModal
+        isOpen={isWikiModalOpen}
+        onClose={() => setIsWikiModalOpen(false)}
+        onSelectDrawing={handleWikiSelect}
+        currentDrawingId={activeDrawingId}
+        filterText={wikiFilterText}
       />
 
       {errorMessage && <Toast message={errorMessage} type="error" onClose={clearError} />}
