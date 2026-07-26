@@ -14,13 +14,10 @@ const ServiceContext = createContext<Services | null>(null)
 const repository = new LocalStorageRepository()
 const adapter = new ExcalidrawAdapter()
 const drawingService = new DrawingService(repository, adapter)
+const SERVICES_VALUE: Services = { repository, adapter, drawingService }
 
 export function ServiceProvider({ children }: { children: ReactNode }) {
-  return (
-    <ServiceContext.Provider value={{ repository, adapter, drawingService }}>
-      {children}
-    </ServiceContext.Provider>
-  )
+  return <ServiceContext.Provider value={SERVICES_VALUE}>{children}</ServiceContext.Provider>
 }
 
 export function useServices() {

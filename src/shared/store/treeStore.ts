@@ -62,18 +62,22 @@ export const useTreeStore = create<TreeStore>((set, get) => ({
 
   removeDrawingFromTree: (drawingId) =>
     set((state) => {
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Recursive tree deletion
       const removeNodeFromTree = (nodes: DrawingTreeNode[]): DrawingTreeNode[] => {
-        return nodes
-          .filter((node) => node.id !== drawingId)
-          .map((node) => {
+        const result: DrawingTreeNode[] = []
+        for (const node of nodes) {
+          if (node.id !== drawingId) {
             if (node.children && node.children.length > 0) {
-              return {
+              result.push({
                 ...node,
                 children: removeNodeFromTree(node.children),
-              }
+              })
+            } else {
+              result.push(node)
             }
-            return node
-          })
+          }
+        }
+        return result
       }
 
       return { tree: removeNodeFromTree(state.tree) }

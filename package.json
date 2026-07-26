@@ -14,7 +14,8 @@
     "check:fix": "biome check --write .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.0",

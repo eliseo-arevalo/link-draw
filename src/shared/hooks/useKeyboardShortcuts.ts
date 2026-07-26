@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
 export interface KeyboardShortcut {
   key: string
@@ -27,18 +27,24 @@ function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): bool
 }
 
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
+  const shortcutsRef = useRef(shortcuts)
+  useEffect(() => {
+    shortcutsRef.current = shortcuts
+  })
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      for (const shortcut of shortcuts) {
+      for (const shortcut of shortcutsRef.current) {
         if (matchesShortcut(event, shortcut)) {
           event.preventDefault()
+          event.stopPropagation()
           shortcut.handler()
           break
         }
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [shortcuts])
+    window.addEventListener("keydown", handleKeyDown, true)
+    return () => window.removeEventListener("keydown", handleKeyDown, true)
+  }, [])
 }

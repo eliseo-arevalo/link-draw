@@ -91,7 +91,6 @@ export function Graph() {
   const [layout, setLayout] = useState<LayoutType>("cose")
   const [_refreshTrigger, setRefreshTrigger] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
-  const [isGraphReady, setIsGraphReady] = useState(false)
   const [stats, setStats] = useState<GraphStats>({
     nodes: 0,
     edges: 0,
@@ -188,13 +187,21 @@ export function Graph() {
     [theme]
   )
 
+  const createTooltipRef = useRef(createTooltip)
+  useEffect(() => {
+    createTooltipRef.current = createTooltip
+  })
+
   useEffect(() => {
     if (!containerRef.current) return
+
+    let isSubscribed = true
 
     const loadGraph = async () => {
       const drawings = await repository.listDrawings()
       const filters = { showHierarchy: true, showLinks: true, showOrphans: true }
       const { elements, stats: graphStats } = buildGraphElements(drawings, filters)
+      if (!isSubscribed) return
       setStats(graphStats)
 
       // If graph exists, update elements
@@ -237,8 +244,6 @@ export function Graph() {
       layoutRef.current = cyRef.current.layout(LAYOUTS[layout].config)
       layoutRef.current.run()
 
-      setIsGraphReady(true)
-
       cyRef.current.on("tap", "node", (evt) => {
         const nodeId = evt.target.id()
         const existingTooltip = document.getElementById("graph-tooltip")
@@ -271,7 +276,7 @@ export function Graph() {
           const renderedPosition = node.renderedPosition()
           const containerRect = containerRef.current?.getBoundingClientRect()
           if (containerRect) {
-            createTooltip(
+            createTooltipRef.current(
               drawing,
               childCount,
               linkCount,
@@ -297,6 +302,7 @@ export function Graph() {
     loadGraph()
 
     return () => {
+      isSubscribed = false
       // Stop layout if running
       if (layoutRef.current) {
         layoutRef.current.stop()
@@ -308,7 +314,7 @@ export function Graph() {
         cyRef.current = null
       }
     }
-  }, [layout, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
+  }, [layout, repository, theme, getGraphStyles, setActiveDrawingId, setViewMode])
 
   // Auto-refresh when tree changes (separate effect to avoid lint warnings)
   const { tree } = useTreeStore()
@@ -400,7 +406,6 @@ export function Graph() {
         theme={theme}
         layout={layout}
         searchQuery={searchQuery}
-        stats={stats}
         layouts={LAYOUTS}
         onLayoutChange={handleLayoutChange}
         onSearchChange={handleSearch}
@@ -413,33 +418,68 @@ export function Graph() {
           ref={containerRef}
           style={{ width: "100%", height: "100%", backgroundColor: colors.background }}
         />
-        {!isGraphReady && stats.nodes === 0 && (
+        {stats.nodes === 0 && (
           <div
+            className="absolute inset-0 flex items-center justify-center"
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: colors.textSecondary,
-              fontSize: "14px",
               backgroundColor: colors.background,
             }}
           >
-            No drawings to display. Create a drawing to get started.
+            <div
+              className="max-w-sm rounded-xl border px-6 py-5 text-center shadow-sm"
+              style={{ backgroundColor: colors.backgroundSecondary, borderColor: colors.border }}
+            >
+              <div className="mb-2 flex justify-center">
+                <Icon name="box" size={24} color={colors.accent} />
+              </div>
+              <h2 className="text-sm font-semibold" style={{ color: colors.text }}>
+                Your graph will appear here
+              </h2>
+              <p className="mt-1 text-xs leading-5" style={{ color: colors.textSecondary }}>
+                Create drawings and connect them to explore how your ideas relate.
+              </p>
+            </div>
           </div>
         )}
+        {stats.nodes > 0 && (
+          <>
+            <div
+              className="absolute left-4 top-4 rounded-lg border px-3 py-2 text-xs shadow-sm"
+              style={{ backgroundColor: colors.background, borderColor: colors.border, color: colors.textSecondary }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="h-0.5 w-4" style={{ backgroundColor: colors.textSecondary }} />
+                Parent &amp; child
+              </div>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="w-4 border-t-2 border-dashed" style={{ borderColor: colors.accent }} />
+                Drawing link
+              </div>
+            </div>
+            <div
+              className="absolute right-4 top-4 flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs shadow-sm"
+              style={{ backgroundColor: colors.background, borderColor: colors.border, color: colors.textSecondary }}
+            >
+              <span><strong style={{ color: colors.text }}>{stats.nodes}</strong> drawings</span>
+              <span aria-hidden="true">·</span>
+              <span><strong style={{ color: colors.text }}>{stats.edges}</strong> links</span>
+              <span aria-hidden="true">·</span>
+              <span><strong style={{ color: colors.text }}>{stats.orphans}</strong> unlinked</span>
+            </div>
+          </>
+        )}
         <div
+          className="rounded-lg border p-1 shadow-lg"
           style={{
             position: "absolute",
             bottom: "1rem",
             right: "1rem",
             display: "flex",
             flexDirection: "column",
-            gap: "0.5rem",
+            gap: "0.25rem",
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            boxShadow: colors.shadowIsland,
           }}
         >
           <button
@@ -452,8 +492,7 @@ export function Graph() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: colors.background,
-              boxShadow: colors.shadowIsland,
+              backgroundColor: "transparent",
             }}
             title="Zoom in"
           >
@@ -469,8 +508,7 @@ export function Graph() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: colors.background,
-              boxShadow: colors.shadowIsland,
+              backgroundColor: "transparent",
             }}
             title="Zoom out"
           >
@@ -486,8 +524,7 @@ export function Graph() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: colors.background,
-              boxShadow: colors.shadowIsland,
+              backgroundColor: "transparent",
             }}
             title="Fit to screen"
           >

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Icon } from "@/shared/components/Icon"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
+import { generateUniqueDrawingName } from "@/shared/lib/drawing-names"
+import { findInTree } from "@/shared/lib/tree-utils"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
@@ -9,6 +11,9 @@ import { useTreeStore } from "@/shared/store/treeStore"
 import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
+import { ExplorerFooter } from "./components/ExplorerFooter"
+import { ExplorerMenuModal } from "./components/ExplorerMenuModal"
+import { ExplorerToolbar } from "./components/ExplorerToolbar"
 import { TreeNode } from "./components/TreeNode"
 import { useDragAndDrop } from "./hooks/useDragAndDrop"
 
@@ -20,6 +25,7 @@ interface DrawingsExplorerProps {
   isMobile?: boolean
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Sidebar UI rendering requires complex conditional states
 export function Explorer({
   isCollapsed,
   onToggleSidebar,
@@ -47,7 +53,8 @@ export function Explorer({
     setIsCreating(true)
     setError(null)
     try {
-      const id = await repository.createDrawing("New Drawing", null)
+      const uniqueName = generateUniqueDrawingName(tree)
+      const id = await repository.createDrawing(uniqueName, null)
       await repository.saveDrawing(id, {
         content: {
           elements: [],
@@ -188,12 +195,8 @@ export function Explorer({
     ): Promise<DrawingTreeNode[]> => {
       if (!query.trim()) return nodes
 
-      const filtered: DrawingTreeNode[] = []
-      for (const node of nodes) {
-        const result = await processNode(node, query, filterTree)
-        if (result) filtered.push(result)
-      }
-      return filtered
+      const results = await Promise.all(nodes.map((node) => processNode(node, query, filterTree)))
+      return results.filter((r): r is DrawingTreeNode => r !== null)
     }
 
     filterTree(tree, searchQuery).then(setFilteredTree)
@@ -210,23 +213,20 @@ export function Explorer({
           setTree(drawings)
           setError(null)
 
-          // Auto-select drawing: last active > single root > first root
+          // Auto-select drawing: last active > Project brief example > single root > first root
           if (!activeDrawingId && drawings.length > 0) {
             // Try to load last active drawing
             const lastDrawingId = localStorage.getItem("linkdraw:last-active-drawing")
 
-            // Check if last drawing still exists
-            // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Recursive tree search is inherently complex
-            const findDrawing = (nodes: typeof drawings, id: string): boolean => {
-              for (const node of nodes) {
-                if (node.id === id) return true
-                if (node.children && findDrawing(node.children, id)) return true
-              }
-              return false
-            }
+            const lastDrawing = lastDrawingId
+              ? findInTree(drawings, (node) => node.id === lastDrawingId)
+              : null
+            const projectBrief = findInTree(drawings, (node) => node.title === "Project brief")
 
-            if (lastDrawingId && findDrawing(drawings, lastDrawingId)) {
+            if (lastDrawing) {
               setActiveDrawingId(lastDrawingId)
+            } else if (projectBrief) {
+              setActiveDrawingId(projectBrief.id)
             } else if (drawings.length === 1) {
               // Single root drawing
               setActiveDrawingId(drawings[0].id)
@@ -266,33 +266,146 @@ export function Explorer({
     }
   }, [showMenu])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: resize event triggered on collapse state change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"))
+    }, 150)
+    return () => clearTimeout(timer)
+  }, [isCollapsed])
+
   if (isCollapsed) {
     return (
       <div
-        className="h-full flex flex-col items-center"
+        className="h-full flex flex-col items-center justify-between"
         style={{
           width: "48px",
           minWidth: "48px",
           backgroundColor: colors.background,
           borderRight: `1px solid ${colors.border}`,
-          padding: "0.5rem 0",
+          padding: "0.75rem 0",
           transition: "width 0.15s ease-out, min-width 0.15s ease-out",
+          zIndex: 10,
         }}
       >
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            style={{
+              padding: "0.4rem",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: colors.textSecondary,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hoverBackground
+              e.currentTarget.style.color = colors.text
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
+            }}
+            title="Expand sidebar (Cmd+B)"
+          >
+            <Icon name="sidebar" size={16} aria-label="Expand sidebar" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCreateDrawing}
+            disabled={isCreating}
+            style={{
+              padding: "0.4rem",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: colors.textSecondary,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hoverBackground
+              e.currentTarget.style.color = colors.text
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent"
+              e.currentTarget.style.color = colors.textSecondary
+            }}
+            title="New drawing (Cmd+N)"
+          >
+            <Icon name="plus" size={16} aria-label="New drawing" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleGraph}
+            style={{
+              padding: "0.4rem",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: isGraphView ? colors.accent : colors.textSecondary,
+              backgroundColor: isGraphView ? colors.activeBackground : "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
+            title="Toggle Graph view (Cmd+G)"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              role="img"
+              aria-label="Graph view"
+            >
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Bottom Theme Quick Toggle */}
         <button
           type="button"
-          onClick={onToggleSidebar}
-          className="excalidraw-button"
+          onClick={() => {
+            const { theme: currentTheme, setTheme } = useThemeStore.getState()
+            setTheme(currentTheme === "light" ? "dark" : "light")
+          }}
           style={{
-            padding: "0.5rem",
+            padding: "0.4rem",
+            borderRadius: "4px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: colors.text,
+            color: colors.textSecondary,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
           }}
-          title="Show sidebar (Cmd+B)"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.hoverBackground
+            e.currentTarget.style.color = colors.text
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent"
+            e.currentTarget.style.color = colors.textSecondary
+          }}
+          title={`Switch to ${theme === "light" ? "Dark" : "Light"} mode`}
         >
-          <Icon name="sidebar" size={20} aria-label="Show sidebar" />
+          <Icon name={theme === "light" ? "moon" : "sun"} size={16} />
         </button>
       </div>
     )
@@ -312,385 +425,114 @@ export function Explorer({
           top: 0,
           bottom: 0,
           zIndex: 1000,
-          boxShadow: "2px 0 8px rgba(0, 0, 0, 0.2)",
+          boxShadow: "2px 0 12px rgba(0, 0, 0, 0.15)",
         }),
         transition: "width 0.15s ease-out, min-width 0.15s ease-out",
       }}
     >
       {/* Header */}
-      <div
-        className="border-b"
-        style={{
-          borderColor: "var(--excalidraw-border)",
-        }}
-      >
-        <div
-          className="flex items-center justify-between"
-          style={{
-            minHeight: "3rem",
-            padding: "0 1rem",
-          }}
-        >
-          <h2 className="text-sm font-semibold" style={{ color: colors.text }}>
-            EXPLORER
-          </h2>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={handleCreateDrawing}
-              disabled={isCreating}
-              className="excalidraw-button"
-              style={{
-                padding: "0.375rem",
-                minWidth: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: colors.text,
+      <ExplorerToolbar
+        colors={colors}
+        menuRef={menuRef}
+        onToggleSidebar={onToggleSidebar}
+        onToggleMenu={() => setShowMenu(!showMenu)}
+        onNewDrawing={handleCreateDrawing}
+        menu={
+          showMenu ? (
+            <ExplorerMenuModal
+              colors={colors}
+              isGraphView={isGraphView}
+              repository={repository}
+              onCloseMenu={() => setShowMenu(false)}
+              onToggleSearch={toggleSearch}
+              onToggleGraph={onToggleGraph}
+              onTreeUpdated={setTree}
+              onResetActiveDrawing={() => setActiveDrawingId(null)}
+              onError={(msg) => {
+                setError(msg)
+                setTimeout(() => setError(null), 5000)
               }}
-              title="New drawing (Cmd+N)"
-            >
-              <Icon name="plus" aria-label="New drawing" />
-            </button>
-            <button
-              type="button"
-              onClick={onToggleSidebar}
-              className="excalidraw-button"
-              style={{
-                padding: "0.375rem",
-                minWidth: "1.5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: colors.text,
-              }}
-              title="Hide sidebar (Cmd+B)"
-            >
-              <Icon name="sidebar" aria-label="Hide sidebar" />
-            </button>
-            <div style={{ position: "relative", zIndex: 10001 }} ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setShowMenu(!showMenu)}
-                className="excalidraw-button"
-                style={{
-                  padding: "0.375rem",
-                  minWidth: "1.5rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: colors.text,
-                }}
-                title="More options"
-              >
-                <Icon name="moreVertical" aria-label="More options" />
-              </button>
-              {showMenu && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    right: 0,
-                    marginTop: "0.25rem",
-                    backgroundColor: colors.background,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: "4px",
-                    boxShadow: colors.shadowIsland,
-                    minWidth: "160px",
-                    zIndex: 10000,
-                    padding: "0.25rem",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleSearch()
-                      setShowMenu(false)
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "2px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon name="search" size={14} aria-label="Search" />
-                    Search (Cmd+K)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onToggleGraph()
-                      setShowMenu(false)
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      background: isGraphView ? colors.backgroundSecondary : "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "2px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isGraphView) {
-                        e.currentTarget.style.backgroundColor = "transparent"
-                      }
-                    }}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      role="img"
-                      aria-label="Icon"
-                    >
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                      <line x1="12" y1="22.08" x2="12" y2="12" />
-                    </svg>
-                    Graph view (Cmd+G)
-                  </button>
-                  <div
-                    style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const drawings = await repository.listDrawings()
-                        const data = {
-                          version: "1.0.0",
-                          exportDate: new Date().toISOString(),
-                          drawings,
-                        }
-                        const blob = new Blob([JSON.stringify(data, null, 2)], {
-                          type: "application/json",
-                        })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement("a")
-                        a.href = url
-                        a.download = `linkdraw-export-${Date.now()}.json`
-                        a.click()
-                        URL.revokeObjectURL(url)
-                        setShowMenu(false)
-                      } catch (err) {
-                        console.error("Export failed:", err)
-                        setError("Failed to export project")
-                        setTimeout(() => setError(null), 5000)
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "2px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon name="download" size={14} aria-label="Export" />
-                    Export project
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.createElement("input")
-                      input.type = "file"
-                      input.accept = "application/json"
-                      input.onchange = async (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0]
-                        if (!file) return
+            />
+          ) : undefined
+        }
+      />
 
-                        try {
-                          const text = await file.text()
-                          const data = JSON.parse(text)
-
-                          if (!data.drawings || !Array.isArray(data.drawings)) {
-                            throw new Error("Invalid file format")
-                          }
-
-                          // Clear existing data and import
-                          localStorage.setItem("linkdraw:drawings", JSON.stringify(data.drawings))
-
-                          // Reload tree
-                          const updatedTree = await repository.getDrawingsTree()
-                          setTree(updatedTree)
-                          setShowMenu(false)
-                          setActiveDrawingId(null)
-                        } catch (err) {
-                          console.error("Import failed:", err)
-                          setError("Failed to import project. Check file format.")
-                          setTimeout(() => setError(null), 5000)
-                        }
-                      }
-                      input.click()
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "2px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon name="upload" size={14} aria-label="Import" />
-                    Import project
-                  </button>
-                  <div
-                    style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const { theme: currentTheme, setTheme } = useThemeStore.getState()
-                      setTheme(currentTheme === "light" ? "dark" : "light")
-                      setShowMenu(false)
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.5rem 0.75rem",
-                      fontSize: "0.875rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "2px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.backgroundSecondary
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon
-                      name={theme === "light" ? "moon" : "sun"}
-                      size={14}
-                      aria-label="Toggle theme"
-                    />
-                    {theme === "light" ? "Dark" : "Light"} mode
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Search Input - Conditional */}
-        {showSearch && (
-          <div style={{ padding: "0.5rem 1rem", position: "relative" }}>
+      {showSearch && (
+        /* Embedded Search */
+        <div style={{ position: "relative" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              backgroundColor: colors.inputBg,
+              border: `1px solid ${colors.border}`,
+              borderRadius: "4px",
+              padding: "0.3rem 0.5rem",
+            }}
+          >
+            <Icon name="search" size={13} color={colors.textSecondary} />
             <input
               ref={searchInputRef}
               type="text"
+              aria-label="Search drawings"
               placeholder="Search drawings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm rounded border"
               style={{
-                backgroundColor: colors.backgroundSecondary,
-                borderColor: colors.border,
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontSize: "0.8125rem",
                 color: colors.text,
-                paddingRight: searchQuery ? "2rem" : "0.75rem",
               }}
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
                 style={{
-                  position: "absolute",
-                  right: "1.5rem",
-                  top: "50%",
-                  transform: "translateY(-50%)",
                   background: "transparent",
                   border: "none",
                   cursor: "pointer",
-                  padding: "0.25rem",
+                  padding: "0.1rem",
                   display: "flex",
                   alignItems: "center",
                   color: colors.textSecondary,
                 }}
                 title="Clear search"
               >
-                <Icon name="x" size={14} color={colors.textSecondary} />
+                <Icon name="x" size={12} color={colors.textSecondary} />
               </button>
+            ) : (
+              <span
+                style={{
+                  fontSize: "10px",
+                  color: colors.textSecondary,
+                  opacity: 0.6,
+                }}
+              >
+                ⌘K
+              </span>
             )}
           </div>
-        )}
-      </div>
-
-      {/* Error Message */}
+        </div>
+      )}
       {error && (
         <div
-          className="mx-4 mt-2 px-3 py-2 rounded"
+          className="mx-3 mt-2 px-3 py-1.5 rounded"
           style={{
-            backgroundColor: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid #ef4444",
+            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
             color: "#ef4444",
           }}
         >
           <p className="text-xs">{error}</p>
         </div>
       )}
-
-      {/* Tree View */}
       <div
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto px-1"
         style={{
           scrollbarWidth: "thin",
           scrollbarColor: "var(--excalidraw-border) transparent",
@@ -705,19 +547,18 @@ export function Explorer({
           e.preventDefault()
           e.stopPropagation()
           if (dragAndDrop.draggedId) {
-            // Drop on root (no parent)
             handleDrop(dragAndDrop.draggedId, null)
           }
         }}
       >
         {filteredTree.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <p className="text-sm" style={{ color: colors.textSecondary }}>
-              {searchQuery ? "No drawings found" : "No drawings yet"}
+            <p className="text-xs" style={{ color: colors.textSecondary }}>
+              {searchQuery ? "No matching drawings" : "No drawings yet"}
             </p>
           </div>
         ) : (
-          <div className="py-2">
+          <div className="py-1">
             {filteredTree.map((node) => (
               <TreeNode
                 key={node.id}
@@ -737,6 +578,16 @@ export function Explorer({
           </div>
         )}
       </div>
+      <ExplorerFooter
+        theme={theme}
+        colors={colors}
+        isGraphView={isGraphView}
+        onToggleTheme={() => {
+          const store = useThemeStore.getState()
+          store.setTheme(store.theme === "light" ? "dark" : "light")
+        }}
+        onToggleGraph={onToggleGraph}
+      />
     </div>
   )
 }

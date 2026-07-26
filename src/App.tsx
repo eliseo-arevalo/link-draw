@@ -6,10 +6,14 @@ import { Search } from "./features/search/Search"
 import { MobileWarning } from "./shared/components/MobileWarning"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
 import { useThemeDetector } from "./shared/hooks/useThemeDetector"
+import { useThemeStore } from "./shared/store/themeStore"
 import { useViewStore } from "./shared/store/viewStore"
+import { getThemeColors } from "./shared/styles/theme"
 
 function App() {
   const { viewMode, toggleView } = useViewStore()
+  const { theme } = useThemeStore()
+  const colors = getThemeColors(theme)
   const [showSidebar, setShowSidebar] = useState(() => window.innerWidth >= 768)
   useThemeDetector() // Detectar cambios de theme
 
@@ -31,24 +35,32 @@ function App() {
   const isMobile = window.innerWidth < 768
 
   return (
-    <div
+    <main
+      aria-label="LinkDraw visual workspace"
       style={{
         display: "flex",
         height: "100vh",
         overflow: "hidden",
-        backgroundColor: "var(--color-surface-primary, #ffffff)",
+        backgroundColor: colors.background,
       }}
     >
+      <h1 className="sr-only">LinkDraw — Connected canvases for visual thinking</h1>
       <MobileWarning />
       {/* Overlay backdrop on mobile */}
       {isMobile && showSidebar && (
-        <div
+        <button
+          type="button"
+          aria-label="Close sidebar"
           onClick={() => setShowSidebar(false)}
           style={{
             position: "fixed",
             inset: 0,
             backgroundColor: "rgba(0, 0, 0, 0.5)",
             zIndex: 999,
+            border: "none",
+            cursor: "pointer",
+            width: "100%",
+            height: "100%",
           }}
         />
       )}
@@ -63,14 +75,17 @@ function App() {
       <div
         style={{
           flex: 1,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
           overflow: "hidden",
-          backgroundColor: "var(--color-surface-primary, #ffffff)",
-          transition: "all 0.15s ease-out",
+          backgroundColor: colors.background,
         }}
       >
         {viewMode === "canvas" ? <Canvas /> : <Graph />}
       </div>
-    </div>
+    </main>
   )
 }
 

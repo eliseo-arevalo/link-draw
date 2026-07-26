@@ -2,6 +2,7 @@ import type { BinaryFiles, ExcalidrawImperativeAPI } from "@excalidraw/excalidra
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import type { ICanvasAdapter } from "@/shared/interfaces/ICanvasAdapter"
 import { type DrawingLinkInfo, findDrawingLinks } from "@/shared/lib/drawing-links"
+import { useThemeStore } from "@/shared/store/themeStore"
 import type {
   DrawingLink,
   ExcalidrawAppState,
@@ -71,24 +72,37 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
       return
     }
 
-    // Clean appState - fix collaborators to be a Map
+    const currentTheme = useThemeStore.getState().theme
+
+    // Clean appState - fix collaborators to be a Map, force current theme and remove static layout dimensions
     const cleanAppState = content.appState
       ? {
           ...content.appState,
           collaborators: new Map(),
+          theme: currentTheme,
         }
-      : undefined
+      : { theme: currentTheme }
+
+    delete (cleanAppState as Partial<ExcalidrawAppState>).width
+    delete (cleanAppState as Partial<ExcalidrawAppState>).height
+    delete (cleanAppState as Partial<ExcalidrawAppState>).offsetTop
+    delete (cleanAppState as Partial<ExcalidrawAppState>).offsetLeft
 
     // Load elements and appState
     this.api.updateScene({
       elements: content.elements || [],
       // biome-ignore lint/suspicious/noExplicitAny: Excalidraw appState type mismatch
-      ...(cleanAppState && { appState: cleanAppState as any }),
+      appState: cleanAppState as any,
     })
 
     // Add files if they exist
     if (content.files && Object.keys(content.files).length > 0) {
       this.api.addFiles(Object.values(content.files))
+    }
+
+    // Trigger resize to ensure canvas recalculates viewport dimensions
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("resize"))
     }
   }
 
@@ -244,5 +258,50 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
     const elements = this.getElements()
     const element = elements.find((el) => el.id === elementId)
     return element?.link ?? null
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: Excalidraw element skeleton type
+  addElements(newElements: any[]): void {
+    if (!this.api) return
+
+    import("@excalidraw/excalidraw")
+      .then((mod) => {
+        if (!this.api) return
+        const currentElements = this.getElements()
+        const skeletons = newElements.map((el) => {
+          const text = el.text || ""
+          const calculatedWidth = el.width ?? Math.max(160, text.length * 12)
+          const calculatedHeight = el.height ?? 36
+          return {
+            type: el.type || "text",
+            x: el.x ?? 100,
+            y: el.y ?? 100,
+            text,
+            fontSize: el.fontSize ?? 18,
+            fontFamily: el.fontFamily ?? 1,
+            width: calculatedWidth,
+            height: calculatedHeight,
+          }
+        })
+
+        const converted = mod.convertToExcalidrawElements(skeletons)
+
+        // Re-apply link and only fallback width/height if converter failed to measure (e.g. jsdom/SSR)
+        const withLinks = converted.map((convEl, i) => {
+          const orig = newElements[i]
+          const skel = skeletons[i]
+          return {
+            ...convEl,
+            ...(convEl.width ? {} : { width: skel.width, height: skel.height }),
+            ...(orig?.link ? { link: orig.link } : {}),
+          }
+        })
+
+        this.api.updateScene({
+          elements: [...currentElements, ...withLinks],
+        })
+        this.notifyChange()
+      })
+      .catch(console.error)
   }
 }

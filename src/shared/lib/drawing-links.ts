@@ -50,21 +50,30 @@ export function createFrameLink(drawingId: string, frameId: string): string {
 }
 
 /**
- * Checks if a link is a drawing link
+ * Checks if a link is a drawing link (supports current drawing:// and legacy excaligraph://drawing/)
  */
 export function isDrawingLink(link: string | null | undefined): boolean {
-  return link?.startsWith(DRAWING_LINK_PREFIX) ?? false
+  if (!link) return false
+  return link.startsWith(DRAWING_LINK_PREFIX) || link.startsWith("excaligraph://drawing/")
 }
 
 /**
  * Parses a drawing link into its components
  */
 export function parseDrawingLink(link: string): LinkTarget | null {
-  if (!isDrawingLink(link)) {
+  if (!link) return null
+
+  // Handle legacy scheme for backward compatibility
+  let normalizedLink = link
+  if (normalizedLink.startsWith("excaligraph://drawing/")) {
+    normalizedLink = normalizedLink.replace("excaligraph://drawing/", DRAWING_LINK_PREFIX)
+  }
+
+  if (!normalizedLink.startsWith(DRAWING_LINK_PREFIX)) {
     return null
   }
 
-  const [base, fragment] = link.split("#")
+  const [base, fragment] = normalizedLink.split("#")
   const drawingId = base.replace(DRAWING_LINK_PREFIX, "")
 
   if (!drawingId) {

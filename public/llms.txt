@@ -1,0 +1,24 @@
+# LinkDraw
+
+> LinkDraw is a free, local-first web application for organizing Excalidraw canvases and connecting related ideas.
+
+LinkDraw helps people build multi-canvas visual workspaces. Users can organize drawings in a hierarchy, link whole drawings or specific elements and frames, navigate those links, and inspect relationships in a graph view.
+
+## Important facts
+
+- LinkDraw runs in the browser and requires JavaScript.
+- Drawing data is stored locally in the user's browser by default; LinkDraw does not publish or expose individual user drawings as public web pages.
+- It is intended for visual thinking, diagramming, knowledge mapping, and connected canvas workflows.
+- The application integrates the Excalidraw canvas experience.
+
+## Canonical URL
+
+- https://link-draw.com/
+
+## Core capabilities
+
+- Create, rename, duplicate, organize, and delete drawings in a tree.
+- Link a drawing to another drawing, an element, or a frame.
+- Follow links with focused navigation and highlights.
+- Explore relationships between drawings in a graph.
+- Save work automatically to local browser storage.

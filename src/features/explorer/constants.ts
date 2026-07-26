@@ -1,5 +1,0 @@
-export const Z_INDEX = {
-  DROPDOWN_MENU: 100,
-  MODAL_BACKDROP: 200,
-  MODAL_CONTENT: 201,
-} as const

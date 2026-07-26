@@ -44,15 +44,19 @@ export function useCanvasLoader(
 
   const saveAllCachedDrawings = useCallback(async () => {
     console.log("[Canvas] Saving", contentCacheRef.current.size, "cached drawings")
-    for (const [drawingId, content] of contentCacheRef.current.entries()) {
-      try {
-        await repository.saveDrawing(drawingId, { content })
-        console.log("[Canvas] Saved cached drawing:", drawingId)
-      } catch (err) {
-        console.error("[Canvas] Failed to save cached drawing:", drawingId, err)
-      }
-    }
+    const entries = Array.from(contentCacheRef.current.entries())
     contentCacheRef.current.clear()
+
+    await Promise.all(
+      entries.map(async ([drawingId, content]) => {
+        try {
+          await repository.saveDrawing(drawingId, { content })
+          console.log("[Canvas] Saved cached drawing:", drawingId)
+        } catch (err) {
+          console.error("[Canvas] Failed to save cached drawing:", drawingId, err)
+        }
+      })
+    )
   }, [repository])
 
   useEffect(() => {

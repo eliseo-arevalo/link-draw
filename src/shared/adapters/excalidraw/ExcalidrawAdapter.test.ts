@@ -142,7 +142,13 @@ describe("ExcalidrawAdapter", () => {
       // It should update elements and appState (scroll/zoom only)
       expect(mockApi.updateScene).toHaveBeenCalledWith({
         elements: content.elements,
-        appState: { zoom: 1, scrollX: 100, scrollY: 200 },
+        appState: {
+          zoom: 1,
+          scrollX: 100,
+          scrollY: 200,
+          collaborators: expect.any(Map),
+          theme: "light",
+        },
       })
       // It should add files
       expect(mockApi.addFiles).toHaveBeenCalledWith([{ id: "f1" }])

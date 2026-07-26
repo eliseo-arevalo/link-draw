@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
 interface ToastProps {
@@ -10,15 +10,19 @@ interface ToastProps {
 
 export function Toast({ message, type = "error", duration = 3000, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false)
-      setTimeout(onClose, 300)
+      setTimeout(() => onCloseRef.current(), 300)
     }, duration)
 
     return () => clearTimeout(timer)
-  }, [duration, onClose])
+  }, [duration])
 
   const bgColor = type === "error" ? "#ef4444" : type === "warning" ? "#f59e0b" : "#3b82f6"
 
@@ -39,7 +43,7 @@ export function Toast({ message, type = "error", duration = 3000, onClose }: Toa
         maxWidth: "400px",
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "translateY(0)" : "translateY(-1rem)",
-        transition: "all 0.3s ease",
+        transition: "opacity 0.3s ease, transform 0.3s ease",
       }}
     >
       {message}

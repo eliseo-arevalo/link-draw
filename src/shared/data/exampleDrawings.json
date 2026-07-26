@@ -1032,6 +1032,19 @@
       "is_public": false,
       "created_at": "2026-01-10T02:16:21.852Z",
       "updated_at": "2026-01-10T16:52:37.108Z"
+    },
+    {
+      "id": "3d8b3b3f-5c93-4b96-b5a6-b5d20fb54215",
+      "title": "Project brief",
+      "parent_id": "1e6a9009-a446-4ee0-ba67-9501229ebca2",
+      "content": {
+        "elements": [],
+        "appState": {},
+        "files": {}
+      },
+      "is_public": false,
+      "created_at": "2026-07-25T00:00:00.000Z",
+      "updated_at": "2026-07-25T00:00:00.000Z"
     }
   ]
 }
