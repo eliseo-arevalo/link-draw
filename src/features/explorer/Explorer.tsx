@@ -434,34 +434,30 @@ export function Explorer({
     >
       {/* Header */}
       <ExplorerToolbar
-        theme={theme}
         colors={colors}
-        isMobile={isMobile}
         menuRef={menuRef}
-        onToggleTheme={() => {
-          const store = useThemeStore.getState()
-          store.setTheme(store.theme === "light" ? "dark" : "light")
-        }}
         onToggleSidebar={onToggleSidebar}
         onToggleMenu={() => setShowMenu(!showMenu)}
         onNewDrawing={handleCreateDrawing}
+        menu={
+          showMenu ? (
+            <ExplorerMenuModal
+              colors={colors}
+              isGraphView={isGraphView}
+              repository={repository}
+              onCloseMenu={() => setShowMenu(false)}
+              onToggleSearch={toggleSearch}
+              onToggleGraph={onToggleGraph}
+              onTreeUpdated={setTree}
+              onResetActiveDrawing={() => setActiveDrawingId(null)}
+              onError={(msg) => {
+                setError(msg)
+                setTimeout(() => setError(null), 5000)
+              }}
+            />
+          ) : undefined
+        }
       />
-      {showMenu && (
-        <ExplorerMenuModal
-          colors={colors}
-          isGraphView={isGraphView}
-          repository={repository}
-          onCloseMenu={() => setShowMenu(false)}
-          onToggleSearch={toggleSearch}
-          onToggleGraph={onToggleGraph}
-          onTreeUpdated={setTree}
-          onResetActiveDrawing={() => setActiveDrawingId(null)}
-          onError={(msg) => {
-            setError(msg)
-            setTimeout(() => setError(null), 5000)
-          }}
-        />
-      )}
 
       {showSearch && (
         /* Embedded Search */

@@ -1,26 +1,23 @@
 import { Icon } from "@/shared/components/Icon"
+import type { ReactNode } from "react"
 import type { ThemeColors } from "@/shared/styles/theme"
 
 interface ExplorerToolbarProps {
-  theme: "light" | "dark"
   colors: ThemeColors
-  isMobile: boolean
   menuRef: React.RefObject<HTMLDivElement | null>
-  onToggleTheme: () => void
   onToggleSidebar: () => void
   onToggleMenu: () => void
   onNewDrawing: () => void
+  menu?: ReactNode
 }
 
 export function ExplorerToolbar({
-  theme,
   colors,
-  isMobile,
   menuRef,
-  onToggleTheme,
   onToggleSidebar,
   onToggleMenu,
   onNewDrawing,
+  menu,
 }: ExplorerToolbarProps) {
   return (
     <div
@@ -69,7 +66,7 @@ export function ExplorerToolbar({
 
         <button
           type="button"
-          onClick={onToggleTheme}
+          onClick={onToggleSidebar}
           style={{
             padding: "0.3rem",
             borderRadius: "4px",
@@ -81,31 +78,10 @@ export function ExplorerToolbar({
             background: "transparent",
             cursor: "pointer",
           }}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title="Collapse sidebar"
         >
-          <Icon name={theme === "dark" ? "sun" : "moon"} size={14} aria-label="Toggle theme" />
+          <Icon name="sidebar" size={14} aria-label="Collapse sidebar" />
         </button>
-
-        {isMobile && (
-          <button
-            type="button"
-            onClick={onToggleSidebar}
-            style={{
-              padding: "0.3rem",
-              borderRadius: "4px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: colors.textSecondary,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-            }}
-            title="Hide sidebar"
-          >
-            <Icon name="sidebar" size={14} aria-label="Hide sidebar" />
-          </button>
-        )}
 
         <div style={{ position: "relative", zIndex: 10001 }} ref={menuRef}>
           <button
@@ -126,6 +102,7 @@ export function ExplorerToolbar({
           >
             <Icon name="moreVertical" size={14} aria-label="More options" />
           </button>
+          {menu}
         </div>
       </div>
     </div>
