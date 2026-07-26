@@ -4,6 +4,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { Icon } from "@/shared/components/Icon"
 import { Toast } from "@/shared/components/Toast"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
+import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links"
 import { useServices } from "@/shared/providers/ServiceProvider"
@@ -561,7 +562,7 @@ export function Canvas() {
     [adapter.setElementLink, adapter.getSelectedElementIds]
   )
 
-  const isMobile = window.innerWidth < 768
+  const isMobile = useIsMobile()
 
   return (
     <div ref={canvasRef} className="w-full h-full relative overflow-hidden flex-1 min-h-0">

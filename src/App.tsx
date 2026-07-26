@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Canvas } from "./features/canvas/Canvas"
 import { Explorer } from "./features/explorer/Explorer"
 import { Graph } from "./features/graph/Graph"
 import { Search } from "./features/search/Search"
-import { MobileWarning } from "./shared/components/MobileWarning"
+import { MobileBottomNavigation } from "./shared/components/MobileNavigation"
+import { useIsMobile } from "./shared/hooks/useIsMobile"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
 import { useThemeDetector } from "./shared/hooks/useThemeDetector"
 import { useThemeStore } from "./shared/store/themeStore"
@@ -11,11 +12,16 @@ import { useViewStore } from "./shared/store/viewStore"
 import { getThemeColors } from "./shared/styles/theme"
 
 function App() {
-  const { viewMode, toggleView } = useViewStore()
-  const { theme } = useThemeStore()
+  const { viewMode, setViewMode, toggleView } = useViewStore()
+  const { theme, setTheme } = useThemeStore()
   const colors = getThemeColors(theme)
-  const [showSidebar, setShowSidebar] = useState(() => window.innerWidth >= 768)
+  const isMobile = useIsMobile()
+  const [showSidebar, setShowSidebar] = useState(() => !isMobile)
   useThemeDetector() // Detectar cambios de theme
+
+  useEffect(() => {
+    setShowSidebar(!isMobile)
+  }, [isMobile])
 
   useKeyboardShortcuts([
     {
@@ -27,25 +33,31 @@ function App() {
     {
       key: "b",
       meta: true,
-      handler: () => setShowSidebar(!showSidebar),
+      handler: () => setShowSidebar((isOpen) => !isOpen),
       description: "Toggle sidebar",
     },
   ])
 
-  const isMobile = window.innerWidth < 768
+  const closeDrawer = () => setShowSidebar(false)
+  const openDrawer = () => setShowSidebar(true)
+  const selectMobileView = (mode: "canvas" | "graph") => {
+    setViewMode(mode)
+    closeDrawer()
+  }
 
   return (
     <main
       aria-label="LinkDraw visual workspace"
       style={{
         display: "flex",
-        height: "100vh",
+        flexDirection: isMobile ? "column" : "row",
+        height: "100dvh",
+        minHeight: "100vh",
         overflow: "hidden",
         backgroundColor: colors.background,
       }}
     >
       <h1 className="sr-only">LinkDraw — Connected canvases for visual thinking</h1>
-      <MobileWarning />
       {/* Overlay backdrop on mobile */}
       {isMobile && showSidebar && (
         <button
@@ -67,7 +79,7 @@ function App() {
       <Search />
       <Explorer
         isCollapsed={!showSidebar}
-        onToggleSidebar={() => setShowSidebar(!showSidebar)}
+        onToggleSidebar={() => setShowSidebar((isOpen) => !isOpen)}
         onToggleGraph={toggleView}
         isGraphView={viewMode === "graph"}
         isMobile={isMobile}
@@ -79,12 +91,24 @@ function App() {
           display: "flex",
           flexDirection: "column",
           minHeight: 0,
+          width: isMobile ? "100%" : undefined,
           overflow: "hidden",
           backgroundColor: colors.background,
         }}
       >
         {viewMode === "canvas" ? <Canvas /> : <Graph />}
       </div>
+      {isMobile && (
+        <MobileBottomNavigation
+          colors={colors}
+          theme={theme}
+          viewMode={viewMode}
+          onOpenDrawer={openDrawer}
+          onSelectCanvas={() => selectMobileView("canvas")}
+          onSelectGraph={() => selectMobileView("graph")}
+          onToggleTheme={() => setTheme(theme === "light" ? "dark" : "light")}
+        />
+      )}
     </main>
   )
 }

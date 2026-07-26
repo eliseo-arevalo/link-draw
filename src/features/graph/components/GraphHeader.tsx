@@ -30,7 +30,7 @@ export function GraphHeader({
       style={{ backgroundColor: colors.background, borderColor: colors.border }}
     >
       <div className="flex flex-wrap items-center gap-3">
-        <div className="mr-auto min-w-36">
+        <div className="w-full sm:mr-auto sm:min-w-36 sm:w-auto">
           <h1 className="text-sm font-semibold" style={{ color: colors.text }}>
             Graph view
           </h1>
@@ -58,7 +58,7 @@ export function GraphHeader({
         </label>
 
         <div
-          className="flex min-w-52 flex-1 items-center gap-2 rounded-md border px-2.5 py-2"
+          className="flex min-w-0 w-full flex-1 items-center gap-2 rounded-md border px-2.5 py-2 sm:min-w-52 sm:w-auto"
           style={{ backgroundColor: colors.backgroundSecondary, borderColor: colors.border, maxWidth: "360px" }}
         >
           <Icon name="search" size={15} color={colors.textSecondary} />
