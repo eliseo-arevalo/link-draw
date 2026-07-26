@@ -34,7 +34,9 @@ export function Canvas() {
   const [canvasError, setCanvasError] = useState<string | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const excalidrawAPIRef = useRef(excalidrawAPI)
-  excalidrawAPIRef.current = excalidrawAPI
+  useEffect(() => {
+    excalidrawAPIRef.current = excalidrawAPI
+  }, [excalidrawAPI])
 
   const [wikiFilterText, setWikiFilterText] = useState("")
 
@@ -86,7 +88,9 @@ export function Canvas() {
   )
 
   const saveAllRef = useRef(saveAllCachedDrawings)
-  saveAllRef.current = saveAllCachedDrawings
+  useEffect(() => {
+    saveAllRef.current = saveAllCachedDrawings
+  }, [saveAllCachedDrawings])
 
   const { triggerSave, forceSave } = useAutoSave(
     async () => {
@@ -106,7 +110,9 @@ export function Canvas() {
   )
 
   const triggerSaveRef = useRef(triggerSave)
-  triggerSaveRef.current = triggerSave
+  useEffect(() => {
+    triggerSaveRef.current = triggerSave
+  }, [triggerSave])
 
   // Center content only on first load (when appState is empty in storage)
   useEffect(() => {
