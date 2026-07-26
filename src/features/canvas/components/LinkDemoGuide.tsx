@@ -24,7 +24,8 @@ export function LinkDemoGuide({
   text,
   textSecondary,
 }: LinkDemoGuideProps) {
-  const activeStage = demo.stage === "complete" ? stages.length : stages.findIndex((s) => s.id === demo.stage)
+  const activeStage =
+    demo.stage === "complete" ? stages.length : stages.findIndex((s) => s.id === demo.stage)
 
   return (
     <aside
@@ -43,7 +44,11 @@ export function LinkDemoGuide({
           const complete = index < activeStage
           const active = index === activeStage
           return (
-            <li key={stage.id} className="flex items-center gap-2 text-xs" style={{ color: textSecondary }}>
+            <li
+              key={stage.id}
+              className="flex items-center gap-2 text-xs"
+              style={{ color: textSecondary }}
+            >
               <span
                 className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                 style={{
@@ -54,7 +59,9 @@ export function LinkDemoGuide({
               >
                 {complete ? "✓" : index + 1}
               </span>
-              <span style={{ color: complete || active ? text : textSecondary }}>{stage.label}</span>
+              <span style={{ color: complete || active ? text : textSecondary }}>
+                {stage.label}
+              </span>
             </li>
           )
         })}

@@ -296,6 +296,10 @@ export class LocalStorageRepository implements IGraphRepository {
     return newId
   }
 
+  async replaceAllDrawings(drawings: Drawing[]): Promise<void> {
+    this.saveAll(drawings)
+  }
+
   /**
    * Clear all drawings (for testing/reset)
    */

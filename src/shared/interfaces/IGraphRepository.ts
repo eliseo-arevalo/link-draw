@@ -99,4 +99,10 @@ export interface IGraphRepository {
    * @returns The new drawing ID
    */
   duplicateDrawing(id: string, includeChildren: boolean): Promise<string>
+
+  /**
+   * Replace all drawings in repository with a new set of drawings
+   * @param drawings - Array of drawings to replace current data
+   */
+  replaceAllDrawings(drawings: Drawing[]): Promise<void>
 }

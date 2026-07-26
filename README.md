@@ -1,262 +1,189 @@
-# LinkDraw
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org)
-[![React](https://img.shields.io/badge/React-19-61dafb?logo=react)](https://react.dev)
 
-Multi-canvas management and element relationships for [Excalidraw](https://excalidraw.com).
+<p align="center">
+  <img src="./public/logo-dark.svg" width="80" alt="LinkDraw Logo" />
+</p>
+
+<h1 align="center">LinkDraw</h1>
+
+<p align="center">
+  A modern, privacy-first multi-canvas workspace and visual knowledge base built on top of <a href="https://excalidraw.com">Excalidraw</a>.
+</p>
+
+<p align="center">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=white" alt="TypeScript 5.9" /></a>
+  <a href="https://react.dev"><img src="https://img.shields.io/badge/React-19.2-61dafb?logo=react&logoColor=black" alt="React 19" /></a>
+  <a href="https://vite.dev"><img src="https://img.shields.io/badge/Vite-7.2-646cff?logo=vite&logoColor=white" alt="Vite 7" /></a>
+  <a href="https://vitest.dev"><img src="https://img.shields.io/badge/Vitest-4.0-729b1b?logo=vitest&logoColor=white" alt="Vitest 4" /></a>
+  <a href="https://excalidraw.com"><img src="https://img.shields.io/badge/Excalidraw-0.18-6965db" alt="Excalidraw" /></a>
+</p>
+
+---
 
 ## Overview
 
-Excalidraw is excellent for individual drawings. LinkDraw extends it with:
+Excalidraw is an infinite canvas tool for sketching and architecture diagrams. **LinkDraw** extends it into a structured visual workspace by enabling **multi-canvas project trees**, **deep element linking**, **interactive graph views**, and **wiki-style references**.
 
-- **Multi-canvas projects**: Manage multiple canvases in a hierarchical tree structure
-- **Element relationships**: Link elements and entire drawings across canvases
-- **Auto-save**: Automatic content persistence with debounced saves
-- **Navigation**: Click links to navigate between drawings and focus on specific elements
-- **Project persistence**: All data stored locally in browser (localStorage)
+All data is kept strictly private and stored locally in your browser using structured storage abstractions, with support for JSON project import/export backups.
+
+---
 
 ## Features
 
-### ✨ Current (v0.1.0)
+- **Hierarchical Multi-Canvas Tree**: Organize infinite canvases in parent-child trees with drag-and-drop reorganization and duplicate/copy support.
+- **Inter-Canvas Deep Linking**: Hyperlink elements or entire drawings using `drawing://id#element:xyz`. Clicking links smoothly loads the target canvas and centers on the linked element.
+- **Interactive Graph View**: Visualize project structure and inter-drawing relationships in a responsive node-link graph view (`Cmd+G`).
+- **Wiki-Style Autocomplete (`[[`)**: Type `[[` inside any text box to trigger instant drawing search and inline linking.
+- **Backlinks Panel**: Inspect incoming references across drawings in real-time.
+- **Unified Project Transfer & Backups**: Export and import complete projects with `ProjectTransferService`, version 1 schemas, circular reference checking, and recovery backups in `sessionStorage`.
+- **Race-Safe Auto-Save**: 500ms debounced autosave synchronized with canvas loader caches and import state guards.
+- **Dark & Light Mode**: Seamless dark/light theme switching for canvas, tree, graph, and UI modals.
+- **Comprehensive Test Coverage**: 126 automated unit & integration tests written with Vitest and Happy DOM.
 
-- **Tree-based Drawing Explorer**: Hierarchical organization with create, rename, delete operations
-- **Canvas Integration**: Full Excalidraw functionality with custom link handling
-- **Drawing Links**: Link to entire drawings or specific elements/frames
-- **Smart Navigation**: Auto-scroll and highlight when navigating to linked elements
-- **Auto-save**: 500ms debounced saves with content caching during navigation
-- **Confirmation Dialogs**: Safe deletion with user confirmation
-- **Responsive UI**: Sidebar + canvas layout with Tailwind CSS
-
-### 🧪 Testing
-
-- **111 unit tests** covering services, adapters, utilities, and hooks
-- **~88% code coverage** with v8 provider
-- **Fast execution**: All tests run in ~3-4 seconds
+---
 
 ## Quick Start
 
+### Prerequisites
+- Node.js >= 18
+- pnpm / npm / yarn
+
+### Installation & Run
+
 ```bash
+# Clone the repository
+git clone https://github.com/bug-devs/link-draw.git
+cd link-draw
+
 # Install dependencies
 pnpm install
 
-# Start development server
+# Start local development server
 pnpm dev
-
-# Build for production
-pnpm build
-
-# Run linter
-pnpm lint
-
-# Run tests
-pnpm test
-
-# Run tests with coverage
-pnpm test:coverage
 ```
 
-## Tech Stack
+Open `http://localhost:5173` in your browser.
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19 | UI framework |
-| TypeScript | 5.9 | Type safety |
-| Vite | 7 | Build tool |
-| Vitest | 4 | Testing framework |
-| Excalidraw | 0.18 | Canvas engine |
-| Zustand | 5 | State management |
-| Tailwind CSS | 4 | Styling |
-| Biome | 2.3 | Linting & formatting |
+---
 
-## Architecture
+## Key Commands
 
-### Design Principles
+| Script | Command | Purpose |
+| :--- | :--- | :--- |
+| **Development** | `pnpm dev` | Start Vite dev server with hot reload |
+| **Production Build** | `pnpm build` | Run TypeScript check (`tsc -b`) and Vite production bundle |
+| **Unit Tests** | `pnpm test` | Run Vitest test suite |
+| **Coverage** | `pnpm test:coverage` | Generate V8 coverage report |
+| **Linter & Format** | `pnpm check` | Run Biome lint & code style checks |
+| **Auto-Fix** | `pnpm check:fix` | Fix code format and linting issues automatically |
 
-1. **Feature-based organization**: Code organized by functionality, not file type
-2. **Interfaces at extension points**: Only abstract where we plan to extend (persistence, canvas engine)
-3. **Inward dependencies**: Features depend on shared code, never the reverse
-4. **No over-engineering**: Simple code first, abstract only when needed
+---
 
-### Project Structure
+## Architecture & System Design
 
+LinkDraw adheres to **Clean Architecture** principles, enforcing strict dependency boundaries between UI features, core domain services, and extension interfaces.
+
+```mermaid
+flowchart LR
+    subgraph UI["UI Features"]
+        direction TB
+        Canvas["Canvas"]
+        Explorer["Explorer"]
+        Graph["Graph View"]
+    end
+
+    subgraph Domain["Services & State"]
+        direction TB
+        DrawingSvc["DrawingService"]
+        LinkSvc["LinkService"]
+        TransferSvc["ProjectTransferService"]
+    end
+
+    subgraph Contracts["Interfaces"]
+        direction TB
+        IGraphRepo["IGraphRepository"]
+        ICanvasAdapter["ICanvasAdapter"]
+    end
+
+    subgraph Storage["Drivers"]
+        direction TB
+        LocalStorageRepo["LocalStorageRepository"]
+        ExcalidrawAdapter["ExcalidrawAdapter"]
+    end
+
+    UI --> Domain --> Contracts
+    IGraphRepo --> LocalStorageRepo
+    ICanvasAdapter --> ExcalidrawAdapter
 ```
-src/
-├── features/           # Feature modules
-│   ├── canvas/        # Canvas and drawing management
-│   │   ├── components/
-│   │   ├── hooks/
-│   │   └── Canvas.tsx
-│   └── explorer/      # Tree-based drawing explorer
-│       ├── components/
-│       ├── hooks/
-│       └── DrawingsExplorer.tsx
-├── shared/            # Shared utilities
-│   ├── adapters/     # External library adapters
-│   ├── constants/    # Shared constants
-│   ├── hooks/        # Reusable hooks
-│   ├── interfaces/   # Core interfaces
-│   ├── lib/          # Utility functions
-│   ├── repositories/ # Data persistence
-│   ├── services/     # Business logic
-│   ├── store/        # Global state
-│   └── types/        # TypeScript types
-└── App.tsx           # Root component
-```
 
-### Extension Points
+### Core Abstractions
 
-The architecture defines interfaces at two critical points:
-
-#### IGraphRepository (Persistence)
-
-Allows switching data sources without changing business logic.
+#### 1. `IGraphRepository` (Persistence Engine)
+Abstracts drawing persistence so storage backends can be swapped without touching UI logic:
 
 ```typescript
-interface IGraphRepository {
-  createDrawing(title: string, parentId: string | null): Promise<string>;
-  loadDrawing(id: string): Promise<Drawing | null>;
-  saveDrawing(id: string, input: DrawingInput): Promise<void>;
-  deleteDrawing(id: string): Promise<void>;
-  getDrawingsTree(): Promise<DrawingTreeNode[]>;
-  // ... more methods
+export interface IGraphRepository {
+  createDrawing(title: string, parentId?: string | null): Promise<string>
+  loadDrawing(id: string): Promise<Drawing | null>
+  saveDrawing(id: string, data: DrawingInput): Promise<void>
+  deleteDrawing(id: string): Promise<void>
+  listDrawings(): Promise<Drawing[]>
+  getDrawingsTree(): Promise<DrawingTreeNode[]>
+  replaceAllDrawings(drawings: Drawing[]): Promise<void>
 }
 ```
 
-**Current Implementation:**
-- `LocalStorageRepository` - Browser localStorage (v0.1.0)
-
-**Future:**
-- `APIRepository` - Backend sync with authentication
-- `IndexedDBRepository` - Better performance for large projects
-
-#### ICanvasAdapter (Canvas Engine)
-
-Decouples from Excalidraw for testing and potential future changes.
+#### 2. `ProjectTransferService` (Import/Export & Validation)
+Manages backup export, structural validation, parent hierarchy validation, circular reference prevention, and atomic project replacement:
 
 ```typescript
-interface ICanvasAdapter {
-  getContent(): ExcalidrawContent;
-  setContent(content: ExcalidrawContent): void;
-  onChange(callback: (content: ExcalidrawContent) => void): () => void;
-  scrollToElement(elementId: string): void;
-  highlightElement(elementId: string): void;
-  // ... more methods
+export interface LinkDrawProjectBackup {
+  format: "linkdraw-project"
+  version: 1
+  exportedAt: string
+  drawings: Drawing[]
 }
 ```
 
-**Current Implementation:**
-- `ExcalidrawAdapter` - Wraps Excalidraw API
+---
 
-### Dependency Flow
+## Keyboard Shortcuts
 
-```
-┌─────────────────────────────────┐
-│       UI / Features             │
-│   Canvas │ Explorer             │
-└──────────────┬──────────────────┘
-               │ uses interfaces
-               ▼
-┌──────────────────────────────────┐
-│    Services & Interfaces         │
-│  DrawingService │ LinkService    │
-│  IGraphRepository │ ICanvasAdapter│
-└─────────┬─────────┴───────┬──────┘
-          ▼                 ▼
-   LocalStorage        Excalidraw
-   Repository          Adapter
-```
+| Shortcut | Action |
+| :--- | :--- |
+| `Cmd + N` | Create a new drawing |
+| `Cmd + K` | Search drawings |
+| `Cmd + G` | Toggle Graph view |
+| `Cmd + S` | Force save current drawing |
+| `Cmd + L` / `Cmd + K` | Add link to selected canvas element |
+| `Cmd + B` | Toggle Explorer sidebar |
 
-## Key Features Explained
-
-### Drawing Links
-
-Links use a custom URI scheme: `drawing://[id][#element:id|#frame:id]`
-
-- `drawing://abc123` - Link to entire drawing
-- `drawing://abc123#element:xyz` - Link to specific element
-- `drawing://abc123#frame:xyz` - Link to specific frame
-
-### Auto-save Strategy
-
-1. **Debounced saves**: 500ms delay after last change
-2. **Content caching**: Previous drawing content cached before navigation
-3. **Stable references**: useRef pattern prevents onChange reconnections
-4. **Batch saves**: All cached drawings saved together
-
-### Navigation Flow
-
-1. User clicks link in Excalidraw
-2. `useLinkNavigation` parses the link
-3. `useCanvasLoader` caches current content
-4. New drawing loads into canvas
-5. If element specified, scroll and highlight it
-
-## Extending the Project
-
-### Adding a New Feature
-
-1. Create a folder under `src/features/your-feature/`
-2. Include components, hooks, types, and an `index.ts` barrel export
-3. Import shared utilities from `src/shared/`
-4. Never import from other features directly; use shared abstractions
-
-### Changing Persistence (localStorage to API)
-
-1. Implement `IGraphRepository` interface:
-
-```typescript
-class APIRepository implements IGraphRepository {
-  constructor(private baseUrl: string, private token: string) {}
-
-  async createDrawing(title: string, parentId: string | null): Promise<string> {
-    const res = await fetch(`${this.baseUrl}/drawings`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.token}`
-      },
-      body: JSON.stringify({ title, parentId }),
-    });
-    const { id } = await res.json();
-    return id;
-  }
-
-  // ... implement remaining methods
-}
-```
-
-2. Swap the repository in your components:
-
-```typescript
-// Before
-const repository = new LocalStorageRepository();
-
-// After
-const repository = new APIRepository('https://api.example.com', token);
-```
-
-No changes needed in features or business logic.
+---
 
 ## Testing
 
-Tests are colocated with source files using `.test.ts` or `.test.tsx` extensions.
+All services, graph algorithms, link parsers, and custom hooks are thoroughly tested using Vitest and Happy DOM.
 
-**Coverage by module:**
-- Services: DrawingService, LinkService, graph algorithms
-- Adapters: ExcalidrawAdapter (96% coverage)
-- Utilities: tree-utils, drawing-links, utils
-- Hooks: useAutoSave
+```bash
+pnpm test -- --run
+```
 
-Run `pnpm test:coverage` to see detailed HTML report in `coverage/index.html`.
+```
+ Test Files  14 passed (14)
+      Tests  126 passed (126)
+```
+
+---
 
 ## Documentation
 
-- [Architecture Details](./ARCHITECTURE.md) - System design and patterns
-- [Contributing Guide](./CONTRIBUTING.md) - How to contribute
-- [Code of Conduct](./CODE_OF_CONDUCT.md) - Community guidelines
-- [Security Policy](./SECURITY.md) - Reporting vulnerabilities
+- [Architecture Guide](./ARCHITECTURE.md) - Deep dive into system layers and design principles
+- [Changelog](./CHANGELOG.md) - Record of project releases and notable updates
+- [Contributing Guide](./CONTRIBUTING.md) - Guidelines for contributing to LinkDraw
+
+---
 
 ## License
 
-[MIT](./LICENSE)
+Distributed under the [MIT License](./LICENSE).

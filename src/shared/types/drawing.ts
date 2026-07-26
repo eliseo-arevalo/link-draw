@@ -69,6 +69,14 @@ export interface DrawingLink {
 }
 
 /**
+ * Information about a backlink (incoming link)
+ */
+export interface BacklinkInfo extends DrawingLink {
+  sourceDrawingId: string
+  sourceDrawingTitle: string
+}
+
+/**
  * Drawing summary (for lists)
  */
 export interface DrawingSummary {

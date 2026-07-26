@@ -31,8 +31,14 @@ export function DemoWikiSuggestion({
         borderColor: border,
       }}
     >
-      <div className="flex items-center gap-2 border-b px-3 py-2 text-xs" style={{ borderColor: border }}>
-        <span className="rounded px-1.5 py-0.5 font-mono font-semibold" style={{ backgroundColor: `${accent}1f`, color: accent }}>
+      <div
+        className="flex items-center gap-2 border-b px-3 py-2 text-xs"
+        style={{ borderColor: border }}
+      >
+        <span
+          className="rounded px-1.5 py-0.5 font-mono font-semibold"
+          style={{ backgroundColor: `${accent}1f`, color: accent }}
+        >
           [[
         </span>
         <span style={{ color: textSecondary }}>Choose a drawing to link</span>
@@ -47,7 +53,11 @@ export function DemoWikiSuggestion({
           >
             <Icon name="file" size={14} color={selected ? accent : textSecondary} />
             <span className="flex-1 text-sm font-medium">{suggestion}</span>
-            {selected && <span className="text-xs" style={{ color: accent }}>↵</span>}
+            {selected && (
+              <span className="text-xs" style={{ color: accent }}>
+                ↵
+              </span>
+            )}
           </div>
         )
       })}

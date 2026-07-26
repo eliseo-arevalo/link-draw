@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react"
 import type {
-  LinkDemoCursor as LinkDemoCursorState,
   LinkDemoCursorMode,
+  LinkDemoCursor as LinkDemoCursorState,
 } from "../hooks/useFirstLaunchLinkDemo"
 
 interface DemoNavigationCursorProps {
@@ -26,11 +26,7 @@ function getStartOffset(mode: LinkDemoCursorMode, cursor: LinkDemoCursorState) {
   return { x: 84, y: 96 }
 }
 
-export function DemoNavigationCursor({
-  cursor,
-  accent,
-  background,
-}: DemoNavigationCursorProps) {
+export function DemoNavigationCursor({ cursor, accent, background }: DemoNavigationCursorProps) {
   const startOffset = getStartOffset(cursor.mode, cursor)
   const cursorStyle: CursorStyle = {
     left: cursor.x,
@@ -41,11 +37,7 @@ export function DemoNavigationCursor({
   const isComposing = cursor.mode === "compose"
 
   return (
-    <div
-      aria-hidden="true"
-      className="absolute z-50 pointer-events-none"
-      style={cursorStyle}
-    >
+    <div aria-hidden="true" className="absolute z-50 pointer-events-none" style={cursorStyle}>
       <style>{`
         @keyframes demo-compose-cursor-move {
           0% {
@@ -105,7 +97,12 @@ export function DemoNavigationCursor({
             ? "Demo cursor double-clicking to write"
             : "Demo cursor clicking the navigation arrow"}
         </title>
-        <path d="M3 2v25l7-7 6 13 5-2-6-13h12L3 2Z" fill={background} stroke={accent} strokeWidth="2" />
+        <path
+          d="M3 2v25l7-7 6 13 5-2-6-13h12L3 2Z"
+          fill={background}
+          stroke={accent}
+          strokeWidth="2"
+        />
       </svg>
     </div>
   )

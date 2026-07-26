@@ -47,7 +47,11 @@ export function GraphHeader({
             aria-label="Graph layout"
             onChange={(e) => onLayoutChange(e.target.value as LayoutType)}
             className="rounded-md border px-2.5 py-2 text-sm outline-none cursor-pointer"
-            style={{ backgroundColor: colors.backgroundSecondary, color: colors.text, borderColor: colors.border }}
+            style={{
+              backgroundColor: colors.backgroundSecondary,
+              color: colors.text,
+              borderColor: colors.border,
+            }}
           >
             {(Object.keys(layouts) as LayoutType[]).map((key) => (
               <option key={key} value={key}>
@@ -59,7 +63,11 @@ export function GraphHeader({
 
         <div
           className="flex min-w-0 w-full flex-1 items-center gap-2 rounded-md border px-2.5 py-2 sm:min-w-52 sm:w-auto"
-          style={{ backgroundColor: colors.backgroundSecondary, borderColor: colors.border, maxWidth: "360px" }}
+          style={{
+            backgroundColor: colors.backgroundSecondary,
+            borderColor: colors.border,
+            maxWidth: "360px",
+          }}
         >
           <Icon name="search" size={15} color={colors.textSecondary} />
           <input
@@ -88,14 +96,17 @@ export function GraphHeader({
           type="button"
           onClick={onRefresh}
           className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium cursor-pointer"
-          style={{ backgroundColor: colors.backgroundSecondary, color: colors.text, borderColor: colors.border }}
+          style={{
+            backgroundColor: colors.backgroundSecondary,
+            color: colors.text,
+            borderColor: colors.border,
+          }}
           title="Refresh graph"
         >
           <span aria-hidden="true">↻</span>
           Refresh
         </button>
       </div>
-
     </header>
   )
 }

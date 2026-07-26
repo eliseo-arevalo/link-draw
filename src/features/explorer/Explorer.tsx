@@ -11,6 +11,7 @@ import { useTreeStore } from "@/shared/store/treeStore"
 import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
+import { BacklinksPanel } from "./components/BacklinksPanel"
 import { ExplorerFooter } from "./components/ExplorerFooter"
 import { ExplorerMenuModal } from "./components/ExplorerMenuModal"
 import { ExplorerToolbar } from "./components/ExplorerToolbar"
@@ -41,6 +42,7 @@ export function Explorer({
   const colors = getThemeColors(theme)
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -457,6 +459,10 @@ export function Explorer({
                 setError(msg)
                 setTimeout(() => setError(null), 5000)
               }}
+              onSuccess={(msg) => {
+                setSuccessMessage(msg)
+                setTimeout(() => setSuccessMessage(null), 5000)
+              }}
             />
           ) : undefined
         }
@@ -536,6 +542,18 @@ export function Explorer({
           <p className="text-xs">{error}</p>
         </div>
       )}
+      {successMessage && (
+        <div
+          className="mx-3 mt-2 px-3 py-1.5 rounded"
+          style={{
+            backgroundColor: "rgba(34, 197, 94, 0.08)",
+            border: "1px solid rgba(34, 197, 94, 0.2)",
+            color: "#16a34a",
+          }}
+        >
+          <p className="text-xs">{successMessage}</p>
+        </div>
+      )}
       <div
         className="flex-1 overflow-y-auto px-1"
         style={{
@@ -583,6 +601,11 @@ export function Explorer({
           </div>
         )}
       </div>
+      <BacklinksPanel
+        activeDrawingId={activeDrawingId}
+        colors={colors}
+        onSelectDrawing={(id) => handleSelectDrawing(id)}
+      />
       <ExplorerFooter
         theme={theme}
         colors={colors}

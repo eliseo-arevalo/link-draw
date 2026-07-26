@@ -90,6 +90,13 @@ const ICONS: Record<string, ReactNode> = {
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </>
   ),
+  backlink: (
+    <>
+      <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+      <path d="M15 7h2a5 5 0 0 1 0 10h-2" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+    </>
+  ),
   arrowLeft: (
     <>
       <line x1="19" y1="12" x2="5" y2="12" />

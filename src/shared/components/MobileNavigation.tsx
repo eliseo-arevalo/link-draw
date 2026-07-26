@@ -53,7 +53,11 @@ export function MobileBottomNavigation({
         borderTop: `1px solid ${colors.border}`,
       }}
     >
-      <button type="button" onClick={onOpenDrawer} style={{ ...navButtonStyle, color: inactiveColor }}>
+      <button
+        type="button"
+        onClick={onOpenDrawer}
+        style={{ ...navButtonStyle, color: inactiveColor }}
+      >
         <Icon name="sidebar" size={20} aria-label="Drawings icon" />
         <span>Drawings</span>
       </button>
@@ -83,12 +87,12 @@ export function MobileBottomNavigation({
         <Icon name="box" size={20} aria-label="Graph icon" />
         <span>Graph</span>
       </button>
-      <button type="button" onClick={onToggleTheme} style={{ ...navButtonStyle, color: inactiveColor }}>
-        <Icon
-          name={theme === "light" ? "moon" : "sun"}
-          size={20}
-          aria-label="Theme icon"
-        />
+      <button
+        type="button"
+        onClick={onToggleTheme}
+        style={{ ...navButtonStyle, color: inactiveColor }}
+      >
+        <Icon name={theme === "light" ? "moon" : "sun"} size={20} aria-label="Theme icon" />
         <span>{theme === "light" ? "Dark" : "Light"}</span>
       </button>
     </nav>

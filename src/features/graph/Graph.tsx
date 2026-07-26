@@ -445,26 +445,43 @@ export function Graph() {
           <>
             <div
               className="absolute left-4 top-4 rounded-lg border px-3 py-2 text-xs shadow-sm"
-              style={{ backgroundColor: colors.background, borderColor: colors.border, color: colors.textSecondary }}
+              style={{
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                color: colors.textSecondary,
+              }}
             >
               <div className="flex items-center gap-2">
                 <span className="h-0.5 w-4" style={{ backgroundColor: colors.textSecondary }} />
                 Parent &amp; child
               </div>
               <div className="mt-1 flex items-center gap-2">
-                <span className="w-4 border-t-2 border-dashed" style={{ borderColor: colors.accent }} />
+                <span
+                  className="w-4 border-t-2 border-dashed"
+                  style={{ borderColor: colors.accent }}
+                />
                 Drawing link
               </div>
             </div>
             <div
               className="absolute right-4 top-4 flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs shadow-sm"
-              style={{ backgroundColor: colors.background, borderColor: colors.border, color: colors.textSecondary }}
+              style={{
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                color: colors.textSecondary,
+              }}
             >
-              <span><strong style={{ color: colors.text }}>{stats.nodes}</strong> drawings</span>
+              <span>
+                <strong style={{ color: colors.text }}>{stats.nodes}</strong> drawings
+              </span>
               <span aria-hidden="true">·</span>
-              <span><strong style={{ color: colors.text }}>{stats.edges}</strong> links</span>
+              <span>
+                <strong style={{ color: colors.text }}>{stats.edges}</strong> links
+              </span>
               <span aria-hidden="true">·</span>
-              <span><strong style={{ color: colors.text }}>{stats.orphans}</strong> unlinked</span>
+              <span>
+                <strong style={{ color: colors.text }}>{stats.orphans}</strong> unlinked
+              </span>
             </div>
           </>
         )}

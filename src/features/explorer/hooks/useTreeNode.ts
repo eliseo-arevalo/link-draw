@@ -80,6 +80,7 @@ export function useTreeNode(
 
   const handleCreateChild = async () => {
     setIsMenuOpen(false)
+    setIsExpanded(true)
     try {
       const uniqueName = generateUniqueDrawingName(tree)
       const childId = await repository.createDrawing(uniqueName, nodeId)
