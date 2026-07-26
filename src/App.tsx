@@ -7,6 +7,7 @@ import { MobileBottomNavigation } from "./shared/components/MobileNavigation"
 import { useIsMobile } from "./shared/hooks/useIsMobile"
 import { useKeyboardShortcuts } from "./shared/hooks/useKeyboardShortcuts"
 import { useThemeDetector } from "./shared/hooks/useThemeDetector"
+import { useVisualViewportHeight } from "./shared/hooks/useVisualViewportHeight"
 import { useThemeStore } from "./shared/store/themeStore"
 import { useViewStore } from "./shared/store/viewStore"
 import { getThemeColors } from "./shared/styles/theme"
@@ -16,6 +17,7 @@ function App() {
   const { theme, setTheme } = useThemeStore()
   const colors = getThemeColors(theme)
   const isMobile = useIsMobile()
+  const visualViewportHeight = useVisualViewportHeight()
   const [showSidebar, setShowSidebar] = useState(() => !isMobile)
   useThemeDetector() // Detectar cambios de theme
 
@@ -51,8 +53,15 @@ function App() {
       style={{
         display: "flex",
         flexDirection: isMobile ? "column" : "row",
-        height: "100dvh",
-        minHeight: "100vh",
+        height: isMobile ? `${visualViewportHeight}px` : "100vh",
+        minHeight: 0,
+        width: "100%",
+        ...(isMobile && {
+          position: "fixed",
+          top: 0,
+          right: 0,
+          left: 0,
+        }),
         overflow: "hidden",
         backgroundColor: colors.background,
       }}
