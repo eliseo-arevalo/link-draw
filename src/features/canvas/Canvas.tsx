@@ -6,21 +6,27 @@ import { Toast } from "@/shared/components/Toast"
 import { useAutoSave } from "@/shared/hooks/useAutoSave"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
-import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links"
+import {
+  createDrawingLink,
+  createElementLink,
+  isDrawingLink,
+  parseDrawingLink,
+} from "@/shared/lib/drawing-links"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { getThemeColors } from "@/shared/styles/theme"
-import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { DemoNavigationCursor } from "./components/DemoNavigationCursor"
 import { DemoWikiSuggestion } from "./components/DemoWikiSuggestion"
+import { DrawingLinkPreviewPopover } from "./components/DrawingLinkPreviewPopover"
+import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { GlobalWikiModal } from "./components/GlobalWikiModal"
-import { LinkDemoGuide } from "./components/LinkDemoGuide"
 import { LinkButton } from "./components/LinkButton"
+import { LinkDemoGuide } from "./components/LinkDemoGuide"
 import { useCanvasLoader } from "./hooks/useCanvasLoader"
 import { useElementSelection } from "./hooks/useElementSelection"
-import { useLinkNavigation } from "./hooks/useLinkNavigation"
 import { useFirstLaunchLinkDemo } from "./hooks/useFirstLaunchLinkDemo"
+import { useLinkNavigation } from "./hooks/useLinkNavigation"
 
 const Excalidraw = lazy(() =>
   import(/* webpackChunkName: "excalidraw" */ "@excalidraw/excalidraw").then((mod) => ({
@@ -31,7 +37,7 @@ const Excalidraw = lazy(() =>
 export function Canvas() {
   const { adapter, drawingService, repository } = useServices()
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
-  const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
+  const { activeDrawingId, setActiveDrawingId, isImporting } = useDrawingStore()
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
@@ -85,13 +91,38 @@ export function Canvas() {
 
   const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
   const { handleLinkOpen, errorMessage, clearError } = useLinkNavigation(adapter)
+
+  const [previewTarget, setPreviewTarget] = useState<{
+    drawingId: string
+    position: { x: number; y: number }
+  } | null>(null)
+
+  useEffect(() => {
+    if (selectedElementIds.length === 1) {
+      const link = adapter.getElementLink(selectedElementIds[0])
+      if (link && isDrawingLink(link)) {
+        const parsed = parseDrawingLink(link)
+        if (parsed) {
+          setPreviewTarget((prev) => {
+            if (prev?.drawingId === parsed.drawingId) return prev
+            return {
+              drawingId: parsed.drawingId,
+              position: { x: window.innerWidth - 320, y: 120 },
+            }
+          })
+          return
+        }
+      }
+    }
+    setPreviewTarget(null)
+  }, [selectedElementIds, adapter])
   const demo = useFirstLaunchLinkDemo({
     api: excalidrawAPI,
     adapter,
     repository,
     onActivateDrawing: setActiveDrawingId,
   })
-  const { saveAllCachedDrawings } = useCanvasLoader(
+  const { saveAllCachedDrawings, clearCache } = useCanvasLoader(
     drawingService,
     repository,
     excalidrawAPI,
@@ -103,9 +134,9 @@ export function Canvas() {
     saveAllRef.current = saveAllCachedDrawings
   }, [saveAllCachedDrawings])
 
-  const { triggerSave, forceSave } = useAutoSave(
+  const { triggerSave, forceSave, cancelSave } = useAutoSave(
     async () => {
-      if (!activeDrawingId) return
+      if (!activeDrawingId || isImporting) return
       console.log(`[Canvas] 💾 SAVING drawing ${activeDrawingId.slice(0, 8)}`)
       // Guardar cache primero
       await saveAllRef.current()
@@ -114,11 +145,19 @@ export function Canvas() {
     },
     {
       delay: 500,
-      enabled: !!activeDrawingId,
+      enabled: !!activeDrawingId && !isImporting,
       onSaveSuccess: () => console.log("Auto-saved"),
       onSaveError: (error) => console.error("Auto-save failed:", error),
     }
   )
+
+  useEffect(() => {
+    if (isImporting) {
+      console.log("[Canvas] Importing state active, canceling pending saves & clearing cache")
+      cancelSave()
+      clearCache()
+    }
+  }, [isImporting, cancelSave, clearCache])
 
   const triggerSaveRef = useRef(triggerSave)
   useEffect(() => {
@@ -694,6 +733,13 @@ export function Canvas() {
           />
         </>
       )}
+
+      <DrawingLinkPreviewPopover
+        targetDrawingId={previewTarget?.drawingId ?? null}
+        position={previewTarget?.position ?? null}
+        onClose={() => setPreviewTarget(null)}
+        onNavigate={(id) => setActiveDrawingId(id)}
+      />
     </div>
   )
 }

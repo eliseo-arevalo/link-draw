@@ -14,6 +14,9 @@ interface DrawingStore {
 
   newDrawingToFocus: string | null
   setNewDrawingToFocus: (drawingId: string | null) => void
+
+  isImporting: boolean
+  setIsImporting: (isImporting: boolean) => void
 }
 
 export const useDrawingStore = create<DrawingStore>((set, get) => ({
@@ -30,6 +33,8 @@ export const useDrawingStore = create<DrawingStore>((set, get) => ({
     // Save to localStorage for next session
     if (drawingId) {
       localStorage.setItem(LAST_DRAWING_KEY, drawingId)
+    } else {
+      localStorage.removeItem(LAST_DRAWING_KEY)
     }
   },
 
@@ -38,4 +43,7 @@ export const useDrawingStore = create<DrawingStore>((set, get) => ({
 
   newDrawingToFocus: null,
   setNewDrawingToFocus: (drawingId) => set({ newDrawingToFocus: drawingId }),
+
+  isImporting: false,
+  setIsImporting: (isImporting) => set({ isImporting }),
 }))

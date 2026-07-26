@@ -1,5 +1,5 @@
-import { Icon } from "@/shared/components/Icon"
 import type { ReactNode } from "react"
+import { Icon } from "@/shared/components/Icon"
 import type { ThemeColors } from "@/shared/styles/theme"
 
 interface ExplorerToolbarProps {

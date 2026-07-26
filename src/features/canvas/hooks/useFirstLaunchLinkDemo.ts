@@ -81,10 +81,7 @@ export function useFirstLaunchLinkDemo({
         })
 
         const [{ convertToExcalidrawElements, sceneCoordsToViewportCoords }, drawings] =
-          await Promise.all([
-            import("@excalidraw/excalidraw"),
-            repository.listDrawings(),
-          ])
+          await Promise.all([import("@excalidraw/excalidraw"), repository.listDrawings()])
         const targetDrawing = drawings.find((drawing) => drawing.title === DEMO_TARGET_TITLE)
         const sourceDrawing = drawings.find((drawing) => drawing.title === "Project brief")
         if (!targetDrawing || !sourceDrawing) {
@@ -126,26 +123,28 @@ export function useFirstLaunchLinkDemo({
         }
 
         for (let index = 1; index <= DEMO_TEXT.length; index += 1) {
-          schedule(() => {
-            if (cancelled) return
-            const { x, y } = getTextPosition()
-            api.updateScene({
-              elements: convertToExcalidrawElements([
-                {
-                  type: "text",
-                  x,
-                  y,
-                  text: DEMO_TEXT.slice(0, index),
-                  fontSize: 28,
-                  strokeColor: "#4338ca",
-                },
-              ]),
-            })
-          }, TYPE_START_DELAY + index * TYPE_INTERVAL)
+          schedule(
+            () => {
+              if (cancelled) return
+              const { x, y } = getTextPosition()
+              api.updateScene({
+                elements: convertToExcalidrawElements([
+                  {
+                    type: "text",
+                    x,
+                    y,
+                    text: DEMO_TEXT.slice(0, index),
+                    fontSize: 28,
+                    strokeColor: "#4338ca",
+                  },
+                ]),
+              })
+            },
+            TYPE_START_DELAY + index * TYPE_INTERVAL
+          )
         }
 
-        const linkingDelay =
-          TYPE_START_DELAY + (DEMO_TEXT.length + 1) * TYPE_INTERVAL + 900
+        const linkingDelay = TYPE_START_DELAY + (DEMO_TEXT.length + 1) * TYPE_INTERVAL + 900
         schedule(() => {
           if (!cancelled) {
             setDemo({ stage: "linking", message: "Choosing a linked drawing", suggestionIndex: 0 })
@@ -154,7 +153,11 @@ export function useFirstLaunchLinkDemo({
 
         schedule(() => {
           if (!cancelled) {
-            setDemo({ stage: "linking", message: "Moving to the next suggestion", suggestionIndex: 1 })
+            setDemo({
+              stage: "linking",
+              message: "Moving to the next suggestion",
+              suggestionIndex: 1,
+            })
           }
         }, linkingDelay + 1000)
 

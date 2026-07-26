@@ -1,5 +1,5 @@
-import { Icon } from "@/shared/components/Icon"
 import type { CSSProperties } from "react"
+import { Icon } from "@/shared/components/Icon"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"

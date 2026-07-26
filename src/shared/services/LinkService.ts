@@ -2,7 +2,12 @@ import type { ICanvasAdapter } from "@/shared/interfaces/ICanvasAdapter"
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import { findDrawingLinks } from "@/shared/lib/drawing-links"
 import { findInTree, getPathToNode, nodeExists } from "@/shared/lib/tree-utils"
-import type { DrawingLink, DrawingTreeNode, ExcalidrawContent } from "@/shared/types/drawing"
+import type {
+  BacklinkInfo,
+  DrawingLink,
+  DrawingTreeNode,
+  ExcalidrawContent,
+} from "@/shared/types/drawing"
 import { buildLinkGraph, detectCycle } from "./link/graph-algorithms"
 
 export interface CircularReferenceResult {
@@ -122,14 +127,22 @@ export class LinkService {
     return validationResults.filter((targetId): targetId is string => targetId !== null)
   }
 
-  async getBacklinks(drawingId: string): Promise<DrawingLink[]> {
+  async getBacklinks(drawingId: string): Promise<BacklinkInfo[]> {
     const allDrawings = await this.repository.listDrawings()
-    const backlinks: DrawingLink[] = []
+    const backlinks: BacklinkInfo[] = []
 
     for (const drawing of allDrawings) {
+      if (drawing.id === drawingId) continue
       const links = this.extractLinksFromContent(drawing.content)
-      const linksToTarget = links.filter((link: DrawingLink) => link.targetDrawingId === drawingId)
-      backlinks.push(...linksToTarget)
+      for (const link of links) {
+        if (link.targetDrawingId === drawingId) {
+          backlinks.push({
+            ...link,
+            sourceDrawingId: drawing.id,
+            sourceDrawingTitle: drawing.title || "Untitled",
+          })
+        }
+      }
     }
 
     return backlinks

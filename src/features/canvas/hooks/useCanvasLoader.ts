@@ -86,6 +86,11 @@ export function useCanvasLoader(
     }
   }, [activeDrawingId, excalidrawAPI, loadCurrentDrawing, adapter])
 
+  const clearCache = useCallback(() => {
+    console.log("[Canvas] Clearing content cache")
+    contentCacheRef.current.clear()
+  }, [])
+
   // Guardar todo al desmontar
   useEffect(() => {
     return () => {
@@ -93,5 +98,5 @@ export function useCanvasLoader(
     }
   }, [saveAllCachedDrawings])
 
-  return { previousDrawingIdRef, saveAllCachedDrawings }
+  return { previousDrawingIdRef, saveAllCachedDrawings, clearCache }
 }
