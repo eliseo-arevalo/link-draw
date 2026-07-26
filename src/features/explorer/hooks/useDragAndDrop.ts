@@ -7,7 +7,6 @@ export function useDragAndDrop() {
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id)
     e.dataTransfer.effectAllowed = "all"
-    e.dataTransfer.setData("text/plain", id)
   }
 
   const handleDragOver = (e: React.DragEvent, id: string) => {

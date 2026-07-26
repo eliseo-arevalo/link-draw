@@ -286,14 +286,13 @@ export class ExcalidrawAdapter implements ICanvasAdapter {
 
         const converted = mod.convertToExcalidrawElements(skeletons)
 
-        // Re-apply link, width, height from original input (converter strips non-skeleton props or zero-sizes text without DOM metrics)
+        // Re-apply link and only fallback width/height if converter failed to measure (e.g. jsdom/SSR)
         const withLinks = converted.map((convEl, i) => {
           const orig = newElements[i]
           const skel = skeletons[i]
           return {
             ...convEl,
-            width: skel.width,
-            height: skel.height,
+            ...(convEl.width ? {} : { width: skel.width, height: skel.height }),
             ...(orig?.link ? { link: orig.link } : {}),
           }
         })

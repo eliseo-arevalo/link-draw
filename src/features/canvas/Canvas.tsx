@@ -1,3 +1,4 @@
+import { viewportCoordsToSceneCoords } from "@excalidraw/excalidraw"
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { Icon } from "@/shared/components/Icon"
@@ -334,9 +335,16 @@ export function Canvas() {
   const [isDraggingOver, setIsDraggingOver] = useState(false)
 
   useEffect(() => {
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Dragover bounds and mime-type check
     const handleGlobalDragOver = (e: DragEvent) => {
       const el = canvasRef.current
       if (!el) return
+
+      const isOurDrag =
+        e.dataTransfer?.types.includes("application/linkdraw-drawing-id") ||
+        e.dataTransfer?.types.includes("text/plain")
+
+      if (!isOurDrag) return
 
       const rect = el.getBoundingClientRect()
       const isInside =
@@ -378,8 +386,8 @@ export function Canvas() {
         e.dataTransfer?.getData("application/linkdraw-drawing-title")?.trim() ?? ""
 
       let drawingId = globalDragged?.id || customId
-      if (!drawingId && rawData) {
-        drawingId = rawData.startsWith("drawing://") ? rawData.replace("drawing://", "") : rawData
+      if (!drawingId && rawData.startsWith("drawing://")) {
+        drawingId = rawData.slice("drawing://".length)
       }
 
       if (!drawingId) {
@@ -419,10 +427,10 @@ export function Canvas() {
         triggerSaveRef.current()
         console.log(`[Canvas] Linked ${selectedIds.length} element(s) via Drag & Drop`)
       } else {
-        const appState = api.getAppState()
-        const zoom = appState.zoom?.value || 1
-        const dropX = (e.clientX - rect.left - appState.scrollX) / zoom
-        const dropY = (e.clientY - rect.top - appState.scrollY) / zoom
+        const { x: dropX, y: dropY } = viewportCoordsToSceneCoords(
+          { clientX: e.clientX, clientY: e.clientY },
+          api.getAppState()
+        )
 
         const labelText = `📄 ${drawingTitle}`
         adapter.addElements([
@@ -444,6 +452,7 @@ export function Canvas() {
     }
 
     const handleGlobalDragEnd = () => {
+      window.__linkdraw_dragged_drawing = null
       setIsDraggingOver(false)
     }
 
