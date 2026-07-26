@@ -3,6 +3,7 @@ import { Icon } from "@/shared/components/Icon"
 import { SIDEBAR_WIDTH } from "@/shared/constants/layout"
 import { useKeyboardShortcuts } from "@/shared/hooks/useKeyboardShortcuts"
 import { generateUniqueDrawingName } from "@/shared/lib/drawing-names"
+import { findInTree } from "@/shared/lib/tree-utils"
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
@@ -212,23 +213,20 @@ export function Explorer({
           setTree(drawings)
           setError(null)
 
-          // Auto-select drawing: last active > single root > first root
+          // Auto-select drawing: last active > Project brief example > single root > first root
           if (!activeDrawingId && drawings.length > 0) {
             // Try to load last active drawing
             const lastDrawingId = localStorage.getItem("linkdraw:last-active-drawing")
 
-            // Check if last drawing still exists
-            // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Recursive tree search is inherently complex
-            const findDrawing = (nodes: typeof drawings, id: string): boolean => {
-              for (const node of nodes) {
-                if (node.id === id) return true
-                if (node.children && findDrawing(node.children, id)) return true
-              }
-              return false
-            }
+            const lastDrawing = lastDrawingId
+              ? findInTree(drawings, (node) => node.id === lastDrawingId)
+              : null
+            const projectBrief = findInTree(drawings, (node) => node.title === "Project brief")
 
-            if (lastDrawingId && findDrawing(drawings, lastDrawingId)) {
+            if (lastDrawing) {
               setActiveDrawingId(lastDrawingId)
+            } else if (projectBrief) {
+              setActiveDrawingId(projectBrief.id)
             } else if (drawings.length === 1) {
               // Single root drawing
               setActiveDrawingId(drawings[0].id)

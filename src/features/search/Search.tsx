@@ -237,7 +237,7 @@ export function Search() {
             </div>
           )}
 
-          {results.map((result) => (
+          {results.map((result, index) => (
             <button
               key={`${result.drawingId}-${result.matchType}-${result.matchText}`}
               type="button"

@@ -1,4 +1,5 @@
 import { Icon } from "@/shared/components/Icon"
+import type { CSSProperties } from "react"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
@@ -26,7 +27,7 @@ const getNodeStyles = (
   isDragging: boolean,
   isDragOver: boolean,
   colors: ReturnType<typeof getThemeColors>
-) => ({
+): CSSProperties => ({
   paddingLeft: `${level * 1.25 + 0.5}rem`,
   paddingRight: "0.5rem",
   paddingTop: "0.35rem",
@@ -242,7 +243,7 @@ export function TreeNode({
             <span
               className="text-sm truncate"
               style={{
-                color: isActive ? colors.textActive : colors.text,
+                color: isActive ? colors.accent : colors.text,
                 fontWeight: isActive ? 600 : 400,
               }}
             >
