@@ -1,12 +1,12 @@
 # LinkDraw Architecture
 
-## 📋 Overview
+## Overview
 
 LinkDraw extends Excalidraw with multi-canvas project management, inter-drawing element relationships, graph visualization, and wiki-style references. The codebase is designed around Clean Architecture principles, ensuring strict separation of concerns, inward dependency flow, and explicit extension interfaces.
 
 ---
 
-## 🎯 Design Principles
+## Design Principles
 
 1. **Feature-based Organization**: Code is organized by domain functionality (`features/canvas`, `features/explorer`, `features/graph`), not by arbitrary technical file types.
 2. **Interface Abstraction at Integration Boundaries**: Explicit interfaces (`IGraphRepository`, `ICanvasAdapter`) decouple core domain logic from external libraries (Excalidraw, localStorage, IndexedDB, Cytoscape).
@@ -15,34 +15,44 @@ LinkDraw extends Excalidraw with multi-canvas project management, inter-drawing 
 
 ---
 
-## 🏗️ Architecture Layers
+## Architecture Layers
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    UI Layer (Features)                      │
-│        Canvas  │  Explorer  │  Graph  │  Components         │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│                   Service & Store Layer                     │
-│    DrawingService │ LinkService │ ProjectTransferService    │
-│    useDrawingStore │ useTreeStore │ useThemeStore           │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│                    Interface Boundaries                     │
-│        IGraphRepository      │      ICanvasAdapter          │
-└──────────────┬───────────────────────────────┬──────────────┘
-               │                               │
-┌──────────────▼──────────────┐ ┌──────────────▼──────────────┐
-│ LocalStorageRepository      │ │ ExcalidrawAdapter           │
-│ (Client Storage)            │ │ (Excalidraw Wrapper)        │
-└─────────────────────────────┘ └─────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph UI["UI Features"]
+        direction TB
+        Canvas["Canvas"]
+        Explorer["Explorer"]
+        Graph["Graph View"]
+    end
+
+    subgraph Domain["Services & State"]
+        direction TB
+        DrawingSvc["DrawingService"]
+        LinkSvc["LinkService"]
+        TransferSvc["ProjectTransferService"]
+    end
+
+    subgraph Contracts["Interfaces"]
+        direction TB
+        IGraphRepo["IGraphRepository"]
+        ICanvasAdapter["ICanvasAdapter"]
+    end
+
+    subgraph Storage["Drivers"]
+        direction TB
+        LocalStorageRepo["LocalStorageRepository"]
+        ExcalidrawAdapter["ExcalidrawAdapter"]
+    end
+
+    UI --> Domain --> Contracts
+    IGraphRepo --> LocalStorageRepo
+    ICanvasAdapter --> ExcalidrawAdapter
 ```
 
 ---
 
-## 📁 Directory Layout
+## Directory Layout
 
 ```
 src/
@@ -80,7 +90,7 @@ src/
 
 ---
 
-## 🔑 Core Domain Interfaces
+## Core Domain Interfaces
 
 ### 1. `IGraphRepository` (Persistence abstraction)
 
@@ -132,7 +142,7 @@ Provides standardized schema import/export with multi-level verification:
 
 ---
 
-## ⚡ Auto-Save & Synchronization Strategy
+## Auto-Save & Synchronization Strategy
 
 1. **Debounced Saves**: `useAutoSave` applies a 500ms delay after canvas edits to minimize write amplification.
 2. **State Protection (`isImporting`)**: When `ProjectTransferService` performs an import, `isImporting` is set to `true` in `useDrawingStore`. This disables `useAutoSave` and clears `useCanvasLoader` caches (`clearCache()`), eliminating race conditions where debounced saves overwrite freshly imported project data.
@@ -140,7 +150,7 @@ Provides standardized schema import/export with multi-level verification:
 
 ---
 
-## 🧪 Testing Architecture
+## Testing Architecture
 
 The codebase features **126 automated unit & integration tests** executed via Vitest and Happy DOM:
 

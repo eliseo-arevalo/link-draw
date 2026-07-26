@@ -1,10 +1,10 @@
-# LinkDraw
+
 
 <p align="center">
-  <img src="./public/vite.svg" width="80" alt="LinkDraw Logo" />
+  <img src="./public/logo-dark.svg" width="80" alt="LinkDraw Logo" />
 </p>
 
-<h3 align="center">LinkDraw</h3>
+<h1 align="center">LinkDraw</h1>
 
 <p align="center">
   A modern, privacy-first multi-canvas workspace and visual knowledge base built on top of <a href="https://excalidraw.com">Excalidraw</a>.
@@ -21,29 +21,29 @@
 
 ---
 
-## 💡 Overview
+## Overview
 
-Excalidraw is an incredible infinite canvas tool for sketching and architecture diagrams. **LinkDraw** elevates it into a structured visual workspace by enabling **multi-canvas project trees**, **deep element linking**, **interactive graph views**, and **wiki-style references**.
+Excalidraw is an infinite canvas tool for sketching and architecture diagrams. **LinkDraw** extends it into a structured visual workspace by enabling **multi-canvas project trees**, **deep element linking**, **interactive graph views**, and **wiki-style references**.
 
-All data is kept strictly private and stored locally in your browser using structured storage abstractions, with support for seamless JSON project import/export backups.
-
----
-
-## ✨ Features
-
-- 🌳 **Hierarchical Multi-Canvas Tree**: Organize infinite canvases in parent-child trees with drag-and-drop reorganization and duplicate/copy support.
-- 🔗 **Inter-Canvas Deep Linking**: Hyperlink elements or entire drawings using `drawing://id#element:xyz`. Clicking links smoothly loads the target canvas and centers on the linked element.
-- 🕸️ **Interactive Graph View**: Visualize project structure and inter-drawing relationships in a responsive node-link graph view (`Cmd+G`).
-- 💡 **Wiki-Style Autocomplete (`[[`)**: Type `[[` inside any text box to trigger instantaneous drawing search and inline linking.
-- 📌 **Backlinks Panel**: Inspect incoming references across drawings in real-time.
-- 📦 **Unified Project Transfer & Backups**: Export and import complete projects with `ProjectTransferService`, version 1 schemas, circular reference checking, and recovery backups in `sessionStorage`.
-- ⚡ **Race-Safe Auto-Save**: 500ms debounced autosave synchronized with canvas loader caches and import state guards.
-- 🌙 **Dark & Light Mode**: Seamless dark/light theme switching for canvas, tree, graph, and UI modals.
-- 🧪 **Comprehensive Test Coverage**: 126 automated unit & integration tests written with Vitest and Happy DOM.
+All data is kept strictly private and stored locally in your browser using structured storage abstractions, with support for JSON project import/export backups.
 
 ---
 
-## ⚡ Quick Start
+## Features
+
+- **Hierarchical Multi-Canvas Tree**: Organize infinite canvases in parent-child trees with drag-and-drop reorganization and duplicate/copy support.
+- **Inter-Canvas Deep Linking**: Hyperlink elements or entire drawings using `drawing://id#element:xyz`. Clicking links smoothly loads the target canvas and centers on the linked element.
+- **Interactive Graph View**: Visualize project structure and inter-drawing relationships in a responsive node-link graph view (`Cmd+G`).
+- **Wiki-Style Autocomplete (`[[`)**: Type `[[` inside any text box to trigger instant drawing search and inline linking.
+- **Backlinks Panel**: Inspect incoming references across drawings in real-time.
+- **Unified Project Transfer & Backups**: Export and import complete projects with `ProjectTransferService`, version 1 schemas, circular reference checking, and recovery backups in `sessionStorage`.
+- **Race-Safe Auto-Save**: 500ms debounced autosave synchronized with canvas loader caches and import state guards.
+- **Dark & Light Mode**: Seamless dark/light theme switching for canvas, tree, graph, and UI modals.
+- **Comprehensive Test Coverage**: 126 automated unit & integration tests written with Vitest and Happy DOM.
+
+---
+
+## Quick Start
 
 ### Prerequisites
 - Node.js >= 18
@@ -67,7 +67,7 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 🛠️ Key Commands
+## Key Commands
 
 | Script | Command | Purpose |
 | :--- | :--- | :--- |
@@ -80,31 +80,41 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 📐 Architecture & System Design
+## Architecture & System Design
 
 LinkDraw adheres to **Clean Architecture** principles, enforcing strict dependency boundaries between UI features, core domain services, and extension interfaces.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                       UI Layer                              │
-│         Canvas  │  Explorer  │  Graph  │  Modals            │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│                    Service & Store Layer                    │
-│    DrawingService │ LinkService │ ProjectTransferService    │
-│    useDrawingStore │ useTreeStore │ useThemeStore           │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-┌──────────────────────────────▼──────────────────────────────┐
-│                   Interface Abstractions                    │
-│        IGraphRepository      │      ICanvasAdapter          │
-└──────────────┬───────────────────────────────┬──────────────┘
-               │                               │
-┌──────────────▼──────────────┐ ┌──────────────▼──────────────┐
-│ LocalStorageRepository      │ │ ExcalidrawAdapter           │
-│ (IndexedDB/API Future)      │ │ (Canvas Engine)             │
-└─────────────────────────────┘ └─────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph UI["UI Features"]
+        direction TB
+        Canvas["Canvas"]
+        Explorer["Explorer"]
+        Graph["Graph View"]
+    end
+
+    subgraph Domain["Services & State"]
+        direction TB
+        DrawingSvc["DrawingService"]
+        LinkSvc["LinkService"]
+        TransferSvc["ProjectTransferService"]
+    end
+
+    subgraph Contracts["Interfaces"]
+        direction TB
+        IGraphRepo["IGraphRepository"]
+        ICanvasAdapter["ICanvasAdapter"]
+    end
+
+    subgraph Storage["Drivers"]
+        direction TB
+        LocalStorageRepo["LocalStorageRepository"]
+        ExcalidrawAdapter["ExcalidrawAdapter"]
+    end
+
+    UI --> Domain --> Contracts
+    IGraphRepo --> LocalStorageRepo
+    ICanvasAdapter --> ExcalidrawAdapter
 ```
 
 ### Core Abstractions
@@ -138,7 +148,7 @@ export interface LinkDrawProjectBackup {
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |
@@ -151,7 +161,7 @@ export interface LinkDrawProjectBackup {
 
 ---
 
-## 🧪 Testing
+## Testing
 
 All services, graph algorithms, link parsers, and custom hooks are thoroughly tested using Vitest and Happy DOM.
 
@@ -166,14 +176,14 @@ pnpm test -- --run
 
 ---
 
-## 📄 Documentation
+## Documentation
 
-- 📚 [Architecture Guide](./ARCHITECTURE.md) - Deep dive into system layers and design principles
-- 📝 [Changelog](./CHANGELOG.md) - Record of project releases and notable updates
-- 🤝 [Contributing Guide](./CONTRIBUTING.md) - Guidelines for contributing to LinkDraw
+- [Architecture Guide](./ARCHITECTURE.md) - Deep dive into system layers and design principles
+- [Changelog](./CHANGELOG.md) - Record of project releases and notable updates
+- [Contributing Guide](./CONTRIBUTING.md) - Guidelines for contributing to LinkDraw
 
 ---
 
-## 📜 License
+## License
 
 Distributed under the [MIT License](./LICENSE).
