@@ -1,13 +1,97 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon-ligth.ico" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/x-icon" href="/favicon-dark.ico" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/logo-ligth.svg" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+    <link rel="apple-touch-icon" href="/linkdraw-icon-192.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LinkDraw</title>
+    <meta name="theme-color" content="#1e1e1e" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="LinkDraw is a local-first visual workspace for organizing Excalidraw canvases, linking drawings, and navigating ideas as a connected graph."
+    />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <meta
+      name="googlebot"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+    <link rel="canonical" href="https://link-draw.com/" />
+
+    <meta property="og:site_name" content="LinkDraw" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://link-draw.com/" />
+    <meta property="og:title" content="LinkDraw — Connected canvases for visual thinking" />
+    <meta
+      property="og:description"
+      content="Organize Excalidraw canvases, link ideas across drawings, and explore their relationships as a graph — all stored locally in your browser."
+    />
+    <meta property="og:image" content="https://link-draw.com/linkdraw-social-preview.png" />
+    <meta property="og:image:secure_url" content="https://link-draw.com/linkdraw-social-preview.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1731" />
+    <meta property="og:image:height" content="909" />
+    <meta property="og:image:alt" content="Linked hand-drawn diagrams on a dark canvas" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="LinkDraw — Connected canvases for visual thinking" />
+    <meta
+      name="twitter:description"
+      content="A local-first workspace for linking Excalidraw drawings and exploring ideas as a graph."
+    />
+    <meta name="twitter:image" content="https://link-draw.com/linkdraw-social-preview.png" />
+    <meta name="twitter:image:alt" content="Linked hand-drawn diagrams on a dark canvas" />
+
+    <title>LinkDraw — Connected Canvases for Visual Thinking</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://link-draw.com/#website",
+            "url": "https://link-draw.com/",
+            "name": "LinkDraw",
+            "description": "A local-first visual workspace for connected Excalidraw canvases.",
+            "inLanguage": "en-US"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://link-draw.com/#app",
+            "name": "LinkDraw",
+            "url": "https://link-draw.com/",
+            "image": "https://link-draw.com/linkdraw-social-preview.png",
+            "description": "A local-first visual workspace for organizing Excalidraw canvases, linking drawings, and exploring their relationships as a connected graph.",
+            "applicationCategory": "DesignApplication",
+            "applicationSubCategory": "Visual collaboration and diagramming",
+            "operatingSystem": "Web browser",
+            "browserRequirements": "Requires a modern JavaScript-enabled web browser.",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Organize multiple canvases in a hierarchy",
+              "Link drawings, elements, and frames",
+              "Navigate linked ideas and explore their graph",
+              "Automatically save data locally in the browser"
+            ],
+            "inLanguage": "en-US"
+          }
+        ]
+      }
+    </script>
     
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,6 +105,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main>
+        <h1>LinkDraw</h1>
+        <p>
+          LinkDraw is a local-first visual workspace for organizing Excalidraw canvases,
+          linking drawings, and exploring ideas as a connected graph. JavaScript is required
+          to use the application.
+        </p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

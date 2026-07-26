@@ -35,7 +35,8 @@ function App() {
   const isMobile = window.innerWidth < 768
 
   return (
-    <div
+    <main
+      aria-label="LinkDraw visual workspace"
       style={{
         display: "flex",
         height: "100vh",
@@ -43,6 +44,7 @@ function App() {
         backgroundColor: colors.background,
       }}
     >
+      <h1 className="sr-only">LinkDraw — Connected canvases for visual thinking</h1>
       <MobileWarning />
       {/* Overlay backdrop on mobile */}
       {isMobile && showSidebar && (
@@ -83,7 +85,7 @@ function App() {
       >
         {viewMode === "canvas" ? <Canvas /> : <Graph />}
       </div>
-    </div>
+    </main>
   )
 }
 

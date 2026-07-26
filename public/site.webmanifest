@@ -1,0 +1,22 @@
+{
+  "name": "LinkDraw — Connected Canvases for Visual Thinking",
+  "short_name": "LinkDraw",
+  "description": "A local-first workspace for organizing Excalidraw canvases and connected ideas.",
+  "lang": "en-US",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1e1e",
+  "theme_color": "#1e1e1e",
+  "icons": [
+    {
+      "src": "/linkdraw-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/linkdraw-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
