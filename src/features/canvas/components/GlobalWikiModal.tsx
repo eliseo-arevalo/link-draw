@@ -47,6 +47,7 @@ export function GlobalWikiModal({
   const [popoverPos, setPopoverPos] = useState<{
     x: number
     y: number
+    placement: "above" | "below"
   } | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -76,16 +77,18 @@ export function GlobalWikiModal({
         const rect = textarea.getBoundingClientRect()
         const popoverHeight = 220
         const spaceBelow = window.innerHeight - rect.bottom
-        const yPos = spaceBelow > popoverHeight + 8 ? rect.bottom + 4 : rect.top - popoverHeight - 4
+        const placement = spaceBelow > popoverHeight + 8 ? "below" : "above"
         setPopoverPos({
           x: Math.max(16, Math.min(rect.left, window.innerWidth - 300)),
-          y: Math.max(8, yPos),
+          y: placement === "below" ? rect.bottom + 4 : rect.top - 4,
+          placement,
         })
       } else {
         // Fallback: center-top of canvas area
         setPopoverPos({
           x: Math.max(16, window.innerWidth / 2 - 140),
           y: 80,
+          placement: "below",
         })
       }
     }
@@ -166,6 +169,7 @@ export function GlobalWikiModal({
         left: `${popoverPos.x}px`,
         top: `${popoverPos.y}px`,
         width: "280px",
+        transform: popoverPos.placement === "above" ? "translateY(-100%)" : undefined,
       }}
     >
       <div

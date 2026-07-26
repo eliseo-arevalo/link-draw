@@ -8,6 +8,7 @@ export class LocalStorageRepository implements IGraphRepository {
   private readonly STORAGE_KEY = "linkdraw:drawings:v1"
   private readonly VERSION_KEY = "linkdraw:version"
   private readonly INITIALIZED_KEY = "linkdraw:initialized"
+  private readonly ONBOARDING_DEMO_ELIGIBLE_KEY = "linkdraw:onboarding-link-demo:eligible"
   private readonly CURRENT_VERSION = "1.0.0"
 
   constructor() {
@@ -40,6 +41,7 @@ export class LocalStorageRepository implements IGraphRepository {
         this.saveAll(exampleDrawings)
       }
       localStorage.setItem(this.INITIALIZED_KEY, "true")
+      localStorage.setItem(this.ONBOARDING_DEMO_ELIGIBLE_KEY, "true")
     }
   }
 

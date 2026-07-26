@@ -9,6 +9,7 @@ import { createDrawingLink, createElementLink } from "@/shared/lib/drawing-links
 import { useServices } from "@/shared/providers/ServiceProvider"
 import { useDrawingStore } from "@/shared/store/drawingStore"
 import { useThemeStore } from "@/shared/store/themeStore"
+import { useTreeStore } from "@/shared/store/treeStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import { DrawingPickerModal } from "./components/DrawingPickerModal"
 import { GlobalWikiModal } from "./components/GlobalWikiModal"
@@ -16,6 +17,7 @@ import { LinkButton } from "./components/LinkButton"
 import { useCanvasLoader } from "./hooks/useCanvasLoader"
 import { useElementSelection } from "./hooks/useElementSelection"
 import { useLinkNavigation } from "./hooks/useLinkNavigation"
+import { useFirstLaunchLinkDemo } from "./hooks/useFirstLaunchLinkDemo"
 
 const Excalidraw = lazy(() =>
   import(/* webpackChunkName: "excalidraw" */ "@excalidraw/excalidraw").then((mod) => ({
@@ -27,6 +29,7 @@ export function Canvas() {
   const { adapter, drawingService, repository } = useServices()
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null)
   const { activeDrawingId, setActiveDrawingId } = useDrawingStore()
+  const { setTree } = useTreeStore()
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
@@ -80,6 +83,13 @@ export function Canvas() {
 
   const { selectedElementIds, hasSelection } = useElementSelection(excalidrawAPI, adapter)
   const { handleLinkOpen, errorMessage, clearError } = useLinkNavigation(adapter)
+  const demoMessage = useFirstLaunchLinkDemo({
+    api: excalidrawAPI,
+    adapter,
+    repository,
+    onActivateDrawing: setActiveDrawingId,
+    onTreeUpdated: setTree,
+  })
   const { saveAllCachedDrawings } = useCanvasLoader(
     drawingService,
     repository,
@@ -652,6 +662,7 @@ export function Canvas() {
       {canvasError && (
         <Toast message={canvasError} type="error" onClose={() => setCanvasError(null)} />
       )}
+      {demoMessage && <Toast message={demoMessage} type="info" onClose={() => undefined} />}
     </div>
   )
 }
