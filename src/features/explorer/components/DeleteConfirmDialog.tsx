@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { useThemeStore } from "@/shared/store/themeStore"
 import { getThemeColors } from "@/shared/styles/theme"
@@ -17,20 +18,30 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   const { theme } = useThemeStore()
   const colors = getThemeColors(theme)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (isOpen) {
+      if (!dialog.open) dialog.showModal()
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
   return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
       aria-label="Confirm Deletion"
-      className="fixed inset-0 flex items-center justify-center"
+      onClose={onCancel}
+      className="p-0 rounded-lg backdrop:bg-black/50 bg-transparent max-w-sm border-0"
       style={{
         zIndex: 999999,
-        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.5)",
       }}
-      onClick={onCancel}
     >
       <div
         className="rounded-lg p-6 max-w-sm shadow-xl"
@@ -38,7 +49,6 @@ export function DeleteConfirmDialog({
           backgroundColor: colors.background,
           border: `1px solid ${colors.border}`,
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-base font-semibold mb-2" style={{ color: colors.text }}>
           Delete Drawing?
@@ -55,7 +65,7 @@ export function DeleteConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm rounded"
+            className="px-4 py-2 text-sm rounded cursor-pointer"
             style={{
               border: `1px solid ${colors.border}`,
               backgroundColor: colors.backgroundSecondary,
@@ -67,7 +77,7 @@ export function DeleteConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm rounded"
+            className="px-4 py-2 text-sm rounded cursor-pointer"
             style={{
               backgroundColor: "#ef4444",
               color: "#ffffff",
@@ -77,7 +87,7 @@ export function DeleteConfirmDialog({
           </button>
         </div>
       </div>
-    </div>,
+    </dialog>,
     document.body
   )
 }

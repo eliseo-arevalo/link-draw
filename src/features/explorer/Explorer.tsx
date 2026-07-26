@@ -10,6 +10,9 @@ import { useTreeStore } from "@/shared/store/treeStore"
 import { useViewStore } from "@/shared/store/viewStore"
 import { getThemeColors } from "@/shared/styles/theme"
 import type { DrawingTreeNode } from "@/shared/types/drawing"
+import { ExplorerFooter } from "./components/ExplorerFooter"
+import { ExplorerMenuModal } from "./components/ExplorerMenuModal"
+import { ExplorerToolbar } from "./components/ExplorerToolbar"
 import { TreeNode } from "./components/TreeNode"
 import { useDragAndDrop } from "./hooks/useDragAndDrop"
 
@@ -410,17 +413,6 @@ export function Explorer({
     )
   }
 
-  const countTotalDrawings = (nodes: DrawingTreeNode[]): number => {
-    let count = 0
-    for (const node of nodes) {
-      count += 1
-      if (node.children) count += countTotalDrawings(node.children)
-    }
-    return count
-  }
-
-  const totalDrawings = countTotalDrawings(tree)
-
   return (
     <div
       className="h-full flex flex-col"
@@ -441,365 +433,38 @@ export function Explorer({
       }}
     >
       {/* Header */}
-      <div
-        style={{
-          borderBottom: `1px solid ${colors.border}`,
-          padding: "0.625rem 0.875rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
+      <ExplorerToolbar
+        theme={theme}
+        colors={colors}
+        isMobile={isMobile}
+        menuRef={menuRef}
+        onToggleTheme={() => {
+          const store = useThemeStore.getState()
+          store.setTheme(store.theme === "light" ? "dark" : "light")
         }}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-xs font-semibold tracking-wider uppercase"
-              style={{ color: colors.textSecondary, letterSpacing: "0.06em" }}
-            >
-              EXPLORER
-            </span>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 500,
-                color: colors.textSecondary,
-                opacity: 0.7,
-              }}
-            >
-              ({totalDrawings})
-            </span>
-          </div>
+        onToggleSidebar={onToggleSidebar}
+        onToggleMenu={() => setShowMenu(!showMenu)}
+        onNewDrawing={handleCreateDrawing}
+      />
+      {showMenu && (
+        <ExplorerMenuModal
+          colors={colors}
+          isGraphView={isGraphView}
+          repository={repository}
+          onCloseMenu={() => setShowMenu(false)}
+          onToggleSearch={toggleSearch}
+          onToggleGraph={onToggleGraph}
+          onTreeUpdated={setTree}
+          onResetActiveDrawing={() => setActiveDrawingId(null)}
+          onError={(msg) => {
+            setError(msg)
+            setTimeout(() => setError(null), 5000)
+          }}
+        />
+      )}
 
-          <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={handleCreateDrawing}
-              disabled={isCreating}
-              style={{
-                padding: "0.3rem",
-                borderRadius: "4px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: colors.textSecondary,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors.hoverBackground
-                e.currentTarget.style.color = colors.text
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent"
-                e.currentTarget.style.color = colors.textSecondary
-              }}
-              title="New drawing (Cmd+N)"
-            >
-              <Icon name="plus" size={14} aria-label="New drawing" />
-            </button>
-            <button
-              type="button"
-              onClick={onToggleSidebar}
-              style={{
-                padding: "0.3rem",
-                borderRadius: "4px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: colors.textSecondary,
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors.hoverBackground
-                e.currentTarget.style.color = colors.text
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent"
-                e.currentTarget.style.color = colors.textSecondary
-              }}
-              title="Hide sidebar (Cmd+B)"
-            >
-              <Icon name="sidebar" size={14} aria-label="Hide sidebar" />
-            </button>
-            <div style={{ position: "relative", zIndex: 10001 }} ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setShowMenu(!showMenu)}
-                style={{
-                  padding: "0.3rem",
-                  borderRadius: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: colors.textSecondary,
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = colors.hoverBackground
-                  e.currentTarget.style.color = colors.text
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent"
-                  e.currentTarget.style.color = colors.textSecondary
-                }}
-                title="More options"
-              >
-                <Icon name="moreVertical" size={14} aria-label="More options" />
-              </button>
-              {showMenu && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    right: 0,
-                    marginTop: "0.25rem",
-                    backgroundColor: colors.background,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: "6px",
-                    boxShadow: colors.shadowIsland,
-                    minWidth: "160px",
-                    zIndex: 10000,
-                    padding: "0.25rem",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toggleSearch()
-                      setShowMenu(false)
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.4rem 0.6rem",
-                      fontSize: "0.8125rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "4px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.hoverBackground
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon name="search" size={14} aria-label="Search" />
-                    Search (Cmd+K)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onToggleGraph()
-                      setShowMenu(false)
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.4rem 0.6rem",
-                      fontSize: "0.8125rem",
-                      border: "none",
-                      background: isGraphView ? colors.activeBackground : "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "4px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.hoverBackground
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isGraphView) {
-                        e.currentTarget.style.backgroundColor = "transparent"
-                      }
-                    }}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      aria-hidden="true"
-                    >
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                      <line x1="12" y1="22.08" x2="12" y2="12" />
-                    </svg>
-                    Graph view (Cmd+G)
-                  </button>
-                  <div
-                    style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const drawings = await repository.listDrawings()
-                        const data = {
-                          version: "1.0.0",
-                          exportDate: new Date().toISOString(),
-                          drawings,
-                        }
-                        const blob = new Blob([JSON.stringify(data, null, 2)], {
-                          type: "application/json",
-                        })
-                        const url = URL.createObjectURL(blob)
-                        const a = document.createElement("a")
-                        a.href = url
-                        a.download = `linkdraw-export-${Date.now()}.json`
-                        a.click()
-                        URL.revokeObjectURL(url)
-                        setShowMenu(false)
-                      } catch (err) {
-                        console.error("Export failed:", err)
-                        setError("Failed to export project")
-                        setTimeout(() => setError(null), 5000)
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.4rem 0.6rem",
-                      fontSize: "0.8125rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "4px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.hoverBackground
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon name="download" size={14} aria-label="Export" />
-                    Export project
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.createElement("input")
-                      input.type = "file"
-                      input.accept = "application/json"
-                      input.onchange = async (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0]
-                        if (!file) return
-
-                        try {
-                          const text = await file.text()
-                          const data = JSON.parse(text)
-
-                          if (!data.drawings || !Array.isArray(data.drawings)) {
-                            throw new Error("Invalid file format")
-                          }
-
-                          // Clear existing data and import
-                          localStorage.setItem(
-                            "linkdraw:drawings:v1",
-                            JSON.stringify(data.drawings)
-                          )
-
-                          // Reload tree
-                          const updatedTree = await repository.getDrawingsTree()
-                          setTree(updatedTree)
-                          setShowMenu(false)
-                          setActiveDrawingId(null)
-                        } catch (err) {
-                          console.error("Import failed:", err)
-                          setError("Failed to import project. Check file format.")
-                          setTimeout(() => setError(null), 5000)
-                        }
-                      }
-                      input.click()
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.4rem 0.6rem",
-                      fontSize: "0.8125rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "4px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.hoverBackground
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon name="upload" size={14} aria-label="Import" />
-                    Import project
-                  </button>
-                  <div
-                    style={{ height: "1px", backgroundColor: colors.border, margin: "0.25rem 0" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const { theme: currentTheme, setTheme } = useThemeStore.getState()
-                      setTheme(currentTheme === "light" ? "dark" : "light")
-                      setShowMenu(false)
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "0.4rem 0.6rem",
-                      fontSize: "0.8125rem",
-                      border: "none",
-                      background: "transparent",
-                      cursor: "pointer",
-                      color: colors.text,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      borderRadius: "4px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = colors.hoverBackground
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent"
-                    }}
-                  >
-                    <Icon
-                      name={theme === "light" ? "moon" : "sun"}
-                      size={14}
-                      aria-label="Toggle theme"
-                    />
-                    {theme === "light" ? "Dark" : "Light"} mode
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Embedded Search */}
+      {showSearch && (
+        /* Embedded Search */
         <div style={{ position: "relative" }}>
           <div
             style={{
@@ -859,9 +524,7 @@ export function Explorer({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Error Message */}
+      )}
       {error && (
         <div
           className="mx-3 mt-2 px-3 py-1.5 rounded"
@@ -874,8 +537,6 @@ export function Explorer({
           <p className="text-xs">{error}</p>
         </div>
       )}
-
-      {/* Tree View */}
       <div
         className="flex-1 overflow-y-auto px-1"
         style={{
@@ -923,96 +584,16 @@ export function Explorer({
           </div>
         )}
       </div>
-
-      {/* Footer */}
-      <div
-        style={{
-          borderTop: `1px solid ${colors.border}`,
-          padding: "0.4rem 0.75rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          backgroundColor: colors.backgroundSecondary,
+      <ExplorerFooter
+        theme={theme}
+        colors={colors}
+        isGraphView={isGraphView}
+        onToggleTheme={() => {
+          const store = useThemeStore.getState()
+          store.setTheme(store.theme === "light" ? "dark" : "light")
         }}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            const { theme: currentTheme, setTheme } = useThemeStore.getState()
-            setTheme(currentTheme === "light" ? "dark" : "light")
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.375rem",
-            padding: "0.2rem 0.4rem",
-            borderRadius: "4px",
-            fontSize: "0.75rem",
-            color: colors.textSecondary,
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = colors.hoverBackground
-            e.currentTarget.style.color = colors.text
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent"
-            e.currentTarget.style.color = colors.textSecondary
-          }}
-          title="Toggle theme"
-        >
-          <Icon name={theme === "light" ? "moon" : "sun"} size={13} />
-          <span>{theme === "light" ? "Dark" : "Light"}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={onToggleGraph}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.375rem",
-            padding: "0.2rem 0.4rem",
-            borderRadius: "4px",
-            fontSize: "0.75rem",
-            color: isGraphView ? colors.accent : colors.textSecondary,
-            backgroundColor: isGraphView ? colors.activeBackground : "transparent",
-            border: "none",
-            cursor: "pointer",
-          }}
-          onMouseEnter={(e) => {
-            if (!isGraphView) {
-              e.currentTarget.style.backgroundColor = colors.hoverBackground
-              e.currentTarget.style.color = colors.text
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isGraphView) {
-              e.currentTarget.style.backgroundColor = "transparent"
-              e.currentTarget.style.color = colors.textSecondary
-            }
-          }}
-          title="Toggle Graph View (Cmd+G)"
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            role="img"
-            aria-label="Graph"
-          >
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-            <line x1="12" y1="22.08" x2="12" y2="12" />
-          </svg>
-          <span>Graph</span>
-        </button>
-      </div>
+        onToggleGraph={onToggleGraph}
+      />
     </div>
   )
 }

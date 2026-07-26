@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 import { Icon } from "@/shared/components/Icon"
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import { useServices } from "@/shared/providers/ServiceProvider"
@@ -75,6 +75,62 @@ interface DrawingPickerModalProps {
   currentDrawingId: string | null
 }
 
+interface ModalState {
+  searchQuery: string
+  selectedDrawing: Drawing | null
+  elements: ElementInfo[]
+  isLoadingElements: boolean
+  urlValue: string
+  activeTab: "drawing" | "url"
+}
+
+type ModalAction =
+  | { type: "RESET" }
+  | { type: "SET_SEARCH_QUERY"; payload: string }
+  | { type: "SET_URL_VALUE"; payload: string }
+  | { type: "SET_ACTIVE_TAB"; payload: "drawing" | "url" }
+  | { type: "START_LOADING_ELEMENTS" }
+  | { type: "SET_DRAWING_ELEMENTS"; payload: { drawing: Drawing; elements: ElementInfo[] } }
+  | { type: "CLEAR_SELECTED_DRAWING" }
+  | { type: "FINISH_LOADING_ELEMENTS" }
+
+const initialModalState: ModalState = {
+  searchQuery: "",
+  selectedDrawing: null,
+  elements: [],
+  isLoadingElements: false,
+  urlValue: "",
+  activeTab: "drawing",
+}
+
+function modalReducer(state: ModalState, action: ModalAction): ModalState {
+  switch (action.type) {
+    case "RESET":
+      return initialModalState
+    case "SET_SEARCH_QUERY":
+      return { ...state, searchQuery: action.payload }
+    case "SET_URL_VALUE":
+      return { ...state, urlValue: action.payload }
+    case "SET_ACTIVE_TAB":
+      return { ...state, activeTab: action.payload }
+    case "START_LOADING_ELEMENTS":
+      return { ...state, isLoadingElements: true }
+    case "SET_DRAWING_ELEMENTS":
+      return {
+        ...state,
+        selectedDrawing: action.payload.drawing,
+        elements: action.payload.elements,
+        isLoadingElements: false,
+      }
+    case "CLEAR_SELECTED_DRAWING":
+      return { ...state, selectedDrawing: null, elements: [] }
+    case "FINISH_LOADING_ELEMENTS":
+      return { ...state, isLoadingElements: false }
+    default:
+      return state
+  }
+}
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Modal with tabs, tree navigation, and element selection requires complex logic
 export function DrawingPickerModal({
   isOpen,
@@ -88,12 +144,9 @@ export function DrawingPickerModal({
   const colors = getThemeColors(theme)
   const [tree, setTree] = useState<DrawingTreeNode[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedDrawing, setSelectedDrawing] = useState<Drawing | null>(null)
-  const [elements, setElements] = useState<ElementInfo[]>([])
-  const [isLoadingElements, setIsLoadingElements] = useState(false)
-  const [urlValue, setUrlValue] = useState("")
-  const [activeTab, setActiveTab] = useState<"drawing" | "url">("drawing")
+  const [state, dispatch] = useReducer(modalReducer, initialModalState)
+
+  const { searchQuery, selectedDrawing, elements, isLoadingElements, urlValue, activeTab } = state
 
   const searchInputRef = useRef<HTMLInputElement>(null)
   const urlInputRef = useRef<HTMLInputElement>(null)
@@ -101,11 +154,7 @@ export function DrawingPickerModal({
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true)
-      setSelectedDrawing(null)
-      setElements([])
-      setSearchQuery("")
-      setUrlValue("")
-      setActiveTab("drawing")
+      dispatch({ type: "RESET" })
       repository
         .getDrawingsTree()
         .then(setTree)
@@ -119,22 +168,19 @@ export function DrawingPickerModal({
     }
   }, [isOpen, repository.getDrawingsTree])
 
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        if (activeTab === "drawing") {
-          searchInputRef.current?.focus()
-        } else if (activeTab === "url") {
-          urlInputRef.current?.focus()
-        }
-      }, 50)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen, activeTab])
+  const handleTabChange = (tab: "drawing" | "url") => {
+    dispatch({ type: "SET_ACTIVE_TAB", payload: tab })
+    setTimeout(() => {
+      if (tab === "drawing") {
+        searchInputRef.current?.focus()
+      } else if (tab === "url") {
+        urlInputRef.current?.focus()
+      }
+    }, 50)
+  }
 
   const handleBack = useCallback(() => {
-    setSelectedDrawing(null)
-    setElements([])
+    dispatch({ type: "CLEAR_SELECTED_DRAWING" })
   }, [])
 
   const handleSelectWholeDrawing = useCallback(() => {
@@ -180,17 +226,17 @@ export function DrawingPickerModal({
   }, [isOpen])
 
   const handleDrawingSelect = async (drawing: DrawingTreeNode) => {
-    setIsLoadingElements(true)
+    dispatch({ type: "START_LOADING_ELEMENTS" })
     try {
       const result = await loadDrawingElements(drawing, repository)
       if (result) {
-        setSelectedDrawing(result.drawing)
-        setElements(result.elements)
+        dispatch({ type: "SET_DRAWING_ELEMENTS", payload: result })
+      } else {
+        dispatch({ type: "FINISH_LOADING_ELEMENTS" })
       }
     } catch (err) {
       console.error("Failed to load drawing elements:", err)
-    } finally {
-      setIsLoadingElements(false)
+      dispatch({ type: "FINISH_LOADING_ELEMENTS" })
     }
   }
 
@@ -200,6 +246,19 @@ export function DrawingPickerModal({
       onClose()
     }
   }
+
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (isOpen) {
+      if (!dialog.open) dialog.showModal()
+    } else if (dialog.open) {
+      dialog.close()
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -233,17 +292,14 @@ export function DrawingPickerModal({
     : "Link to a drawing or external URL"
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
       aria-label="Add Link"
-      className="fixed inset-0 flex items-center justify-center"
+      onClose={onClose}
+      className="p-0 rounded-xl backdrop:bg-black/50 bg-transparent max-w-md w-full border-0 fixed inset-0 flex items-center justify-center m-auto"
       style={{
         zIndex: Z_INDEX.MODAL_BACKDROP,
-        backgroundColor: theme === "dark" ? "rgba(0, 0, 0, 0.75)" : "rgba(15, 23, 42, 0.4)",
       }}
-      onClick={onClose}
-      onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
       <div
         role="document"
@@ -253,8 +309,6 @@ export function DrawingPickerModal({
           border: `1px solid ${colors.border}`,
           zIndex: Z_INDEX.MODAL_CONTENT,
         }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
       >
         <ModalHeader
           title={headerTitle}
@@ -271,7 +325,7 @@ export function DrawingPickerModal({
             <div className="flex gap-2 mb-4" style={{ borderBottom: `1px solid ${colors.border}` }}>
               <button
                 type="button"
-                onClick={() => setActiveTab("drawing")}
+                onClick={() => handleTabChange("drawing")}
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors"
                 style={{
                   color: activeTab === "drawing" ? colors.accent : colors.textSecondary,
@@ -291,7 +345,7 @@ export function DrawingPickerModal({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("url")}
+                onClick={() => handleTabChange("url")}
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors"
                 style={{
                   color: activeTab === "url" ? colors.accent : colors.textSecondary,
@@ -314,7 +368,7 @@ export function DrawingPickerModal({
                 <SearchInput
                   inputRef={searchInputRef}
                   value={searchQuery}
-                  onChange={setSearchQuery}
+                  onChange={(val) => dispatch({ type: "SET_SEARCH_QUERY", payload: val })}
                   onKeyDown={handleSearchKeyDown}
                   placeholder="Search drawings, paste URL, or type [[..."
                   backgroundColor={colors.inputBg}
@@ -365,7 +419,7 @@ export function DrawingPickerModal({
                 type="url"
                 aria-label="External URL"
                 value={urlValue}
-                onChange={(e) => setUrlValue(e.target.value)}
+                onChange={(e) => dispatch({ type: "SET_URL_VALUE", payload: e.target.value })}
                 placeholder="https://example.com"
                 className="w-full px-3.5 py-2.5 text-sm rounded-lg outline-none transition-colors"
                 style={{
@@ -462,6 +516,6 @@ export function DrawingPickerModal({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   )
 }
