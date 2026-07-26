@@ -113,6 +113,7 @@ export function TreeNode({
     <div style={{ position: "relative", zIndex: 1 }}>
       <div
         role="treeitem"
+        tabIndex={0}
         aria-expanded={hasChildren ? isExpanded : undefined}
         draggable={!isEditing}
         onDragStart={(e) => {
@@ -170,39 +171,25 @@ export function TreeNode({
         )}
 
         {/* Icon and Title */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => !isEditing && onSelect(node.id)}
-          onKeyDown={(e) => {
-            if ((e.key === "Enter" || e.key === " ") && !isEditing) {
-              e.preventDefault()
-              onSelect(node.id)
-            }
-          }}
-          onDoubleClick={(e) => {
-            e.stopPropagation()
-            setIsEditing(true)
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            flex: 1,
-            minWidth: 0,
-            cursor: "pointer",
-          }}
-        >
-          <Icon
-            name={hasChildren ? "folderOpen" : "file"}
-            size={15}
-            color={isActive ? colors.iconActive : colors.iconColor}
-          />
-
-          {isEditing ? (
+        {isEditing ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <Icon
+              name={hasChildren ? "folderOpen" : "file"}
+              size={15}
+              color={isActive ? colors.iconActive : colors.iconColor}
+            />
             <input
               ref={inputRef}
               type="text"
+              aria-label="Drawing title"
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
               onBlur={handleSaveTitle}
@@ -222,63 +209,92 @@ export function TreeNode({
                 fontWeight: 500,
               }}
             />
-          ) : (
+          </div>
+        ) : (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelect(node.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                onSelect(node.id)
+              }
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              setIsEditing(true)
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              flex: 1,
+              minWidth: 0,
+              cursor: "pointer",
+            }}
+          >
+            <Icon
+              name={hasChildren ? "folderOpen" : "file"}
+              size={15}
+              color={isActive ? colors.iconActive : colors.iconColor}
+            />
             <span
-              className="text-sm truncate flex-1"
+              className="text-sm truncate"
               style={{
-                color: colors.text,
+                color: isActive ? colors.textActive : colors.text,
                 fontWeight: isActive ? 600 : 400,
               }}
             >
               {node.title}
             </span>
-          )}
 
-          {/* Active Dot Indicator */}
-          {isActive && (
-            <span
-              style={{
-                width: "5px",
-                height: "5px",
-                borderRadius: "50%",
-                backgroundColor: colors.accent,
-                flexShrink: 0,
-              }}
-              title="Active page"
-            />
-          )}
+            {/* Active Dot Indicator */}
+            {isActive && (
+              <span
+                style={{
+                  width: "5px",
+                  height: "5px",
+                  borderRadius: "50%",
+                  backgroundColor: colors.accent,
+                  flexShrink: 0,
+                }}
+                title="Active page"
+              />
+            )}
 
-          {/* Child count */}
-          {hasChildren && !isActive && (
-            <span
-              style={{
-                fontSize: "11px",
-                color: colors.textSecondary,
-                fontWeight: 400,
-                opacity: 0.7,
-              }}
-            >
-              {node.children?.length}
-            </span>
-          )}
+            {/* Child count */}
+            {hasChildren && !isActive && (
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: colors.textSecondary,
+                  fontWeight: 400,
+                  opacity: 0.7,
+                }}
+              >
+                {node.children?.length}
+              </span>
+            )}
 
-          {/* Content match indicator */}
-          {node.metadata?.matchesContent && (
-            <span
-              style={{
-                fontSize: "10px",
-                padding: "1px 5px",
-                borderRadius: "3px",
-                backgroundColor: colors.badgeBg,
-                color: colors.textSecondary,
-                fontWeight: 500,
-              }}
-              title="Match found in content"
-            >
-              match
-            </span>
-          )}
-        </div>
+            {/* Content match indicator */}
+            {node.metadata?.matchesContent && (
+              <span
+                style={{
+                  fontSize: "10px",
+                  padding: "1px 5px",
+                  borderRadius: "3px",
+                  backgroundColor: colors.badgeBg,
+                  color: colors.textSecondary,
+                  fontWeight: 500,
+                }}
+                title="Match found in content"
+              >
+                match
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Action Buttons (visible on hover or when active/menu open) */}
         <div

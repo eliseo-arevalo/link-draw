@@ -5,7 +5,7 @@ import { validateNoCircularReference } from "./helpers/circular-validator"
 import { buildTree } from "./helpers/tree-builder"
 
 export class LocalStorageRepository implements IGraphRepository {
-  private readonly STORAGE_KEY = "linkdraw:drawings"
+  private readonly STORAGE_KEY = "linkdraw:drawings:v1"
   private readonly VERSION_KEY = "linkdraw:version"
   private readonly INITIALIZED_KEY = "linkdraw:initialized"
   private readonly CURRENT_VERSION = "1.0.0"

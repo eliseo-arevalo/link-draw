@@ -557,7 +557,7 @@ export function Canvas() {
     <div ref={canvasRef} className="w-full h-full relative overflow-hidden flex-1 min-h-0">
       {isDraggingOver && (
         <div
-          className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none transition-all m-3 rounded-2xl"
+          className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none transition-colors transition-opacity m-3 rounded-2xl"
           style={{
             backgroundColor:
               theme === "dark" ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.12)",

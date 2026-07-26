@@ -62,6 +62,7 @@ export function DropdownMenu({ isOpen, children, anchorRef }: DropdownMenuProps)
 
   const menu = (
     <div
+      role="menu"
       data-dropdown-menu="true"
       style={style}
       onClick={(e) => {

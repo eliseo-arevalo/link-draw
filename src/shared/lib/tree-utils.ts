@@ -63,15 +63,20 @@ export function mapTree<T extends TreeNode>(nodes: T[], mapper: (node: T) => T):
  * @returns New tree with only matching nodes
  */
 export function filterTree<T extends TreeNode>(nodes: T[], predicate: (node: T) => boolean): T[] {
-  return nodes.filter(predicate).map((node) => {
-    if (node.children && node.children.length > 0) {
-      return {
-        ...node,
-        children: filterTree(node.children as T[], predicate),
-      } as T
+  const result: T[] = []
+  for (const node of nodes) {
+    if (predicate(node)) {
+      if (node.children && node.children.length > 0) {
+        result.push({
+          ...node,
+          children: filterTree(node.children as T[], predicate),
+        } as T)
+      } else {
+        result.push(node)
+      }
     }
-    return node
-  })
+  }
+  return result
 }
 
 /**

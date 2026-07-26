@@ -188,13 +188,21 @@ export function Graph() {
     [theme]
   )
 
+  const createTooltipRef = useRef(createTooltip)
+  useEffect(() => {
+    createTooltipRef.current = createTooltip
+  })
+
   useEffect(() => {
     if (!containerRef.current) return
+
+    let isSubscribed = true
 
     const loadGraph = async () => {
       const drawings = await repository.listDrawings()
       const filters = { showHierarchy: true, showLinks: true, showOrphans: true }
       const { elements, stats: graphStats } = buildGraphElements(drawings, filters)
+      if (!isSubscribed) return
       setStats(graphStats)
 
       // If graph exists, update elements
@@ -271,7 +279,7 @@ export function Graph() {
           const renderedPosition = node.renderedPosition()
           const containerRect = containerRef.current?.getBoundingClientRect()
           if (containerRect) {
-            createTooltip(
+            createTooltipRef.current(
               drawing,
               childCount,
               linkCount,
@@ -297,6 +305,7 @@ export function Graph() {
     loadGraph()
 
     return () => {
+      isSubscribed = false
       // Stop layout if running
       if (layoutRef.current) {
         layoutRef.current.stop()
@@ -308,7 +317,7 @@ export function Graph() {
         cyRef.current = null
       }
     }
-  }, [layout, repository, theme, getGraphStyles, createTooltip, setActiveDrawingId, setViewMode])
+  }, [layout, repository, theme, getGraphStyles, setActiveDrawingId, setViewMode])
 
   // Auto-refresh when tree changes (separate effect to avoid lint warnings)
   const { tree } = useTreeStore()

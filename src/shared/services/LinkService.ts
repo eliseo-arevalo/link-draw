@@ -112,16 +112,14 @@ export class LinkService {
 
   async validateLinks(drawingId: string): Promise<string[]> {
     const links = await this.getDrawingLinks(drawingId)
-    const brokenLinks: string[] = []
+    const validationResults = await Promise.all(
+      links.map(async (link) => {
+        const targetExists = await this.repository.exists(link.targetDrawingId)
+        return targetExists ? null : link.targetDrawingId
+      })
+    )
 
-    for (const link of links) {
-      const targetExists = await this.repository.exists(link.targetDrawingId)
-      if (!targetExists) {
-        brokenLinks.push(link.targetDrawingId)
-      }
-    }
-
-    return brokenLinks
+    return validationResults.filter((targetId): targetId is string => targetId !== null)
   }
 
   async getBacklinks(drawingId: string): Promise<DrawingLink[]> {

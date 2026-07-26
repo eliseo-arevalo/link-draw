@@ -42,6 +42,7 @@ export function GraphHeader({
           <Icon name="box" size={16} color={colors.textSecondary} />
           <select
             value={layout}
+            aria-label="Graph layout algorithm"
             onChange={(e) => onLayoutChange(e.target.value as LayoutType)}
             className="text-sm px-2 py-1 rounded border cursor-pointer"
             style={{
@@ -64,6 +65,7 @@ export function GraphHeader({
           <Icon name="search" size={16} color={colors.textSecondary} />
           <input
             type="text"
+            aria-label="Search graph nodes"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search nodes..."

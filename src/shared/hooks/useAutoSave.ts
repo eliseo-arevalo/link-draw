@@ -91,25 +91,3 @@ export function useAutoSave(onSave: () => Promise<void>, options: UseAutoSaveOpt
     isSaving,
   }
 }
-
-export function useManualSave(onSave: () => Promise<void>) {
-  useEffect(() => {
-    const handleKeyDown = async (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault()
-
-        try {
-          await onSave()
-        } catch (error) {
-          console.error("Manual save failed:", error)
-        }
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [onSave])
-}

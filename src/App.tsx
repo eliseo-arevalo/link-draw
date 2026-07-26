@@ -46,13 +46,19 @@ function App() {
       <MobileWarning />
       {/* Overlay backdrop on mobile */}
       {isMobile && showSidebar && (
-        <div
+        <button
+          type="button"
+          aria-label="Close sidebar"
           onClick={() => setShowSidebar(false)}
           style={{
             position: "fixed",
             inset: 0,
             backgroundColor: "rgba(0, 0, 0, 0.5)",
             zIndex: 999,
+            border: "none",
+            cursor: "pointer",
+            width: "100%",
+            height: "100%",
           }}
         />
       )}

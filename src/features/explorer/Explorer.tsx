@@ -191,12 +191,8 @@ export function Explorer({
     ): Promise<DrawingTreeNode[]> => {
       if (!query.trim()) return nodes
 
-      const filtered: DrawingTreeNode[] = []
-      for (const node of nodes) {
-        const result = await processNode(node, query, filterTree)
-        if (result) filtered.push(result)
-      }
-      return filtered
+      const results = await Promise.all(nodes.map((node) => processNode(node, query, filterTree)))
+      return results.filter((r): r is DrawingTreeNode => r !== null)
     }
 
     filterTree(tree, searchQuery).then(setFilteredTree)
@@ -637,8 +633,7 @@ export function Explorer({
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
-                      role="img"
-                      aria-label="Icon"
+                      aria-hidden="true"
                     >
                       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
@@ -718,7 +713,10 @@ export function Explorer({
                           }
 
                           // Clear existing data and import
-                          localStorage.setItem("linkdraw:drawings", JSON.stringify(data.drawings))
+                          localStorage.setItem(
+                            "linkdraw:drawings:v1",
+                            JSON.stringify(data.drawings)
+                          )
 
                           // Reload tree
                           const updatedTree = await repository.getDrawingsTree()
@@ -818,6 +816,7 @@ export function Explorer({
             <input
               ref={searchInputRef}
               type="text"
+              aria-label="Search drawings"
               placeholder="Search drawings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

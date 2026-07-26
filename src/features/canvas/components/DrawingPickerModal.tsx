@@ -27,18 +27,35 @@ const isUrl = (str: string) => {
   )
 }
 
+const flattenTree = (nodes: DrawingTreeNode[]): DrawingTreeNode[] => {
+  const result: DrawingTreeNode[] = []
+  const traverse = (items: DrawingTreeNode[]) => {
+    for (const item of items) {
+      result.push(item)
+      if (item.children) traverse(item.children)
+    }
+  }
+  traverse(nodes)
+  return result
+}
+
 const loadDrawingElements = async (drawing: DrawingTreeNode, repository: IGraphRepository) => {
   const fullDrawing = await repository.loadDrawing(drawing.id)
   if (!fullDrawing) return null
 
-  const linkableElements = (fullDrawing.content.elements || [])
-    .filter((el: { id: string; type: string; isDeleted?: boolean }) => !el.isDeleted)
-    .map((el: { id: string; type: string; text?: string; name?: string }) => ({
-      id: el.id,
-      type: el.type,
-      text: el.text,
-      name: el.name,
-    }))
+  const linkableElements: ElementInfo[] = (fullDrawing.content.elements || []).reduce<
+    ElementInfo[]
+  >((acc, el: { id: string; type: string; isDeleted?: boolean; text?: string; name?: string }) => {
+    if (!el.isDeleted) {
+      acc.push({
+        id: el.id,
+        type: el.type,
+        text: el.text,
+        name: el.name,
+      })
+    }
+    return acc
+  }, [])
 
   return { drawing: fullDrawing, elements: linkableElements }
 }
@@ -135,22 +152,32 @@ export function DrawingPickerModal({
     [selectedDrawing, onSelect]
   )
 
+  const onCloseRef = useRef(onClose)
+  const selectedDrawingRef = useRef(selectedDrawing)
+  const handleBackRef = useRef(handleBack)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+    selectedDrawingRef.current = selectedDrawing
+    handleBackRef.current = handleBack
+  })
+
   useEffect(() => {
     if (!isOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (selectedDrawing) {
-          handleBack()
+        if (selectedDrawingRef.current) {
+          handleBackRef.current()
         } else {
-          onClose()
+          onCloseRef.current()
         }
       }
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [isOpen, onClose, selectedDrawing, handleBack])
+  }, [isOpen])
 
   const handleDrawingSelect = async (drawing: DrawingTreeNode) => {
     setIsLoadingElements(true)
@@ -175,18 +202,6 @@ export function DrawingPickerModal({
   }
 
   if (!isOpen) return null
-
-  const flattenTree = (nodes: DrawingTreeNode[]): DrawingTreeNode[] => {
-    const result: DrawingTreeNode[] = []
-    const traverse = (items: DrawingTreeNode[]) => {
-      for (const item of items) {
-        result.push(item)
-        if (item.children) traverse(item.children)
-      }
-    }
-    traverse(nodes)
-    return result
-  }
 
   const cleanSearchQuery = searchQuery.replace(/^\[\[/, "").replace(/\]\]$/, "").trim()
   const isWikiLink = searchQuery.startsWith("[[")
@@ -221,6 +236,7 @@ export function DrawingPickerModal({
     <div
       role="dialog"
       aria-modal="true"
+      aria-label="Add Link"
       className="fixed inset-0 flex items-center justify-center"
       style={{
         zIndex: Z_INDEX.MODAL_BACKDROP,
@@ -347,6 +363,7 @@ export function DrawingPickerModal({
               <input
                 ref={urlInputRef}
                 type="url"
+                aria-label="External URL"
                 value={urlValue}
                 onChange={(e) => setUrlValue(e.target.value)}
                 placeholder="https://example.com"

@@ -57,10 +57,11 @@ export function GlobalWikiModal({
     }
   }, [isOpen, repository.getDrawingsTree])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset index on filter change
-  useEffect(() => {
+  const [prevFilterText, setPrevFilterText] = useState(filterText)
+  if (prevFilterText !== filterText) {
+    setPrevFilterText(filterText)
     setSelectedIndex(0)
-  }, [filterText])
+  }
 
   // Position the popover near the WYSIWYG textarea
   useEffect(() => {

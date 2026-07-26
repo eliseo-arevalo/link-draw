@@ -24,6 +24,7 @@ export function DeleteConfirmDialog({
     <div
       role="dialog"
       aria-modal="true"
+      aria-label="Confirm Deletion"
       className="fixed inset-0 flex items-center justify-center"
       style={{
         zIndex: 999999,

@@ -120,6 +120,8 @@ export function Search() {
       return results
     }
 
+    let isSubscribed = true
+
     const searchDrawings = async () => {
       const drawings = await repository.listDrawings()
       const lowerQuery = query.toLowerCase()
@@ -133,11 +135,16 @@ export function Search() {
         foundResults.push(...elementMatches)
       }
 
-      setResults(foundResults)
-      setSelectedIndex(0)
+      if (isSubscribed) {
+        setResults(foundResults)
+        setSelectedIndex(0)
+      }
     }
 
     searchDrawings()
+    return () => {
+      isSubscribed = false
+    }
   }, [query, repository])
 
   const handleSelectResult = (result: SearchResult) => {
@@ -166,8 +173,10 @@ export function Search() {
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
+      <button
+        type="button"
+        aria-label="Close search overlay"
+        className="fixed inset-0 bg-black bg-opacity-50 z-[9998] w-full h-full border-none cursor-pointer"
         onClick={() => setIsOpen(false)}
       />
 
@@ -190,6 +199,7 @@ export function Search() {
           <input
             ref={inputRef}
             type="text"
+            aria-label="Search in all drawings"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -200,6 +210,7 @@ export function Search() {
           {query && (
             <button
               type="button"
+              aria-label="Clear search query"
               onClick={() => {
                 setQuery("")
                 setResults([])
@@ -226,9 +237,9 @@ export function Search() {
             </div>
           )}
 
-          {results.map((result, index) => (
+          {results.map((result) => (
             <button
-              key={`${result.drawingId}-${index}`}
+              key={`${result.drawingId}-${result.matchType}-${result.matchText}`}
               type="button"
               onClick={() => handleSelectResult(result)}
               className="w-full text-left p-4 border-b transition-colors"

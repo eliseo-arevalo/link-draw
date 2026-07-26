@@ -4,19 +4,17 @@ import type { DrawingTreeNode } from "@/shared/types/drawing"
  * Generate a unique drawing name to avoid conflicts
  * Strategy: "Drawing - MMM DD, HH:MM AM/PM"
  */
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+})
+
 export function generateUniqueDrawingName(existingTree: DrawingTreeNode[]): string {
   const now = new Date()
-
-  // Format: "Drawing - Jan 14, 9:27 PM"
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
-
-  const timestamp = formatter.format(now)
+  const timestamp = DATE_FORMATTER.format(now)
   const baseName = `Drawing - ${timestamp}`
 
   // Check if name exists (unlikely with timestamp, but just in case)
