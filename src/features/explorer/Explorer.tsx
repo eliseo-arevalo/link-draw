@@ -85,6 +85,7 @@ export function Explorer({
     console.log("[Sidebar] Selecting drawing:", id)
     setActiveDrawingId(id)
     setViewMode("canvas")
+    if (isMobile) onToggleSidebar()
   }
 
   const handleDrop = async (draggedId: string, targetId: string | null) => {
@@ -273,6 +274,10 @@ export function Explorer({
     }, 150)
     return () => clearTimeout(timer)
   }, [isCollapsed])
+
+  if (isCollapsed && isMobile) {
+    return null
+  }
 
   if (isCollapsed) {
     return (
