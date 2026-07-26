@@ -228,6 +228,11 @@ export function GlobalWikiModal({
                   key={drawing.id}
                   type="button"
                   data-selected={isSelected}
+                  onMouseDown={(event) => {
+                    // Keep Excalidraw's WYSIWYG textarea focused until onClick
+                    // replaces the wiki query and commits the linked text.
+                    event.preventDefault()
+                  }}
                   onClick={() => handleSelect(drawing)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-left w-full cursor-pointer transition-colors"
