@@ -12,7 +12,8 @@ export function useCanvasLoader(
   excalidrawAPI: ExcalidrawImperativeAPI | null,
   adapter: ExcalidrawAdapter
 ) {
-  const { activeDrawingId, setIsLoadingDrawing } = useDrawingStore()
+  const activeDrawingId = useDrawingStore((state) => state.activeDrawingId)
+  const setIsLoadingDrawing = useDrawingStore((state) => state.setIsLoadingDrawing)
   const previousDrawingIdRef = useRef<string | null>(null)
   const contentCacheRef = useRef<Map<string, ExcalidrawContent>>(new Map())
 

@@ -35,14 +35,25 @@ export default defineConfig({
     exclude: [...configDefaults.exclude],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "lcov"],
+      include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "**/*.test.ts",
         "**/*.test.tsx",
+        "**/*.d.ts",
+        "src/main.tsx",
+        "src/shared/types/**",
+        "src/shared/interfaces/**",
         "**/*.config.ts",
         "**/node_modules/**",
         "**/dist/**",
       ],
+      thresholds: {
+        statements: 50,
+        branches: 35,
+        functions: 45,
+        lines: 50,
+      },
     },
   },
 })
