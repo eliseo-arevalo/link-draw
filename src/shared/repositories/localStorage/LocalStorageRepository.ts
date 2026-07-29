@@ -1,11 +1,12 @@
 import { EXAMPLE_DRAWINGS } from "@/shared/data/exampleDrawings"
 import type { IGraphRepository } from "@/shared/interfaces/IGraphRepository"
 import type { Drawing, DrawingInput, DrawingSummary, DrawingTreeNode } from "@/shared/types/drawing"
-import { validateNoCircularReference } from "./helpers/circular-validator"
-import { buildTree } from "./helpers/tree-builder"
+import { validateNoCircularReference } from "../helpers/circular-validator"
+import { buildTree } from "../helpers/tree-builder"
+import { DRAWINGS_STORAGE_KEY } from "../storageKeys"
 
 export class LocalStorageRepository implements IGraphRepository {
-  private readonly STORAGE_KEY = "linkdraw:drawings:v1"
+  private readonly STORAGE_KEY = DRAWINGS_STORAGE_KEY
   private readonly VERSION_KEY = "linkdraw:version"
   private readonly INITIALIZED_KEY = "linkdraw:initialized"
   private readonly ONBOARDING_DEMO_ELIGIBLE_KEY = "linkdraw:onboarding-link-demo:eligible"
