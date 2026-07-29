@@ -21,6 +21,7 @@
     "@excalidraw/excalidraw": "^0.18.0",
     "@types/cytoscape": "^3.31.0",
     "cytoscape": "^3.33.1",
+    "dexie": "^4.4.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zustand": "^5.0.9"
@@ -36,6 +37,7 @@
     "@vitejs/plugin-react-swc": "^4.2.2",
     "@vitest/coverage-v8": "^4.0.16",
     "autoprefixer": "^10.4.23",
+    "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.0.11",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
