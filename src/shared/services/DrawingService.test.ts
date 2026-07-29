@@ -169,4 +169,72 @@ describe("DrawingService", () => {
       await expect(service.duplicateDrawing("missing")).rejects.toThrow("Drawing not found")
     })
   })
+
+  it("delegates collection queries and simple mutations", async () => {
+    const tree = [mockDrawing as never]
+    mockRepository.listDrawings.mockResolvedValue([mockDrawing])
+    mockRepository.getDrawingSummaries.mockResolvedValue([{ id: "drawing-1" }] as never)
+    mockRepository.getDrawingsTree.mockResolvedValue(tree)
+
+    expect(await service.getAllDrawings()).toEqual([mockDrawing])
+    expect(await service.getDrawingSummaries()).toEqual([{ id: "drawing-1" }])
+    expect(await service.getDrawingsTree()).toBe(tree)
+
+    await service.deleteDrawing("drawing-1")
+    await service.setParent("drawing-1", "parent")
+    await service.togglePublic("drawing-1", true)
+    expect(mockRepository.deleteDrawing).toHaveBeenCalledWith("drawing-1")
+    expect(mockRepository.setDrawingParent).toHaveBeenCalledWith("drawing-1", "parent")
+    expect(mockRepository.togglePublic).toHaveBeenCalledWith("drawing-1", true)
+  })
+
+  describe("moveDrawing", () => {
+    const tree = [
+      {
+        ...mockDrawing,
+        id: "root",
+        children: [{ ...mockDrawing, id: "child", parent_id: "root", children: [] }],
+      },
+    ]
+
+    it("moves a drawing to a valid parent or to the root", async () => {
+      mockRepository.getDrawingsTree.mockResolvedValue(tree)
+      await service.moveDrawing("child", null)
+      await service.moveDrawing("child", "other")
+      expect(mockRepository.setDrawingParent).toHaveBeenNthCalledWith(1, "child", null)
+      expect(mockRepository.setDrawingParent).toHaveBeenNthCalledWith(2, "child", "other")
+    })
+
+    it("rejects moving a drawing to itself or its descendant", async () => {
+      await expect(service.moveDrawing("root", "root")).rejects.toThrow("itself")
+      mockRepository.getDrawingsTree.mockResolvedValue(tree)
+      await expect(service.moveDrawing("root", "child")).rejects.toThrow("own descendant")
+      expect(mockRepository.setDrawingParent).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("export and import", () => {
+    it("exports an existing drawing and rejects a missing one", async () => {
+      mockRepository.loadDrawing.mockResolvedValueOnce(mockDrawing).mockResolvedValueOnce(null)
+      expect(JSON.parse(await service.exportDrawing("drawing-1"))).toEqual(mockDrawing)
+      await expect(service.exportDrawing("missing")).rejects.toThrow("Drawing not found")
+    })
+
+    it("imports drawing content into a fresh ID", async () => {
+      mockRepository.createDrawing.mockResolvedValue("imported-id")
+      expect(await service.importDrawing(JSON.stringify(mockDrawing))).toBe("imported-id")
+      expect(mockRepository.createDrawing).toHaveBeenCalledWith("Test Drawing", null)
+      expect(mockRepository.saveDrawing).toHaveBeenCalledWith("imported-id", {
+        content: mockDrawing.content,
+        is_public: false,
+      })
+    })
+  })
+
+  it("exposes canvas dirty state and statistics", () => {
+    mockCanvas.hasUnsavedChanges.mockReturnValue(true)
+    mockCanvas.getStats.mockReturnValue({ elements: 2 } as never)
+    expect(service.hasUnsavedChanges()).toBe(true)
+    expect(service.getCanvasStats()).toEqual({ elements: 2 })
+  })
 })

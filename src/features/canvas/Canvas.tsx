@@ -122,12 +122,7 @@ export function Canvas() {
     repository,
     onActivateDrawing: setActiveDrawingId,
   })
-  const { saveAllCachedDrawings, clearCache } = useCanvasLoader(
-    drawingService,
-    repository,
-    excalidrawAPI,
-    adapter
-  )
+  const { saveAllCachedDrawings, clearCache } = useCanvasLoader(repository, excalidrawAPI, adapter)
 
   const saveAllRef = useRef(saveAllCachedDrawings)
   useEffect(() => {
@@ -136,12 +131,25 @@ export function Canvas() {
 
   const { triggerSave, forceSave, cancelSave } = useAutoSave(
     async () => {
-      if (!activeDrawingId || isImporting) return
-      console.log(`[Canvas] 💾 SAVING drawing ${activeDrawingId.slice(0, 8)}`)
+      const drawingId = activeDrawingId
+      if (
+        !drawingId ||
+        isImporting ||
+        useDrawingStore.getState().activeDrawingId !== drawingId
+      ) {
+        return
+      }
+
+      // Bind the content snapshot to the same drawing ID before any await.
+      const content = adapter.getContent()
+      console.log(`[Canvas] 💾 SAVING drawing ${drawingId.slice(0, 8)}`)
       // Guardar cache primero
       await saveAllRef.current()
-      // Luego guardar el actual
-      await drawingService.saveCurrentDrawing(activeDrawingId)
+      // Then save the captured content under the ID it came from.
+      await repository.saveDrawing(drawingId, { content })
+      if (useDrawingStore.getState().activeDrawingId === drawingId) {
+        adapter.markAsSaved()
+      }
     },
     {
       delay: 500,
@@ -150,6 +158,15 @@ export function Canvas() {
       onSaveError: (error) => console.error("Auto-save failed:", error),
     }
   )
+
+  const autoSaveDrawingIdRef = useRef(activeDrawingId)
+  useEffect(() => {
+    if (autoSaveDrawingIdRef.current !== activeDrawingId) {
+      // A delayed save belongs to the previous drawing and must never read the next canvas.
+      cancelSave()
+      autoSaveDrawingIdRef.current = activeDrawingId
+    }
+  }, [activeDrawingId, cancelSave])
 
   useEffect(() => {
     if (isImporting) {

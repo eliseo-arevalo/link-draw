@@ -167,8 +167,8 @@ export function DrawingLinkPreviewPopover({
             Cargando vista previa...
           </p>
         ) : svgHtml ? (
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted Excalidraw exportToSvg HTML output
           <div
+            /* biome-ignore lint/security/noDangerouslySetInnerHtml: Trusted Excalidraw exportToSvg HTML output */
             dangerouslySetInnerHTML={{ __html: svgHtml }}
             style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center" }}
           />

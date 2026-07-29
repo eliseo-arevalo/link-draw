@@ -250,11 +250,7 @@ export function Search() {
               }}
             >
               <div className="flex items-start gap-3">
-                <Icon
-                  name={result.matchType === "title" ? "file" : "type"}
-                  size={16}
-                  color={colors.textSecondary}
-                />
+                <Icon name="file" size={16} color={colors.textSecondary} />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium mb-1" style={{ color: colors.text }}>
                     {result.drawingTitle}
